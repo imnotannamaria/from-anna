@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
 import { MAX_PAGES_PER_LETTER } from '@/lib/db/schema'
 import { TooManyPagesError, addPages } from '@/lib/letters/mutations'
-import { MAX_DIMENSION, OUTPUT_TYPE } from '@/lib/images/process'
+import { MAX_DIMENSION, OUTPUT_TYPE, SCREEN_DIMENSION } from '@/lib/images/process'
 
 /** Reads the database, so it can never be cached. */
 export const dynamic = 'force-dynamic'
@@ -34,6 +34,7 @@ export async function POST(
 
   const form = await request.formData()
   const files = form.getAll('page').filter((v): v is File => v instanceof File)
+  const screens = form.getAll('screen').filter((v): v is File => v instanceof File)
   const alts = form.getAll('alt').map(String)
 
   if (files.length === 0) {
@@ -53,9 +54,17 @@ export async function POST(
       { status: 400 },
     )
   }
-  if (files.some((file) => file.type !== OUTPUT_TYPE)) {
+  if ([...files, ...screens].some((file) => file.type !== OUTPUT_TYPE)) {
     return Response.json(
       { error: 'Pages must be processed to JPEG before upload.' },
+      { status: 400 },
+    )
+  }
+  // The narrow-screen output is optional in the schema but not in the form:
+  // sending some and not others would leave a letter half able to choose.
+  if (screens.length !== 0 && screens.length !== files.length) {
+    return Response.json(
+      { error: 'Every page needs its narrow-screen output, or none do.' },
       { status: 400 },
     )
   }
@@ -63,6 +72,7 @@ export async function POST(
   const dimensions = files.map((_, i) => ({
     width: Number(form.getAll('width')[i]),
     height: Number(form.getAll('height')[i]),
+    screenWidth: Number(form.getAll('screenWidth')[i]),
   }))
 
   if (
@@ -81,19 +91,44 @@ export async function POST(
     )
   }
 
+  if (
+    screens.length > 0 &&
+    dimensions.some(
+      ({ screenWidth }) =>
+        !Number.isInteger(screenWidth) ||
+        screenWidth < 1 ||
+        screenWidth > SCREEN_DIMENSION,
+    )
+  ) {
+    return Response.json(
+      { error: 'Narrow-screen dimensions are missing or out of range.' },
+      { status: 400 },
+    )
+  }
+
   try {
+    // Private: the photo is the letter's content, and a public URL would
+    // outlive unpublishing and expiry.
+    const store = (file: File) =>
+      put(`letters/${id}/${crypto.randomUUID()}.jpg`, file, {
+        access: 'private',
+        contentType: OUTPUT_TYPE,
+      })
+
     const uploaded = await Promise.all(
       files.map(async (file, i) => {
-        // Private: the photo is the letter's content, and a public URL
-        // would outlive unpublishing and expiry.
-        const blob = await put(`letters/${id}/${crypto.randomUUID()}.jpg`, file, {
-          access: 'private',
-          contentType: OUTPUT_TYPE,
-        })
+        const screen = screens[i]
+        const [blob, screenBlob] = await Promise.all([
+          store(file),
+          screen ? store(screen) : Promise.resolve(null),
+        ])
+
         return {
           blobUrl: blob.url,
           width: dimensions[i].width,
           height: dimensions[i].height,
+          screenBlobUrl: screenBlob?.url ?? null,
+          screenWidth: screenBlob ? dimensions[i].screenWidth : null,
           alt: alts[i].trim(),
         }
       }),

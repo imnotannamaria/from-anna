@@ -15,6 +15,13 @@
       "when": 1788989478485,
       "tag": "0001_abandoned_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788996887631,
+      "tag": "0002_exotic_sentinel",
+      "breakpoints": true
     }
   ]
 }

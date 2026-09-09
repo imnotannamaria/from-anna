@@ -76,6 +76,9 @@ export async function addPages(
     blobUrl: string
     width: number
     height: number
+    /** The narrow-screen output, null for pages uploaded before it existed. */
+    screenBlobUrl: string | null
+    screenWidth: number | null
     alt: string
   }[],
 ) {
@@ -98,6 +101,8 @@ export async function addPages(
         blobUrl: page.blobUrl,
         width: page.width,
         height: page.height,
+        screenBlobUrl: page.screenBlobUrl,
+        screenWidth: page.screenWidth,
         alt: page.alt,
       })),
     )

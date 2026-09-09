@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic'
  * confirm the letter exists.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; index: string }> },
 ) {
   const { id, index } = await params
@@ -44,8 +44,15 @@ export async function GET(
   const page = letter.pages.find((candidate) => candidate.index === pageIndex)
   if (!page) return new Response('Not found', { status: 404 })
 
+  // Two stored outputs of the same photograph, because the sheet a desktop
+  // zooms into is several times what a 390px screen can use. A page uploaded
+  // before the second output existed falls back to the one it has, so an old
+  // letter still renders rather than 404ing half its images.
+  const wantsScreen = request.nextUrl.searchParams.get('size') === 'screen'
+  const url = wantsScreen ? (page.screenBlobUrl ?? page.blobUrl) : page.blobUrl
+
   try {
-    const blob = await readBlob(page.blobUrl)
+    const blob = await readBlob(url)
 
     return new Response(blob.stream, {
       headers: {

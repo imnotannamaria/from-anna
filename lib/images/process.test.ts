@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { MAX_DIMENSION, fitWithin } from './process'
+import { MAX_DIMENSION, SCREEN_DIMENSION, fitWithin } from './process'
 
 describe('fitWithin', () => {
   it('leaves an image already within the limit untouched', () => {
@@ -17,13 +17,13 @@ describe('fitWithin', () => {
     // A portrait phone photo, which is the real case.
     const { width, height } = fitWithin(3024, 4032)
     expect(height).toBe(MAX_DIMENSION)
-    expect(width).toBe(1125)
+    expect(width).toBe(1800)
   })
 
   it('caps the longest side when the image is landscape', () => {
     const { width, height } = fitWithin(4032, 3024)
     expect(width).toBe(MAX_DIMENSION)
-    expect(height).toBe(1125)
+    expect(height).toBe(1800)
   })
 
   it('keeps the aspect ratio within a rounding error', () => {
@@ -45,6 +45,17 @@ describe('fitWithin', () => {
       width: MAX_DIMENSION,
       height: 900,
     })
+  })
+
+  it('produces a genuinely smaller second output for narrow screens', () => {
+    // If these ever meet, the srcset stops offering a choice and a phone is
+    // back to downloading the sheet a desktop zooms into.
+    expect(SCREEN_DIMENSION).toBeLessThan(MAX_DIMENSION)
+
+    const full = fitWithin(3024, 4032, MAX_DIMENSION)
+    const screen = fitWithin(3024, 4032, SCREEN_DIMENSION)
+    expect(screen.width).toBeLessThan(full.width)
+    expect(screen.width / screen.height).toBeCloseTo(full.width / full.height, 2)
   })
 
   it('rejects impossible dimensions rather than producing a broken canvas', () => {

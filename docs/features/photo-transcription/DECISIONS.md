@@ -8,7 +8,11 @@ Decision log. X because Y. Closed on 2026-09-09.
 
 **Multi-select upload, order comes from selection order** — because iPhone filenames don't sort reliably, and selection order is explicit.
 
-**Image processing runs in the client: 1500px longest side, JPEG quality 80** — because the photo then arrives small, which cuts upload time and keeps image work out of a serverless function.
+**Image processing runs in the client: 2400px longest side, JPEG quality 80** — because the photo then arrives small, which cuts upload time and keeps image work out of a serverless function.
+
+Was 1500px. The reading view now zooms into the photograph to follow the passage being read, which is a second consumer of the same file that did not exist when the cap was chosen. Measured, not guessed: the sticky photo occupies 616px at a 1440 viewport, so on a retina screen a 1500px source covered 91% of what it needed *at rest*. See `design/DECISIONS.md`.
+
+**A second, smaller output is stored alongside it, at 1200px** — because nothing below the reading view's breakpoint zooms, so a phone would otherwise download a sheet it can never use. One file gives `srcset` no choice to make. Nullable in the schema: pages uploaded before this existed fall back to the one file they have.
 
 **Colour is kept, no grayscale conversion** — because only one version is stored, so that version is the one people see on the published page. Ink on paper is half the point, and JPEG already compresses chroma hard, so grayscale saved little and made the page look like a photocopy.
 

@@ -106,9 +106,14 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
     for (const item of ready) {
       if (!item.image) continue
       form.append('page', item.image.blob, `${item.name}.jpg`)
+      // The same photograph again, small enough for a phone. Both go up
+      // together: a page with only one of them cannot offer the browser a
+      // choice, and half a letter able to choose is worse than none of it.
+      form.append('screen', item.image.screen.blob, `${item.name}-screen.jpg`)
       form.append('alt', item.alt.trim())
       form.append('width', String(item.image.width))
       form.append('height', String(item.image.height))
+      form.append('screenWidth', String(item.image.screen.width))
     }
 
     try {

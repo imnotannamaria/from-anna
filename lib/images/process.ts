@@ -8,8 +8,27 @@
  * like a photocopy.
  */
 
-/** Longest side, in pixels, after processing. */
-export const MAX_DIMENSION = 1500
+/**
+ * Longest side, in pixels, of the stored sheet.
+ *
+ * Raised from 1500 because the reading view now zooms into the photograph to
+ * follow the passage being read, and the zoom is a second consumer of the
+ * same file that did not exist when the cap was chosen. Measured rather than
+ * guessed: the sticky photo occupies 616px at a 1440 viewport, so on a retina
+ * screen a 1500px source covered 91% of what it needed at rest — already
+ * slightly soft before any zoom at all. At 2400px it lands at 97% at 1.5×.
+ */
+export const MAX_DIMENSION = 2400
+
+/**
+ * Longest side of the second output, the one a phone actually downloads.
+ *
+ * Nothing below the reading view's breakpoint zooms, so the large sheet is
+ * several times the pixels a 390px screen can use. Two outputs and a `srcset`
+ * is the only way to say that, since a single file gives the browser no
+ * choice to make.
+ */
+export const SCREEN_DIMENSION = 1200
 
 /** JPEG quality. Handwriting needs contrast, not fidelity. */
 export const JPEG_QUALITY = 0.8
@@ -22,6 +41,12 @@ export type ProcessedImage = {
   blob: Blob
   width: number
   height: number
+  /** The smaller output of the same photo, for narrow screens. */
+  screen: {
+    blob: Blob
+    width: number
+    height: number
+  }
 }
 
 export class ImageDecodeError extends Error {
@@ -102,11 +127,42 @@ function sourceSize(source: ImageBitmap | HTMLImageElement) {
     : { width: source.width, height: source.height }
 }
 
+/** Resize and re-encode one photo at one size. */
+async function encodeAt(
+  source: ImageBitmap | HTMLImageElement,
+  natural: { width: number; height: number },
+  max: number,
+  fileName: string,
+) {
+  const { width, height } = fitWithin(natural.width, natural.height, max)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new ImageDecodeError(fileName)
+
+  ctx.drawImage(source, 0, 0, width, height)
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, OUTPUT_TYPE, JPEG_QUALITY),
+  )
+  if (!blob) throw new ImageDecodeError(fileName)
+
+  return { blob, width, height }
+}
+
 /**
- * Resize and re-encode one photo. Returns the blob to upload alongside the
- * dimensions *after* the resize — those are what the published page uses to
- * reserve space, so storing the pre-resize numbers would reintroduce the
- * layout shift they exist to prevent.
+ * Resize and re-encode one photo, twice.
+ *
+ * Returns the dimensions *after* the resize — those are what the published
+ * page uses to reserve space, so storing the pre-resize numbers would
+ * reintroduce the layout shift they exist to prevent.
+ *
+ * The two encodes run one after the other rather than together. Decoding and
+ * re-encoding a 4032px photograph is the expensive part of the upload, and
+ * doing five of them at once will freeze a phone.
  */
 export async function processImage(file: File): Promise<ProcessedImage> {
   const source = await decode(file)
@@ -117,23 +173,10 @@ export async function processImage(file: File): Promise<ProcessedImage> {
       throw new ImageDecodeError(file.name)
     }
 
-    const { width, height } = fitWithin(natural.width, natural.height)
+    const full = await encodeAt(source, natural, MAX_DIMENSION, file.name)
+    const screen = await encodeAt(source, natural, SCREEN_DIMENSION, file.name)
 
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new ImageDecodeError(file.name)
-
-    ctx.drawImage(source, 0, 0, width, height)
-
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, OUTPUT_TYPE, JPEG_QUALITY),
-    )
-    if (!blob) throw new ImageDecodeError(file.name)
-
-    return { blob, width, height }
+    return { ...full, screen }
   } finally {
     if ('close' in source) source.close()
   }

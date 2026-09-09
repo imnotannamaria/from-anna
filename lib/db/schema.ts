@@ -74,6 +74,16 @@ export const pages = pgTable(
     width: integer('width').notNull(),
     height: integer('height').notNull(),
     /**
+     * A second, smaller output of the same photo.
+     *
+     * The stored sheet is large enough to zoom into on a desktop, which is
+     * several times what a 390px phone needs, and `srcset` cannot choose
+     * between sizes that do not exist. Nullable, because pages uploaded
+     * before this existed have only the one file and fall back to it.
+     */
+    screenBlobUrl: text('screen_blob_url'),
+    screenWidth: integer('screen_width'),
+    /**
      * Required, not optional. An image of text is invisible to a screen
      * reader, so a page without alt text is a page that cannot be published.
      */
