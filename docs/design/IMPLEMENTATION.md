@@ -1,6 +1,6 @@
 # design — implementation
 
-Discovery is closed. How it got here is in `DISCOVERY.md`, in Portuguese; what was decided and why is in `DECISIONS.md` next door.
+Discovery is closed. What was decided and why is in `DECISIONS.md` next door.
 
 Each phase has a **Done when** list and a **Checks** block. The checks are prompts to look, not boxes to tick.
 

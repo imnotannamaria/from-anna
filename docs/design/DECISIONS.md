@@ -1,6 +1,6 @@
 # design — decisions
 
-Decision log. X because Y. Closed on 2026-09-09, from the comp analysed in `DISCOVERY.md`.
+Decision log. X because Y. Closed on 2026-09-09, from a design comp reviewed against what already existed.
 
 ---
 
