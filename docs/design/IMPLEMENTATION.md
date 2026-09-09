@@ -1,269 +1,154 @@
-# design — plano
+# design — implementation
 
-Discovery fechado em 09/09/2026. O comp veio em `docs/design/from anna.local.html` (fora do git, bundle de 8.4MB).
+Discovery is closed. How it got here is in `DISCOVERY.md`, in Portuguese; what was decided and why is in `DECISIONS.md` next door.
 
-Em português porque guarda o registro do discovery — as perguntas e as respostas ficam no fim do arquivo, e é lá que se vê por que cada fase é do jeito que é.
+Each phase has a **Done when** list and a **Checks** block. The checks are prompts to look, not boxes to tick.
 
----
-
-## O que ficou decidido
-
-| | |
-|---|---|
-| Foto grudada, transcrição rolando ao lado | Sim, no desktop |
-| Mobile | Mantém o toggle de hoje: foto primeiro, um toque pra transcrição |
-| Zoom que segue o trecho | Só desktop |
-| Como a região é definida | **Marcada à mão**, com a faixa proporcional como padrão |
-| Carta de várias folhas | Cada folha vira sua própria seção grudada, empilhada na rolagem |
-| Nome da carta na barra | As três palavras do slug, sem número |
-| Progresso visível pro leitor | Mantém, junto com a linha de privacidade |
-| `WRITE BACK` | `mailto:` por enquanto |
-| Filtro da legenda | Momentâneo, não vai pra URL |
-| Reveal por trecho | Degrada pra totalmente visível sem JS e sob reduced-motion |
+Phase 2 is the one worth building first: it carries most of the gain and depends on none of the region work.
 
 ---
 
-## As duas perguntas que voltaram pra mim
+## Phase 1 — Chrome and hero
 
-### "Agora que vai ter a opção (a), a resolução ainda é problema?"
+A fixed top bar: wordmark left, letter name centred, legend chips right. An asymmetric hero with the photograph rotated `-1.6deg` and bleeding off the right edge, a vertical `writing-mode: vertical-rl` caption up its left side, and a `READ ↓` cue.
 
-**É, e são coisas independentes.** A opção (a) decide *onde* dar zoom. A resolução decide se existe pixel *pra* dar zoom. Escolher a região à mão não acrescenta detalhe nenhum à foto.
+The letter is named by the three words of its slug, without the token: `AUTUMN · BUREAU · COVE`.
 
-Medi no comp: a foto grudada ocupa 616px de largura a 1440, e 728px a 1920. Com a fonte de hoje (1125×1500, teto de 1500):
+**Done when**
 
-| tela | zoom | precisa | 1125px cobre |
-|---|---|---|---|
-| 1440 retina | 1.0 | 1232px | **91%** |
-| 1440 retina | 1.5 | 1848px | 61% |
-| 1440 retina | 1.75 | 2156px | 52% |
-| 1920 retina | 1.75 | 2548px | 44% |
+- [ ] Nothing in the `<head>` or the bar reveals any of the letter's content
+- [ ] The chips read `--hl-important` / `--hl-note` / `--hl-ask` from the tokens, never a repeated hex
+- [ ] The fixed bar does not cover content when an anchor is jumped to
+- [ ] At 390px the wordmark does not wrap and the letter name does not truncate
 
-Repara na primeira linha: **em tela retina a foto de hoje já está levemente mole antes de qualquer zoom.** A 1.75× cada pixel da fonte é esticado sobre dois de tela, e manuscrito é justamente onde isso lê como borrão e não como textura.
+**Checks**
 
-**Decisão: o teto sobe de 1500 pra 2400px, e o zoom máximo cai de 1.75 pra 1.5.** Com fonte de 1800×2400 fica 100% a zoom 1, 97% a 1.5 em 1440 retina, e 82% a 1.5 em 1920 retina. Nítido onde importa.
-
-O custo é tamanho de arquivo: de ~300KB pra algo entre 700KB e 1MB. No plano Hobby do Blob (1GB) isso ainda dá mais de mil páginas, e cada leitura passa por função com `Cache-Control` de uma hora. É pagável.
-
-Isso reverte parcialmente uma decisão de `photo-transcription/DECISIONS.md` — "1500px porque essa versão é a que as pessoas veem". O motivo continua válido; o que mudou é que agora existe um segundo consumidor da mesma imagem, que é o zoom. Vai registrado lá.
-
-### "As fotos já enviadas continuam em 1500px?"
-
-Existe **uma** carta de teste. Não há migração: é subir a foto de novo. Se um dia houver acervo, a regra é aceitar que carta antiga dá zoom pior — reprocessar exigiria a original, e a original não é guardada de propósito.
-
-### Pergunta 4, "pense na melhor solução"
-
-A melhor solução é **não escolher entre (a) e (c)**.
-
-Região é **opcional**. Trecho sem região marcada cai na faixa proporcional — que é exatamente a opção (c). Marcar a região é um upgrade que você faz quando a página merece, não um imposto que toda carta paga.
-
-Isso resolve as três coisas de uma vez:
-
-- O custo por carta não sobe, que era a reclamação que originou o projeto inteiro.
-- Região errada por derivação deixa de existir, porque não existe derivação.
-- A opção (c) para de ser alternativa rejeitada e vira o estado padrão.
-
-**E as regiões moram no markdown**, como diretiva, não numa tabela:
-
-```md
-:::passage{at="0.19 0.31"}
-Oi — testando, e depois testing in English now.
-:::
-```
-
-É a mesma decisão central do projeto: o `.md` carrega tudo, sem join e sem sincronização. Uma tabela de regiões teria o mesmo problema que a tabela de grifos teria tido — ponteiro pra texto mutável.
-
-E tem um argumento a mais: o pacote se chama "página escaneada com **transcrição sincronizada**". Região por trecho *é* a sincronização. Ela pertence ao pacote, não ao app.
+- **Accessibility** — the vertical caption is decorative and needs `aria-hidden`, or a screen reader spells it out sideways. Anything the bar can cover needs `scroll-margin-top`.
+- **Responsive** — the bar has three regions and one width. Decide out loud what drops first at 390px rather than discovering it.
+- **Performance** — the rotation is a `transform`, never an animated negative margin.
 
 ---
 
-## Fases
+## Phase 2 — The sticky spread
 
-Cada fase tem **Pronto quando** e **Checagens**. As checagens são convite pra olhar, não caixinha pra marcar.
+The photograph goes `position: sticky` while the transcription scrolls past it. Passages enter with a small `translateY` and settle.
 
-### Fase 1 — Chrome e hero
+Each photographed sheet is its own sticky section, stacked down the scroll. `mdContent` still splits on `---` for sheets; a passage is a paragraph within a sheet.
 
-Barra fixa: wordmark à esquerda, nome da carta no centro, chips da legenda à direita. Hero assimétrico, foto girada `-1.6deg` sangrando pra direita, legenda vertical em `writing-mode: vertical-rl`, `READ ↓` embaixo.
+**This removes page-turn navigation on desktop.** The previous/next buttons and the dots go; on mobile they stay, because the toggle is what governs there.
 
-O nome da carta são **as três palavras do slug**, sem o token: `AUTUMN · BUREAU · COVE`. Não é sequencial, não conta quantas cartas existem, já é a identidade da carta, e amarra a URL à página de graça.
+**Done when**
 
-**Pronto quando**
+- [ ] Every sheet's text is in the server HTML, as it already is
+- [ ] With no JavaScript everything is legible — a `@media (scripting: none)` block, same as the highlights
+- [ ] Under `prefers-reduced-motion` the settled state is the default and nothing translates
+- [ ] No passage drops below AA contrast at any point in the transition
+- [ ] A three-line letter does not leave the sticky sheet alone on an empty screen
 
-- [ ] Nada no `<head>` nem na barra revela conteúdo da carta
-- [ ] Os chips leem `--hl-important` / `--hl-note` / `--hl-ask` dos tokens, nunca hex repetido
-- [ ] A barra não cobre conteúdo quando se pula por âncora
-- [ ] Em 390px o wordmark não quebra em duas linhas e o nome não trunca
+**Checks**
 
-**Checagens**
-
-- **Acessibilidade** — a legenda vertical é decorativa e precisa de `aria-hidden`, senão leitor de tela soletra ela de lado. A barra fixa precisa de `scroll-margin-top` no alvo de qualquer âncora.
-- **Responsivo** — a barra tem três regiões e uma largura. Decidir agora o que some primeiro em 390px, em vez de descobrir.
-- **Performance** — a rotação é `transform`, nunca margem negativa animada.
-
-### Fase 2 — A página dupla grudada
-
-Foto `position: sticky` à esquerda, transcrição rolando ao lado. Trecho entra com `translateY` e assenta.
-
-**É a fase de maior ganho e não depende de nada das regiões.** Constrói primeiro.
-
-Cada folha fotografada vira sua própria seção grudada, empilhada na rolagem. O `mdContent` continua fatiado por `---` pra separar folha; trecho é parágrafo dentro da folha.
-
-**Consequência que precisa ser dita:** isso **substitui a virada de página no desktop**. Os botões `Previous` / `Next` e os pontinhos saem de lá. No mobile continuam, porque lá o toggle é que manda.
-
-**Pronto quando**
-
-- [ ] O texto de todas as folhas está no HTML do servidor, como já está hoje
-- [ ] Sem JavaScript, tudo aparece legível — bloco `@media (scripting: none)`, igual ao grifo
-- [ ] Sob `prefers-reduced-motion`, o estado final é o padrão e nada translada
-- [ ] Nenhum trecho fica abaixo de contraste AA em nenhum momento da transição
-- [ ] A carta de três linhas não deixa a folha grudada sozinha numa tela vazia
-
-**Checagens**
-
-- **Acessibilidade** — 12% de opacidade é ilegível. O estado de partida precisa ser alto o bastante pra passar AA sozinho, ou a transição precisa ser só `translateY` sem mexer em opacidade. **Medir, não estimar.**
-- **Bugs** — `position: sticky` morre em silêncio se qualquer ancestral tiver `overflow` diferente de `visible`. É o modo de falha clássico dessa técnica.
-- **Performance** — o observer olha os trechos, não a rolagem. Handler de `scroll` a cada frame recalculando posição é o que faz sticky engasgar.
-- **Responsivo** — abaixo do breakpoint o sticky é desligado, não adaptado.
-
-### Fase 3 — Filtro da legenda
-
-Clicar num chip apaga os grifos que não são daquela tag. Troca de custom property, momentâneo, não vai pra URL.
-
-**Pronto quando**
-
-- [ ] Os chips são `<button>` com `aria-pressed`, não `<div>` com clique
-- [ ] Clicar de novo no chip ativo limpa o filtro
-- [ ] O grifo apagado continua legível como texto — o que sai é a cor, nunca a palavra
-- [ ] Sem JavaScript os chips não aparecem, em vez de aparecerem quebrados
-
-**Checagens**
-
-- **Acessibilidade** — apagar por cor tira justamente o canal que WCAG 1.4.1 já disse que não pode ser o único. O sublinhado por tag continua lá e é o que segura essa interação de pé.
-- **Reuso** — o valor apagado é token, não `rgba(63,48,33,0.05)` hardcoded como no comp.
-
-### Fase 4 — Seguir a linha
-
-Diretiva `:::passage{at="0.19 0.31"}` no pacote, seletor de região no editor, e o toggle `full page` / `follow the line`.
-
-Trecho sem `at` cai na faixa proporcional. **A faixa é o padrão, a região é o upgrade.**
-
-Teto da imagem sobe pra 2400px e o zoom máximo é 1.5.
-
-**Pronto quando**
-
-- [ ] Trecho sem região marcada funciona, com a faixa proporcional
-- [ ] `at` fora de 0–1, invertido, ou com um valor só, degrada pra faixa em vez de quebrar
-- [ ] O seletor de região escreve a diretiva no markdown, e o markdown continua sendo a fonte da verdade
-- [ ] O toggle `full page` é alcançável por teclado e o estado é anunciado
-- [ ] A 1440 retina, zoom 1.5 numa foto de 2400px está nítido — **olhar, não calcular**
-- [ ] Reprocessar a transcrição não apaga as regiões já marcadas
-
-**Checagens**
-
-- **Segurança** — `at` vem do markdown, que vem de modelo de visão. É número que entra em `transform`: parsear e limitar, nunca interpolar direto.
-- **Bugs** — o zoom é `transform` sobre a imagem, e o teto de altura da folha já existe no CSS. Os dois brigam se a origem não for explícita.
-- **Performance** — 2400px por folha, até 5 folhas, todas no DOM: fora da primeira, tudo `loading="lazy"`.
-- **Acessibilidade** — a foto que se move é decorativa; a transcrição é o conteúdo e não pode depender do zoom pra ser lida.
-
-### Fase 5 — Fecho
-
-Faixa rosada, `THE END OF THE PAGE`, as linhas de encerramento, `WRITE BACK →` e `READ IT AGAIN`, e a linha de privacidade.
-
-`WRITE BACK` é `mailto:` por enquanto. **O endereço vem de env var, não do repositório** — e vale saber que endereço em página pública é colhido por robô. Se virar incômodo, a troca é por formulário.
-
-A linha *read to the end · counted once · nothing else is stored* é literal e precisa continuar verdadeira. Hoje é: uma linha por abertura, dedupe por sessão, sem IP. Se um dia a medição mudar, essa frase muda junto.
-
-**Pronto quando**
-
-- [ ] A frase de privacidade bate exatamente com o que a tabela `View` guarda
-- [ ] O evento de fim de leitura dispara nessa seção, e continua sendo um só
-- [ ] `READ IT AGAIN` volta ao topo sem recarregar e sem contar abertura nova
-- [ ] O `mailto:` traz assunto preenchido com o nome da carta
-
-**Checagens**
-
-- **Privacidade** — é a única frase do produto que promete alguma coisa. Ela é a checagem.
-- **Acessibilidade** — a faixa rosada muda o fundo, então o contraste do texto e dos botões é outro par. Medir contra o rosa, não contra o papel.
-
-### Fase 6 — Mobile
-
-Não é adaptação. Mas ficou muito menor com as respostas 1 e 2: o mobile **mantém o que já funciona hoje** — foto primeiro, um toque pra transcrição, sem sticky e sem zoom.
-
-Então a fase é: não quebrar o que existe, e cortar o que não se aplica.
-
-**Pronto quando**
-
-- [ ] Sticky, zoom e legenda vertical estão desligados abaixo do breakpoint, não encolhidos
-- [ ] O toggle foto/transcrição continua funcionando, inclusive em carta de uma folha só
-- [ ] A letra continua legível a 390px — já verificado uma vez, verificar de novo depois do hero
-- [ ] Nenhuma linha rola de lado
-- [ ] A navegação entre folhas continua existindo, já que o sticky não está lá pra substituí-la
-
-**Checagens**
-
-- **Responsivo** — raciocinar sobre 390px de verdade. O Chrome não redimensiona abaixo de ~550px: usar a barra de dispositivo.
-- **Performance** — não baixar foto de 2400px pra tela de 390px sem necessidade. `sizes` na imagem ou uma segunda saída.
+- **Accessibility** — 12% opacity is unreadable. Either the starting state clears AA on its own, or the transition moves only `translateY` and leaves opacity alone. **Measure it, don't estimate it.**
+- **Bugs** — `position: sticky` dies silently if any ancestor has `overflow` other than `visible`. It is the classic failure of this technique and it produces no error.
+- **Performance** — the observer watches the passages, not the scroll. A `scroll` handler recomputing positions every frame is what makes sticky stutter.
+- **Responsive** — below the breakpoint sticky is switched off, not shrunk.
 
 ---
 
-## O que já existe e não deve ser reconstruído
+## Phase 3 — Legend filtering
 
-- O `remark-scanned-page` renderiza a transcrição no servidor, com `<mark data-c>` e `<aside>` temático. A marcação do comp bate com essa saída.
-- A varredura do grifo, os keyframes `rise` / `draw` / `sweep`, o fundo de papel, o grão e a paleta estão no `app/globals.css`. O comp reaproveita, não substitui.
-- `--hl-important: #f7b9cf`, `--hl-note: #f6d488`, `--hl-ask: #c9c2f4` vêm dos tokens e são medidos contra a tinta por `lib/theme/palette.test.ts`. **Os chips leem dos tokens.** Repetir o hex, como o comp faz, é o que faria o teste parar de proteger.
-- O evento de fim de leitura, o filtro de bot e a dedupe por sessão já existem. A fase 5 muda onde o evento dispara, não como ele funciona.
+Clicking a chip dims the highlights that are not that tag. A custom-property swap, momentary, not in the URL.
 
-## O que muda em decisões já registradas
+**Done when**
 
-- **`photo-transcription/DECISIONS.md`** — o teto de 1500px vira 2400px. O motivo original continua de pé; o que mudou é que o zoom virou um segundo consumidor da mesma imagem.
-- **`share/DECISIONS.md`** — a virada de página deixa de existir no desktop, substituída pelas seções grudadas. No mobile continua.
-- **`markdown-hightlight/DECISIONS.md`** — o pacote ganha uma segunda diretiva, `:::passage{at}`. Cabe no escopo dele: "transcrição sincronizada" é literalmente isso.
+- [ ] The chips are `<button>` with `aria-pressed`, not a `<div>` with a click handler
+- [ ] Clicking the active chip again clears the filter
+- [ ] A dimmed highlight keeps its text readable — what leaves is the colour, never the word
+- [ ] With no JavaScript the chips do not render, rather than rendering broken
+
+**Checks**
+
+- **Accessibility** — dimming by colour removes exactly the channel WCAG 1.4.1 already said cannot be the only one. The per-tag underline is what holds this interaction up.
+- **Reuse** — the dimmed value is a token, not the `rgba(63,48,33,0.05)` the comp hardcodes.
 
 ---
 
-## O discovery, como foi respondido
+## Phase 4 — Follow the line
 
-Registro de como se chegou nas decisões do topo.
+A `:::passage{at="0.19 0.31"}` directive in the package, a region picker in the editor, and the `full page` / `follow the line` toggle.
 
-**1.** A foto grudada sobrevive no celular, ou o mobile mantém o toggle de hoje?
-→ mantém o toggle que existe hoje (foto primeiro, um toque pra transcrição)
+A passage with no `at` falls back to the proportional band. **The band is the default; the region is the upgrade.**
 
-**2.** O zoom que segue o trecho acontece no mobile também?
-→ só desktop
+The image cap rises to 2400px and the maximum zoom is 1.5.
 
-**3.** Região marcada à mão (a), derivada (b), ou sem zoom (c)?
-→ seria legal ter uma feature dessa; (a) se der, (c) se (a) for muito difícil
-→ **fechado como (a) com (c) de padrão**: região é opcional, trecho sem região cai na faixa proporcional
+**Done when**
 
-**4.** O que acontece quando a região fica errada?
-→ pensar na melhor solução
-→ **não existe região errada por derivação, porque não existe derivação.** O `full page` continua sendo a saída pra quando a foto não ajuda
+- [ ] A passage with no region works, using the proportional band
+- [ ] An `at` outside 0–1, inverted, or with one value degrades to the band rather than throwing
+- [ ] The picker writes the directive into the markdown, and the markdown stays the source of truth
+- [ ] The `full page` toggle is keyboard reachable and its state is announced
+- [ ] At 1440 retina, 1.5× into a 2400px photo is sharp — **look at it, don't compute it**
+- [ ] Re-running the transcription does not erase regions already authored
 
-**5.** Sobe o teto da imagem ou limita o zoom?
-→ isso ainda é problema com a opção (a)?
-→ **sim, e é independente.** Teto vai pra 2400px, zoom máximo pra 1.5. Números medidos acima
+**Checks**
 
-**6.** As fotos já enviadas?
-→ mesma pergunta
-→ **existe uma carta de teste, é só subir de novo**
+- **Security** — `at` comes from markdown, which comes from a vision model. It is a number that ends up in a `transform`: parse and clamp it, never interpolate it.
+- **Bugs** — the zoom is a `transform` on the image and the sheet already has a max-height. The two fight unless the origin is explicit.
+- **Performance** — 2400px per sheet, up to five sheets, all in the DOM: everything but the first is `loading="lazy"`.
+- **Accessibility** — the moving photograph is decorative. The transcription is the content and must never depend on the zoom to be read.
 
-**7.** O reveal degrada sem JS e sob reduced-motion?
-→ faz o recomendado
+---
 
-**8.** Tira o número da carta?
-→ tira, bota alguma coisa legal
-→ **as três palavras do slug**: `AUTUMN · BUREAU · COVE`
+## Phase 5 — The coda
 
-**9.** Mantém o progresso visível pro leitor?
-→ mantém
+The blush band, the closing lines, `WRITE BACK →` and `READ IT AGAIN`, and the privacy line.
 
-**10.** Destino do `WRITE BACK`?
-→ `mailto:` por agora
+`WRITE BACK` is a `mailto:` whose address comes from an env var, not the repository.
 
-**11.** Carta de várias folhas?
-→ cada folha vira sua própria seção grudada, empilhada na rolagem
+The line *read to the end · counted once · nothing else is stored* is literal and has to stay true.
 
-**12.** Tamanho típico de uma carta?
-→ uma folha completa
+**Done when**
 
-**13.** O filtro da legenda sobrevive a reload?
-→ momentâneo
+- [ ] The privacy sentence matches exactly what the `View` table stores
+- [ ] The end-of-letter event fires in this section, and is still fired once
+- [ ] `READ IT AGAIN` returns to the top without reloading and without counting a new open
+- [ ] The `mailto:` arrives with a subject already filled in
+
+**Checks**
+
+- **Privacy** — it is the one sentence in the product that promises anything. It is the check.
+- **Accessibility** — the blush band changes the background, so the text and buttons are a different contrast pair. Measure against the blush, not the paper.
+
+---
+
+## Phase 6 — Mobile
+
+Not a port. It shrank a lot once mobile kept what already works: photo first, one tap to the transcription, no sticky and no zoom.
+
+So the phase is: do not break what exists, and switch off what does not apply.
+
+**Done when**
+
+- [ ] Sticky, zoom and the vertical caption are switched off below the breakpoint, not shrunk
+- [ ] The photo/transcription toggle still works, including on a single-sheet letter
+- [ ] The handwriting is still legible at 390px — verified once already, verify again after the hero
+- [ ] Nothing scrolls sideways
+- [ ] Sheet navigation still exists, since sticky is not there to replace it
+
+**Checks**
+
+- **Responsive** — reason about 390px properly. Chrome will not resize below about 550px; use the device toolbar.
+- **Performance** — do not ship a 2400px photo to a 390px screen. `sizes` on the image, or a second output.
+
+---
+
+## What already exists and should not be rebuilt
+
+- `remark-scanned-page` renders the transcription server-side, with `<mark data-c>` and themed `<aside>` blocks. The comp's markup matches that output.
+- The highlight sweep, the `rise` / `draw` / `sweep` keyframes, the paper ground, the grain and the palette are in `app/globals.css`. The comp reuses them rather than replacing them.
+- The end-of-letter event, the bot filter and the per-session dedup already work. Phase 5 changes where the event fires, not how it works.
+
+## What changes in decisions already recorded
+
+- **`photo-transcription/DECISIONS.md`** — the 1500px cap becomes 2400px. The original reasoning still holds; what changed is that the zoom is a second consumer of the same file.
+- **`share/DECISIONS.md`** — page-turn navigation stops existing on desktop, replaced by the stacked sticky sections. On mobile it stays.
+- **`markdown-hightlight/DECISIONS.md`** — the package gains a second directive, `:::passage{at}`.
