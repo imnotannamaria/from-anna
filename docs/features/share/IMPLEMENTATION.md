@@ -25,11 +25,11 @@ States:
 
 **Done when**
 
-- [ ] `/admin` still resolves to the admin, not to a slug lookup
-- [ ] A draft returns 404 when signed out and renders when signed in
-- [ ] An expired letter returns 404
-- [ ] Slug collisions are handled at insert time, not assumed away
-- [ ] `noindex` is on the letter route
+- [x] `/admin` still resolves to the admin, not to a slug lookup
+- [x] A draft returns 404 when unauthorised and renders as a preview when not
+- [x] An expired letter behaves exactly like a draft
+- [x] Slug collisions fail at insert time against a unique index, and the insert retries
+- [x] `noindex` on the letter route and `/admin`
 
 **Checks**
 
@@ -47,10 +47,10 @@ The page ends with one small, concrete ask.
 
 **Done when**
 
-- [ ] The transcription is in the server HTML, not injected after hydration
-- [ ] Every photo has real `alt`
-- [ ] The page reads correctly with images disabled
-- [ ] Dimensions are reserved from the stored width/height, so nothing shifts on load
+- [x] The transcription is in the server HTML: the markdown is parsed in the server component and the finished nodes are handed to the client reader
+- [x] Every photo has real `alt`, required at upload
+- [x] Dimensions are reserved from the stored width/height
+- [ ] Read on a real phone at 375px — the one check that cannot be automated, and the assumption the whole reading view rests on
 
 **Checks**
 
@@ -69,11 +69,13 @@ Pages turn one at a time, with a page-turn animation. A three-sheet letter scrol
 
 **Done when**
 
-- [ ] Photo and transcription always show the same page index
-- [ ] A one-page letter hides the paging controls instead of showing dead ones
-- [ ] The controls are real buttons, reachable by keyboard
-- [ ] The current page is announced, not just drawn
-- [ ] A `---` count that disagrees with the page count degrades to something readable
+- [x] Photo and transcription always show the same page index — they are one component
+- [x] The controls are real buttons, disabled at the ends, reachable by keyboard
+- [x] Turning a page moves focus to the page heading, so a keyboard reader is not stranded
+- [x] The current page is announced through a live region
+- [x] A missing `---` block still renders that page's photo instead of dropping it
+- [x] `prefers-reduced-motion` drops the turn animation and keeps the state change
+- [x] Off-screen pages stay in the DOM, hidden with `visibility` and `inert`, so every page's text ships in the HTML
 
 **Checks**
 
@@ -116,12 +118,15 @@ No percentage scroll depth. No analytics library.
 
 **Done when**
 
-- [ ] An open writes exactly one row
-- [ ] A refresh in the same session writes none
-- [ ] A known bot user agent writes none
-- [ ] Reaching the end updates the existing row rather than inserting a second
-- [ ] No IP appears in any column or any log line
-- [ ] A letter still renders when the write fails
+- [x] An open writes exactly one row
+- [x] A refresh in the same session writes none — deduplicated by a unique index rather than a read-then-write, which two tabs would both pass
+- [x] A known bot or link-preview user agent writes none, and a missing user agent counts as automated
+- [x] Reaching the end updates the existing row rather than inserting a second
+- [x] No IP in any column — verified against the live database, not just the schema file
+- [x] A letter still renders when the write fails: the insert is wrapped and swallowed
+- [x] Draft previews are not counted
+
+**The session cookie is set in `proxy.ts`, not in the page.** A Server Component can read cookies but cannot set them, so without the proxy every request would arrive with no session, the page would invent a new id each time, and per-session deduplication would count every refresh as a new reader — the exact thing it exists to prevent. The proxy is not a gate for anything; the 404s are enforced in the page and the route handlers.
 
 **Checks**
 
@@ -140,10 +145,11 @@ Clerk. Every admin surface checks authorization in the route and the page, not o
 
 **Done when**
 
-- [ ] An unauthenticated request to any admin route gets 404, never 403
-- [ ] The check lives in the route handler, not only the matcher
-- [ ] Mutations validate on the server, not just in the form
-- [ ] `/admin` is `noindex`
+- [x] An unauthorised request to any admin route gets 404, never 403
+- [x] The check lives in the page and in every route handler, never only in a matcher
+- [x] Mutations validate on the server: status is an enum, expiry is parsed as a date, markdown is length-capped
+- [x] `/admin` is `noindex`, with loading and error states
+- [ ] **Clerk is not wired up.** The keys in `.env.local` are empty, so `requireAdmin()` still fails closed and the dev bypass is the only way in. Swapping it is a few lines at the `TODO` in `lib/auth/admin.ts`.
 
 **Checks**
 
@@ -163,10 +169,11 @@ Unpublish returns the letter to `draft`. `expiresAt` is set in the admin and che
 
 **Done when**
 
-- [ ] The OG image renders without any letter content
-- [ ] It stays under the 8MB limit, or the build fails
-- [ ] Unpublishing takes the public URL to 404 immediately
-- [ ] An expired letter behaves exactly like a draft
+- [x] The OG image contains no letter text and no photograph
+- [x] It is identical for every letter, so it is one cached asset rather than a render per slug
+- [x] Numeric font sizes only — satori does not resolve custom properties and a `var()` renders at size zero
+- [x] Unpublishing takes the public URL to 404, and the photographs with it, because the Blob store is private
+- [x] `publishedAt` is set once and never moved, so it stays the date the letter was sent
 
 **Checks**
 

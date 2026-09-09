@@ -532,3 +532,69 @@ button:focus-visible,
   max-width: 100%;
   height: auto;
 }
+
+/* ============================================================
+   LETTER READER — one page at a time
+   ============================================================ */
+
+.letter-stage {
+  display: grid;
+  /* Pages stack, so turning one does not resize the page around it. */
+  grid-template-areas: "page";
+}
+
+.letter-page {
+  grid-area: page;
+  transition:
+    opacity var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+}
+
+.letter-page[data-active="false"] {
+  opacity: 0;
+  transform: rotateY(-4deg) translateX(-1.5%);
+  transform-origin: left center;
+  pointer-events: none;
+  /*
+     `visibility: hidden` rather than `display: none`: the text of every page
+     stays in the layout and in the HTML a crawler reads, and only leaves the
+     screen. `inert` on the element is what takes it out of tab order.
+  */
+  visibility: hidden;
+}
+
+.letter-page[data-active="true"] {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+
+/*
+   On a phone the photo and the transcription cannot both fit at 375px
+   without one becoming a useless thumbnail, so one is hidden at a time.
+   Which one is a CSS decision, never a mount decision: both halves are in
+   the DOM either way, so the text is never the half that needs JavaScript.
+*/
+@media (max-width: 767px) {
+  .letter-stage[data-showing="photo"] .letter-prose {
+    display: none;
+  }
+
+  .letter-stage[data-showing="text"] figure {
+    display: none;
+  }
+}
+
+/*
+   The page turn is decoration on top of a state change that has already
+   happened. Anyone who asked for less motion gets the state change alone.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .letter-page {
+    transition: none;
+  }
+
+  .letter-page[data-active="false"] {
+    transform: none;
+  }
+}

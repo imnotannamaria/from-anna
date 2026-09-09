@@ -8,6 +8,13 @@
       "when": 1788979802588,
       "tag": "0000_serious_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788989478485,
+      "tag": "0001_abandoned_hex",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
-import { saveMdContent } from '@/lib/letters/mutations'
+import { saveMdContent, setLetterStatus } from '@/lib/letters/mutations'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,21 +32,68 @@ export async function PATCH(
 
   const body = (await request.json().catch(() => null)) as {
     mdContent?: unknown
+    status?: unknown
+    expiresAt?: unknown
   } | null
 
+  if (!body) {
+    return Response.json({ error: 'Expected a JSON body.' }, { status: 400 })
+  }
+
   // Validated on the server, not just in the form.
-  if (!body || typeof body.mdContent !== 'string') {
+  if (body.mdContent !== undefined) {
+    if (typeof body.mdContent !== 'string') {
+      return Response.json(
+        { error: 'mdContent must be a string.' },
+        { status: 400 },
+      )
+    }
+    if (Buffer.byteLength(body.mdContent, 'utf8') > MAX_MD_BYTES) {
+      return Response.json({ error: 'That is too long.' }, { status: 413 })
+    }
+
+    const row = await saveMdContent(id, body.mdContent)
+    if (!row) return new Response('Not found', { status: 404 })
+    return Response.json({ savedAt: row.updatedAt })
+  }
+
+  if (body.status !== undefined && body.status !== 'draft' && body.status !== 'published') {
     return Response.json(
-      { error: 'mdContent must be a string.' },
+      { error: 'status must be draft or published.' },
       { status: 400 },
     )
   }
-  if (Buffer.byteLength(body.mdContent, 'utf8') > MAX_MD_BYTES) {
-    return Response.json({ error: 'That is too long.' }, { status: 413 })
+
+  let expiresAt: Date | null | undefined
+  if (body.expiresAt !== undefined) {
+    if (body.expiresAt === null || body.expiresAt === '') {
+      expiresAt = null
+    } else if (typeof body.expiresAt === 'string') {
+      const parsed = new Date(body.expiresAt)
+      if (Number.isNaN(parsed.getTime())) {
+        return Response.json(
+          { error: 'expiresAt is not a date.' },
+          { status: 400 },
+        )
+      }
+      expiresAt = parsed
+    } else {
+      return Response.json(
+        { error: 'expiresAt must be a date string or null.' },
+        { status: 400 },
+      )
+    }
   }
 
-  const row = await saveMdContent(id, body.mdContent)
+  const row = await setLetterStatus(id, {
+    status: body.status as 'draft' | 'published' | undefined,
+    expiresAt,
+  })
   if (!row) return new Response('Not found', { status: 404 })
 
-  return Response.json({ savedAt: row.updatedAt })
+  return Response.json({
+    status: row.status,
+    expiresAt: row.expiresAt,
+    publishedAt: row.publishedAt,
+  })
 }

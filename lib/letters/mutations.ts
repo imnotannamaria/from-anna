@@ -125,6 +125,48 @@ export async function saveTranscriptions(
 }
 
 /**
+ * Publish, unpublish, or set an expiry.
+ *
+ * Unpublishing takes the letter off the web immediately, and `expiresAt`
+ * does the same on a timer. Both are checked by `isPubliclyReadable`, and
+ * because the Blob store is private the photographs go with it — a public
+ * blob URL would have kept working long after either.
+ *
+ * `publishedAt` is set the first time and never moved, so it stays the date
+ * the letter was sent rather than the date it was last toggled.
+ */
+export async function setLetterStatus(
+  letterId: string,
+  input: { status?: 'draft' | 'published'; expiresAt?: Date | null },
+) {
+  const [existing] = await getDb()
+    .select({ status: letters.status, publishedAt: letters.publishedAt })
+    .from(letters)
+    .where(eq(letters.id, letterId))
+    .limit(1)
+
+  if (!existing) return null
+
+  const becomingPublished =
+    input.status === 'published' && existing.status !== 'published'
+
+  const [row] = await getDb()
+    .update(letters)
+    .set({
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt } : {}),
+      ...(becomingPublished && !existing.publishedAt
+        ? { publishedAt: new Date() }
+        : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(letters.id, letterId))
+    .returning()
+
+  return row ?? null
+}
+
+/**
  * Save edited markdown.
  *
  * Separate from `seedMdContent` on purpose: seeding refuses to touch content
