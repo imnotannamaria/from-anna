@@ -93,9 +93,15 @@ Inline: :mark[text worth reading first]{c=important}
 :::theme{label="a name for the block"}
 A group of paragraphs under one theme.
 :::
+
+:::passage{at="0.19 0.31"}
+A passage, and which band of the sheet it was written on.
+:::
 ```
 
-`:mark` nests inside `:::theme`. `:::theme` does not nest inside itself.
+`:mark` nests inside `:::theme`. `:::theme` does not nest inside itself, and `:::passage` nests inside neither — the inner one unwraps and its words are kept.
+
+**`at` is optional and a passage without one falls back to a proportional band.** That is what makes the cheap version the default and hand-marking a region an upgrade per page. It is also model output that ends up inside a `transform`, so it is parsed and clamped by `parseRegion`, never interpolated.
 
 Three tags in the app — `important`, `note`, `ask`. The **package** defines no vocabulary at all, only the mechanism and three colour slots. An unknown tag renders neutral and warns in the dev console; it never breaks a build.
 
@@ -104,7 +110,8 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`color: inherit` on `mark`.** The user agent sets `color: black`. In dark mode that is black text on a light fill.
 - **`box-decoration-break: clone`.** Without it, a highlight crossing a line break is padded only at the start and the end. Most highlights wrap.
 - **Contrast is measured against the highlight colour, not the page background.** It's an automated test, in both themes, because a broken pair is invisible until someone looks.
-- **Colour never carries meaning alone.** Every tag has its own underline style — solid, wavy, dotted — so the distinction survives in greyscale. WCAG 1.4.1. A legend on the page was rejected as clutter; the underline is what replaced it.
+- **Colour never carries meaning alone.** Every tag has its own underline style — solid, wavy, dotted — so the distinction survives in greyscale. WCAG 1.4.1. The legend in the reading bar filters by dimming the *fill* and never the words, which is only safe because the underline is still there.
+- **The passage reveal moves `translateY` and never opacity.** A passage faded in from anything faint enough to read as an entrance is below AA for the whole transition, on the half of the page that exists to be readable. Not touching opacity means contrast cannot drop.
 
 ---
 
@@ -120,6 +127,9 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`alt` on a page photo is required, not optional.** It's a column on `Page` and a required field in the form.
 - **Anything animated in JS asks `useReducedMotion()` itself.** The global `prefers-reduced-motion` reset only zeroes CSS.
 - **`IntersectionObserver` never fires on a zero-size element.** Put the trigger on something with a real box.
+- **`position: sticky` dies silently if any ancestor has `overflow` other than `visible`.** No error, no warning — the photograph just scrolls away. The reading view clips the hero with `overflow-x: clip`, which does not create a scroll container, and `overflow-x: hidden` is nowhere near `html` or `body`.
+- **Nothing in the reading view creates content.** The transcription is server-rendered and complete before hydration; the client adds `data-` attributes to text that is already painted. Passage numbers are a CSS counter, so they are right before any script runs.
+- **Two stored outputs per photo: 2400px and 1200px.** The desktop zoom needs the first and a phone must never download it. `srcset` is the only way to say that, and `sizes` alone cannot help when there is one file.
 - **satori doesn't resolve CSS custom properties.** OG images use numeric font sizes; a `var(--...)` there renders at size zero.
 - **Chrome won't resize below about 550px.** For a real 375px check, use the device toolbar, not a window drag.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.

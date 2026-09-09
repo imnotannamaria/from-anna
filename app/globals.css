@@ -3,7 +3,7 @@
    Copie este arquivo para app/globals.css no seu projeto.
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400;1,6..72,500&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400;1,6..72,500&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&display=swap");
 
 @import "tailwindcss";
 
@@ -124,6 +124,17 @@
      TYPOGRAPHY
      ============================================================ */
   --font-serif: "Newsreader", "Times New Roman", serif;
+  /*
+     The display face, separate from the reading face on purpose.
+
+     Fraunces is an old-style serif with two axes the others do not have —
+     SOFT rounds the terminals and WONK swaps in the irregular, splayed
+     alternates — which is the warm, slightly hand-cut feel this project is
+     after in a headline. It is the wrong thing for a transcription: those
+     same irregularities are friction across four hundred words, so the
+     letter itself stays in Newsreader, which was drawn for exactly that job.
+  */
+  --font-display: "Fraunces", "Newsreader", Georgia, serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
   --font-sans: "Inter", -apple-system, system-ui, sans-serif;
 }
@@ -473,7 +484,14 @@ button:focus-visible,
   /* Ink, not black. Warm and slightly soft, like it soaked in. */
   --fg-primary: #221d18;
   --fg-secondary: #5d5348;
-  --fg-muted: #8a7f72;
+  /*
+     Darker than entrepta's muted, because paper is not white. #8a7f72 on
+     this canvas measures 3.54:1, and every `.meta` label in the project is
+     11px — under AA for normal text, on the labels that say what a number
+     is. This one measures 5.10:1 on the paper and 4.60:1 on the coda's
+     blush, which are the only two grounds it ever sits on.
+  */
+  --fg-muted: #6f6558;
 
   --border-subtle: #e2dbcd;
   --border-strong: #cfc5b2;
@@ -513,6 +531,13 @@ button:focus-visible,
   --hl-note: #6b4a12;
   --hl-ask: #3d3a7a;
   --hl-unknown: #3f3f46;
+  /*
+     What a highlight becomes while the legend is filtering to a different
+     tag. It has to sit close enough to the canvas to recede and still carry
+     the words at AA, because filtering removes the colour and never the
+     text — the underline style is what says which tag it still is.
+  */
+  --hl-dimmed: #2c2c31;
   --hl-bracket: var(--fg-brand);
   --hl-label-font: var(--font-mono);
 }
@@ -522,6 +547,7 @@ button:focus-visible,
   --hl-note: #f6d488;
   --hl-ask: #c9c2f4;
   --hl-unknown: #ded8cc;
+  --hl-dimmed: #ece7dc;
 }
 
 /* ---- the ground ----------------------------------------------------- */
@@ -574,8 +600,14 @@ body::before {
 /* ---- type ------------------------------------------------------------ */
 
 .display {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-weight: 400;
+  font-optical-sizing: auto;
+  /* The two axes that make it Fraunces rather than another old-style serif.
+     Ignored entirely by the fallback, which is the point of a fallback. */
+  font-variation-settings:
+    "SOFT" 40,
+    "WONK" 1;
   letter-spacing: -0.022em;
   line-height: 1.04;
 }
@@ -616,8 +648,17 @@ body::before {
   margin-top: 1.1em;
 }
 
-.letter-prose > p:first-of-type::first-letter {
-  /* A small letterpress nod, not a drop cap: just a little more presence. */
+/*
+   A small letterpress nod, not a drop cap: just a little more presence on
+   the first words.
+
+   `:first-child`, not `:first-of-type`. Once passages are wrapped in
+   `:::passage`, the first *paragraph* that is still a direct child can be
+   the fourth passage down the page, and the nod lands in the middle of the
+   letter on a sentence that is not the opening of anything.
+*/
+.letter-prose > p:first-child::first-letter,
+.letter-prose > :first-child > p:first-child::first-letter {
   font-size: 1.28em;
   line-height: 1;
 }
@@ -691,7 +732,14 @@ body::before {
   transition-delay: calc(var(--hl-i, 0) * 90ms);
 }
 
-[data-revealed="true"] .letter-prose mark[data-c] {
+/*
+   Two triggers for one effect. `data-revealed` is the whole-container form,
+   which the editor preview uses; `data-seen` is per passage, which the
+   reading view sets as each one arrives. A highlight sweeps when the words
+   around it are reached, not when the page loads.
+*/
+[data-revealed="true"] .letter-prose mark[data-c],
+.letter-prose > [data-seen="true"] mark[data-c] {
   background-size: 100% 100%;
   text-decoration-color: currentColor;
 }
@@ -699,8 +747,9 @@ body::before {
 /* ---- themed blocks --------------------------------------------------- */
 
 .letter-prose aside[data-theme-label] {
+  /* The drawn bracket below replaces the border. The gutter it hangs in
+     comes from the package, so it lines up with the passage numbers. */
   border-left-width: 0;
-  padding-left: 1.25rem;
   position: relative;
 }
 
@@ -728,7 +777,8 @@ body::before {
     opacity 300ms ease;
 }
 
-[data-revealed="true"] .letter-prose aside[data-theme-label]::after {
+[data-revealed="true"] .letter-prose aside[data-theme-label]::after,
+.letter-prose > aside[data-theme-label][data-seen="true"]::after {
   transform: scaleY(1);
   opacity: 0.75;
 }
@@ -772,144 +822,572 @@ body::before {
     background-size: 100% 100%;
     text-decoration-color: currentColor;
   }
+
+  .letter-prose aside[data-theme-label]::after {
+    transform: scaleY(1);
+    opacity: 0.75;
+  }
 }
 
 /* ============================================================
    THE READING VIEW
+   ============================================================
+
+   A letter is read straight through, so the page scrolls straight through.
+   Each photographed sheet pins itself while its transcription moves past it,
+   which is closer to sitting with a letter than paging through a document —
+   and on a wide screen it is what replaced the previous/next buttons, because
+   the sticky section already says where you are. On a phone there is one
+   column, nothing pins, and the two halves toggle.
+
+   `position: sticky` dies silently if any ancestor has `overflow` other than
+   `visible`. There is no error and no warning: the photograph simply scrolls
+   away. That is why the hero clips with `overflow-x: clip` — which does not
+   create a scroll container — and why `overflow-x: hidden` is nowhere near
+   `html` or `body`.
    ============================================================ */
 
-.letter-shell {
+.reader {
+  --bar-h: 3.4rem;
+  --reading-width: 96rem;
   position: relative;
   z-index: 2;
-  width: 100%;
-  max-width: 74rem;
-  margin: 0 auto;
-  padding: clamp(1.25rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem) 6rem;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.5rem, 3vw, 2.5rem);
 }
 
-.letter-masthead {
+/* ---- the bar that stays ---------------------------------------------
+
+   Nothing in it comes from inside the letter. The name is the three words of
+   the slug, which is already in the reader's address bar; the progress is
+   their own position. A strip that is on screen the whole way down is the
+   last place to put something private.
+   -------------------------------------------------------------------- */
+
+.reader-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 7;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  min-height: var(--bar-h);
+  padding: 0.55rem clamp(1rem, 4vw, 2.75rem);
+  border-bottom: 1px solid var(--border-subtle);
+  /* Solid first, so a browser without color-mix still gets an opaque bar
+     rather than the letter showing through the wordmark. */
+  background: var(--bg-canvas);
+  background: color-mix(in srgb, var(--bg-canvas) 86%, transparent);
+  backdrop-filter: blur(12px) saturate(1.08);
 }
 
-.letter-wordmark {
-  font-size: clamp(1.4rem, 3.2vw, 2rem);
+.reader-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--border-strong) 40%, transparent);
+}
+
+.reader-progress span {
+  display: block;
+  height: 100%;
+  background: var(--fg-brand);
+  /* A transform, so following the scroll never repaints the bar's box. */
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.reader-wordmark {
+  font-size: 1.1rem;
   font-style: italic;
+  white-space: nowrap;
   color: var(--fg-primary);
 }
 
-.letter-counter {
-  outline: none;
+.reader-name {
+  justify-self: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.letter-counter:focus-visible {
-  outline: 2px solid var(--fg-brand);
-  outline-offset: 4px;
-  border-radius: 3px;
+.reader-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: end;
 }
 
-.letter-toggle-row {
-  display: none;
+/* ---- the legend ------------------------------------------------------
+
+   Momentary, and not in the URL: it is a way of looking at a letter, not a
+   way of arriving at one.
+   -------------------------------------------------------------------- */
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-/* ---- the stage ------------------------------------------------------- */
-
-.letter-stage {
-  display: grid;
-  /* Pages stack, so turning one does not resize the page around it. */
-  grid-template-areas: "page";
-  /* Depth for the turn. Without it rotateY is a flat squash. */
-  perspective: 1800px;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
-.letter-page {
-  grid-area: page;
-  transform-origin: left center;
-  will-change: transform, opacity;
+/*
+   The swatch is the colour and the word beside it is the name, so the chip
+   never asks anyone to tell two hues apart. That is the same reason each tag
+   carries its own underline in the text.
+*/
+.chip-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--chip-fill, var(--hl-unknown));
+  box-shadow: inset 0 0 0 1px rgba(63, 48, 33, 0.14);
 }
 
-.letter-page[data-active="false"] {
-  pointer-events: none;
+.chip[data-tag="important"] { --chip-fill: var(--hl-important); }
+.chip[data-tag="note"] { --chip-fill: var(--hl-note); }
+.chip[data-tag="ask"] { --chip-fill: var(--hl-ask); }
+
+.chip:hover {
+  color: var(--fg-primary);
+  border-color: var(--border-strong);
 }
 
-/* ---- the photograph -------------------------------------------------- */
+.chip[aria-pressed="true"] {
+  color: var(--fg-primary);
+  border-color: var(--fg-brand);
+  background: var(--bg-surface-brand);
+}
 
-.letter-page figure {
-  margin: 0;
+/*
+   Filtering dims the fill and never the words. Removing colour is exactly
+   the channel WCAG 1.4.1 already said cannot be the only one carrying
+   meaning, so the underline style is what holds this interaction up — a
+   dimmed highlight is still solid, dotted or wavy, and still readable.
+*/
+/*
+   One rule per tag, each dimming only what it is not.
+
+   The obvious shape — dim everything, then put the chosen tag back — gives
+   the two rules identical specificity and leaves source order to settle it,
+   which is a coin toss to debug and was wrong the first time: every
+   highlight dimmed, including the one being filtered to. `:not()` means the
+   rules never overlap, so there is nothing to settle.
+*/
+.reader[data-filter="important"] .letter-prose mark[data-c]:not([data-c="important"]),
+.reader[data-filter="note"] .letter-prose mark[data-c]:not([data-c="note"]),
+.reader[data-filter="ask"] .letter-prose mark[data-c]:not([data-c="ask"]) {
+  --hl: var(--hl-dimmed);
+}
+
+/* ---- main ------------------------------------------------------------ */
+
+.reader-main {
   position: relative;
 }
 
-.letter-page figure img {
+.preview-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  max-width: calc(var(--reading-width) - 8rem);
+  margin: calc(var(--bar-h) + 1rem) clamp(1.25rem, 5vw, 4rem) 0;
+  padding: 0.85rem 1.1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-surface-brand);
+  font-size: 0.9rem;
+  color: var(--fg-secondary);
+}
+
+/* ---- the opening -----------------------------------------------------
+
+   The photograph is the argument, so it is the first thing on screen at a
+   size worth looking at: off-centre, tilted, running off the right edge the
+   way a sheet does when it is put down on a desk rather than filed.
+   -------------------------------------------------------------------- */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  max-width: var(--reading-width);
+  margin: 0 auto;
+  padding: clamp(6rem, 13vh, 10rem) clamp(1.25rem, 5vw, 4rem)
+    clamp(3rem, 9vh, 6rem);
+  /* `clip`, not `hidden`: hidden would make this a scroll container, and a
+     scroll container anywhere above a sticky element kills the sticking. */
+  overflow-x: clip;
+  scroll-margin-top: var(--bar-h);
+}
+
+.hero-copy {
+  max-width: 34rem;
+}
+
+.hero-name,
+.hero-title,
+.hero-rule,
+.hero-lede,
+.hero-meta,
+.hero-cue {
+  opacity: 0;
+  animation: rise 760ms var(--ease-out-quint) forwards;
+  animation-delay: inherit;
+}
+
+.hero-title {
+  margin: 0.7rem 0 0;
+  font-size: clamp(2.6rem, 7vw, 5.2rem);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--fg-brand);
+}
+
+.hero-rule {
   display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 3px;
-  background: var(--bg-surface);
-  /* A sheet resting on a desk, not a card floating in space. */
-  box-shadow: var(--shadow-page);
-  transition:
-    box-shadow 400ms var(--ease-out-quint),
-    transform 400ms var(--ease-out-quint);
+  margin: 2rem 0;
+  animation:
+    rise 760ms var(--ease-out-quint) forwards,
+    draw 900ms var(--ease-out-quint) forwards;
+  animation-delay: inherit;
 }
 
-.letter-page figure:hover img {
-  box-shadow: var(--shadow-lift);
-  transform: translateY(-2px);
+.hero-lede {
+  margin: 0 0 1.3rem;
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  line-height: 1.68;
+  max-width: 40ch;
+  text-wrap: pretty;
 }
 
-.letter-page figcaption {
-  margin-top: 0.9rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
+.hero-lede mark[data-c] {
+  background-image: linear-gradient(var(--hl), var(--hl));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  animation: sweep 700ms var(--ease-out-quint) 900ms forwards;
 }
 
-.letter-page article {
-  gap: clamp(2rem, 5vw, 4rem);
-  align-items: start;
+.hero-meta span {
+  color: var(--fg-secondary);
 }
 
-/* ---- navigation ------------------------------------------------------ */
-
-.letter-nav {
+.hero-cue {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
+  margin-top: clamp(2rem, 6vh, 3.5rem);
+}
+
+.hero-cue-arrow {
+  display: inline-block;
+  font-size: 14px;
+  color: var(--fg-brand);
+  animation: nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
+.hero-photo {
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  max-width: 34rem;
+  /* Runs to the edge of the viewport rather than stopping at the gutter. */
+  margin-right: calc(clamp(1.25rem, 5vw, 4rem) * -1);
+}
+
+.hero-photo .scanned-photo {
+  max-height: 78vh;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lift);
+  opacity: 0;
+  /* A transform, never an animated margin: the tilt must not relayout. */
+  transform: rotate(-1.6deg);
+  animation: settle 1100ms var(--ease-out-quint) 240ms forwards;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(20px) rotate(-1.6deg) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(-1.6deg) scale(1);
+  }
+}
+
+/*
+   Sideways type, and decorative. A screen reader given this would spell it
+   out as ordinary words in the middle of the opening, which is noise — the
+   sheet number is said properly on the section below.
+*/
+.hero-caption {
+  position: absolute;
+  left: -0.9rem;
+  bottom: -1.4rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* ---- sheet navigation ------------------------------------------------
+
+   Only where the sticky sections are not there to replace it.
+   -------------------------------------------------------------------- */
+
+.sheet-nav {
+  display: none;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: var(--reading-width);
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 4rem) 1.5rem;
+}
+
+/* ---- the spread ------------------------------------------------------ */
+
+.sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* `start`, so the sticky column is not stretched to the row height —
+     a stretched grid item has nowhere to stick. */
+  align-items: start;
+  gap: clamp(2rem, 6vw, 5rem);
+  max-width: var(--reading-width);
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 4rem) clamp(4rem, 12vh, 9rem);
+  border-top: 1px solid var(--border-subtle);
+  scroll-margin-top: var(--bar-h);
+}
+
+.sheet-photo {
+  position: sticky;
+  top: calc(var(--bar-h) + 1.25rem);
+  padding-top: clamp(2rem, 7vh, 4rem);
+}
+
+/*
+   The frame is the sheet's own aspect ratio, so nothing is cropped and the
+   region maths stays exact: a fraction of the frame is the same fraction of
+   the photograph. `max-width` rather than `max-height` keeps a tall portrait
+   sheet inside the viewport by narrowing it instead of letting it overflow.
+*/
+.sheet-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--sheet-ratio, 0.75);
+  max-width: calc(68vh * var(--sheet-ratio, 0.75));
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+}
+
+.sheet-zoom {
+  position: absolute;
+  inset: 0;
+  /* Origin is explicit. The frame already caps the size, and a default
+     origin plus a cap is how a zoom ends up fighting a max-height. */
+  transform-origin: center center;
+  transform: scale(var(--zoom, 1)) translateY(var(--pan, 0%));
+  transition: transform 900ms var(--ease-out-quint);
+  will-change: transform;
+}
+
+.sheet-zoom .scanned-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/*
+   Where on the sheet the passage being read was written. Inside the zoomed
+   layer on purpose, so it marks a part of the photograph rather than a part
+   of the screen.
+*/
+.sheet-band {
+  position: absolute;
+  /*
+     Inside the zoomed layer, so it marks a part of the photograph rather
+     than a part of the screen — which means its own left edge is zoomed out
+     of the frame along with everything else. At scale Z only the middle 1/Z
+     of the layer is inside the frame, so the offset has to be measured from
+     the middle rather than from an edge that is no longer on screen.
+  */
+  left: calc(50% - 50% / var(--zoom, 1) + 2.5%);
+  width: 2px;
+  top: var(--band-top, 0%);
+  height: var(--band-height, 100%);
+  border-radius: 2px;
+  background: var(--fg-brand);
+  opacity: 0;
+  transition:
+    top 900ms var(--ease-out-quint),
+    height 900ms var(--ease-out-quint),
+    opacity 400ms ease;
+}
+
+.sheet[data-following="true"] .sheet-band {
+  opacity: 0.85;
+}
+
+.sheet-frame-foot {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
+  max-width: calc(68vh * var(--sheet-ratio, 0.75));
+  margin: 0.9rem auto 0;
 }
 
-.letter-dots {
+.sheet-text {
+  padding-top: clamp(2rem, 7vh, 4rem);
+  max-width: 38rem;
+}
+
+/*
+   Passages are given room to be separate things. Inside one, the paragraphs
+   keep the ordinary rhythm of prose — the gap is between passages, not
+   between sentences.
+*/
+.sheet-text .letter-prose > * + * {
+  margin-top: clamp(2.5rem, 7vh, 4.5rem);
+}
+
+.sheet-text .letter-prose > div[data-passage-at] > * + * {
+  margin-top: 1.1em;
+}
+
+.sheet-text .letter-prose > *[data-passage]:first-child {
+  margin-top: 0;
+}
+
+/*
+   The active passage's number in the gutter. It is the only thing on screen
+   that says which passage the photograph is following, so it is not
+   decoration — but it is also not the only signal, because the photograph
+   moves and the band moves with it.
+*/
+.letter-prose > [data-passage] {
+  --passage-number: var(--fg-muted);
+  --passage-number-opacity: 0.55;
+}
+
+.letter-prose > [data-passage][data-active="true"] {
+  --passage-number: var(--fg-brand);
+  --passage-number-opacity: 1;
+}
+
+/* ---- the coda --------------------------------------------------------
+
+   Where "reached the end" is recorded, and where that measurement is
+   written down in plain words for the person it was taken from. The blush
+   band is a different background, so everything on it is a different
+   contrast pair — measured against the blush, not the paper, which is why
+   the quiet line here is secondary rather than muted.
+   -------------------------------------------------------------------- */
+
+.coda {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface-brand);
+  padding: clamp(4rem, 13vh, 8rem) clamp(1.25rem, 5vw, 4rem);
+  scroll-margin-top: var(--bar-h);
+}
+
+.coda-inner {
+  max-width: 44rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.coda-line {
+  margin: 1.4rem 0 0;
+  font-size: clamp(1.8rem, 4.2vw, 2.8rem);
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.coda-line em {
+  font-style: italic;
+  color: var(--fg-brand);
+}
+
+.coda-actions {
   display: flex;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
 }
 
-.letter-dots li {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--border-strong);
-  transition:
-    background 260ms var(--ease-out-cubic),
-    transform 260ms var(--ease-out-quint);
+.coda-privacy {
+  margin-top: 3rem;
+  /* Measured against the blush, where muted does not reach AA. */
+  color: var(--fg-secondary);
+  text-transform: none;
+  letter-spacing: 0.1em;
 }
 
-.letter-dots li[data-active="true"] {
-  background: var(--fg-brand);
-  transform: scale(1.5);
-}
+/* ---- controls -------------------------------------------------------- */
 
 .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -942,69 +1420,145 @@ body::before {
   cursor: default;
 }
 
-/* ---- the closing ----------------------------------------------------- */
-
-.letter-coda {
-  min-height: 7rem;
-  padding-top: 1.5rem;
-  text-align: center;
-  font-size: 1.05rem;
-  color: var(--fg-secondary);
+.pill--solid {
+  color: var(--bg-surface);
+  background: var(--fg-brand);
+  border-color: var(--fg-brand);
 }
 
-.letter-coda-ask {
-  color: var(--fg-primary);
-  font-style: italic;
+.pill--solid:hover {
+  color: var(--bg-surface);
+  background: var(--fg-brand-hover);
+  border-color: var(--fg-brand-hover);
+  transform: translateY(-1px);
 }
 
-.preview-banner {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.85rem 1.1rem;
-  border: 1px dashed var(--border-strong);
-  border-radius: 10px;
-  background: var(--bg-surface-brand);
-  font-size: 0.9rem;
-  color: var(--fg-secondary);
+.reader-toggle {
+  display: none;
 }
 
-/* ---- narrow ---------------------------------------------------------- */
+/* ---- narrow ----------------------------------------------------------
 
-@media (max-width: 767px) {
-  .letter-toggle-row {
+   Not a port. Below the breakpoint the sticky spread and the zoom are
+   switched **off**, not shrunk: they both need two columns to mean anything
+   and a phone has one. What is left is what already worked — the photograph
+   first, one tap to the transcription — plus sheet navigation, because
+   there are no sticky sections here to replace it.
+
+   The bar loses the letter name and the legend. The name reappears in the
+   opening, where it has a line to itself and cannot truncate; filtering by
+   colour is a way of re-reading a letter rather than a way of reading it.
+   What stays is the wordmark and the toggle, which is the only control on a
+   phone that changes what you can see.
+   -------------------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  .reader-bar {
+    grid-template-columns: auto 1fr;
+  }
+
+  .reader-name,
+  .legend,
+  .hero-caption,
+  .sheet-band,
+  /* Nothing follows the line here, so the control that switches it off is a
+     button that does nothing. */
+  .sheet-frame-foot .pill {
+    display: none;
+  }
+
+  .reader-toggle {
+    display: inline-flex;
+  }
+
+  .sheet-nav {
     display: flex;
-    justify-content: flex-start;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: clamp(5rem, 12vh, 7rem);
+    gap: 2.5rem;
+  }
+
+  .hero-photo {
+    justify-self: stretch;
+    max-width: none;
+    margin-right: 0;
+  }
+
+  .hero-photo .scanned-photo {
+    max-height: 60vh;
+  }
+
+  .sheet {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .sheet-photo {
+    position: static;
+    padding-top: 2rem;
+  }
+
+  .sheet-frame {
+    max-width: min(100%, calc(72vh * var(--sheet-ratio, 0.75)));
+  }
+
+  .sheet-frame-foot {
+    max-width: none;
+  }
+
+  .sheet-zoom {
+    /* Off, not shrunk. */
+    transform: none;
+  }
+
+  .sheet-text {
+    padding-top: 0;
   }
 
   /*
-     One at a time at 375px: neither half survives being half a phone wide.
-     Which one shows is a CSS decision, never a mount decision — both are in
-     the DOM either way, so the accessible half is never the one that needs
-     JavaScript.
+     One at a time: neither half survives being half a phone wide. Which one
+     shows is a CSS decision, never a mount decision — both are in the DOM
+     either way, so the accessible half is never the one that needs
+     JavaScript to exist.
   */
-  .letter-stage[data-showing="photo"] .letter-prose {
+  .reader[data-showing="photo"] .sheet-text {
     display: none;
   }
 
-  .letter-stage[data-showing="text"] figure {
-    display: none;
-  }
-
-  .letter-masthead {
-    grid-template-columns: 1fr auto;
-  }
-
-  .letter-masthead .rule {
+  .reader[data-showing="text"] .sheet-photo {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .letter-page,
-  .letter-page figure img,
-  .letter-dots li,
-  .pill {
+  .hero-name,
+  .hero-title,
+  .hero-rule,
+  .hero-lede,
+  .hero-meta,
+  .hero-cue,
+  .hero-photo .scanned-photo,
+  .hero-lede mark[data-c] {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hero-cue-arrow {
+    animation: none;
+  }
+
+  .hero-lede mark[data-c] {
+    background-size: 100% 100%;
+  }
+
+  .sheet-zoom,
+  .sheet-band,
+  .pill,
+  .chip,
+  .reader-progress span {
     transition: none;
   }
 }
@@ -1403,57 +1957,6 @@ body::before {
    COMPOSITION FIXES — found by looking at it
    ============================================================ */
 
-/*
-   A portrait photograph at full column width is taller than the screen, and
-   it pushed the transcription into a sliver at the top of a very long page.
-   Capping it to the viewport is what makes the two halves read as a spread:
-   the notebook page and its transcription, both visible at once.
-*/
-.letter-page figure img {
-  width: auto;
-  max-width: 100%;
-  max-height: min(68vh, 820px);
-  margin-inline: auto;
-}
-
-.letter-page article {
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 768px) {
-  .letter-page article {
-    /* The photo leads slightly. The text is the content, but the photograph
-       is what someone is here to see first. */
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  }
-
-  .letter-page .letter-prose {
-    /* Optical alignment: the first line of type sits with the first written
-       line rather than with the top edge of the photograph. */
-    padding-top: 0.35rem;
-  }
-}
-
-/*
-   The masthead already says which page this is, and the caption repeated it
-   word for word directly underneath. One of them had to go, and the one that
-   scrolls away is the wrong one to keep.
-*/
-.letter-stage figcaption {
-  display: none;
-}
-
-.letter-coda p {
-  max-width: 34ch;
-  margin-inline: auto;
-  text-wrap: balance;
-}
-
-.letter-coda-ask {
-  display: inline-block;
-  margin-top: 0.4rem;
-}
-
 /* ---- the figures row ------------------------------------------------- */
 
 /*
@@ -1487,6 +1990,74 @@ body::before {
 
 .admin-shell {
   max-width: 52rem;
+}
+
+/* ---- the region picker ----------------------------------------------
+
+   Drag a band down the photograph and the editor writes
+   `:::passage{at="…"}` into the markdown. No derived regions: a derived one
+   can be quietly wrong, and there is nothing to derive from anyway.
+   -------------------------------------------------------------------- */
+
+.editor-hint {
+  margin: 0 0 1rem;
+  max-width: 60ch;
+  font-size: 0.9rem;
+  color: var(--fg-secondary);
+}
+
+.region-grid {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .region-grid {
+    grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  }
+}
+
+.region-frame {
+  position: relative;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+  /* The whole point is dragging down it, so the browser must not claim the
+     gesture for scrolling first. */
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.region-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.region-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface-brand);
+  border-top: 1.5px solid var(--fg-brand);
+  border-bottom: 1.5px solid var(--fg-brand);
+  pointer-events: none;
+}
+
+.region-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.region-nudges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* ============================================================

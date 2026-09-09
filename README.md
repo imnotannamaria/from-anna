@@ -34,9 +34,22 @@ This has :mark[honestly been one of the best weeks]{c=important} I've had.
 :::theme{label="what I actually built"}
 A whole block grouped under a theme, with :mark[a highlight]{c=note} inside it.
 :::
+
+:::passage{at="0.19 0.31"}
+A passage, and where on the sheet it was written. On a wide screen the
+photograph follows the line you are reading.
+:::
 ```
 
 No table of offsets, no join. The `.md` file carries everything, so fixing a comma doesn't break the highlighting. That layer is being extracted into a standalone package — see [docs/features/markdown-hightlight/](docs/features/markdown-hightlight/).
+
+## Reading a letter
+
+On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. A passage can say which band of the sheet it came from, and the photograph follows it; a passage that doesn't gets a proportional band instead, so marking one is worth doing for the pages that need it and skipping for the ones that don't.
+
+On a phone there is one column, so nothing pins and nothing zooms: the photograph opens first and one tap gets you the transcription. Both halves are in the HTML either way — which half is on screen is a CSS decision, never something that depends on JavaScript having run.
+
+Everything the reading view adds is an enhancement over a page that already works: the transcription is rendered on the server, the highlights are painted with no script, and the passage numbers come from a CSS counter.
 
 ## Stack
 
@@ -45,7 +58,7 @@ No table of offsets, no join. The `.md` file carries everything, so fixing a com
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + entrepta tokens |
-| Design system | entrepta, dark first |
+| Design system | entrepta (julia), run in light mode |
 | Markdown | unified, remark-parse, remark-directive, remark-rehype, rehype-sanitize |
 | Database | Postgres (Neon) via Drizzle ORM |
 | File storage | Vercel Blob |
@@ -82,6 +95,9 @@ CLERK_SECRET_KEY=
 
 # Base URL, used for OG images
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Where "write back" at the end of a letter goes. Empty hides the button.
+WRITE_BACK_EMAIL=
 ```
 
 ### Before your first OpenRouter call

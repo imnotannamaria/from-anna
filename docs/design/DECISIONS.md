@@ -1,6 +1,6 @@
 # design — decisions
 
-Decision log. X because Y. Closed on 2026-09-09, from a design comp reviewed against what already existed.
+Decision log. X because Y. Closed on 2026-09-09, from a design comp reviewed against what already existed. The last section is what building it changed.
 
 ---
 
@@ -43,3 +43,29 @@ This partly reverses the decision in `photo-transcription/DECISIONS.md` that cap
 **The legend filter is momentary and does not go in the URL** — because it is a way of looking at a letter, not a way of arriving at one.
 
 **The legend chips read the highlight colours from the tokens** — because `lib/theme/palette.test.ts` measures those tokens against the ink in both modes, and a repeated hex, which is what the comp does, is a value that test no longer protects.
+
+---
+
+## Decided while building it
+
+**The passage reveal moves `translateY` and leaves opacity alone** — because the alternative was picking a starting opacity that clears AA, and there isn't a good one: anything faint enough to read as an entrance is too faint to read as text. Moving only the position means contrast never changes, so it cannot drop, and there is nothing left to measure.
+
+**A passage is a top-level block of the transcription, found in the DOM rather than constructed** — because the markdown decides a letter's shape, and enumerating passages in React would mean a second opinion about it. `data-passage` is added to text that is already painted.
+
+**Passage numbers come from a CSS counter, not from JavaScript** — because they are then correct before any script runs, and they stay decorative: a pseudo-element is never in the accessibility tree, and "04" read aloud in the middle of a sentence is noise.
+
+**The legend filter is three `:not()` rules, one per tag, rather than "dim everything then put one back"** — because the two-rule version gives both rules identical specificity and leaves source order to decide. It was wrong the first time: filtering to `important` dimmed `important` too. Rules that cannot overlap have nothing to settle.
+
+**A second, smaller output of every photo is stored, and the sheet is served through `srcset`** — because raising the cap to 2400px for the zoom would otherwise have made every phone download a sheet it can never zoom into. `sizes` alone cannot help when there is only one file to choose between.
+
+**`--fg-muted` is darker than entrepta's** — because paper is not white. The inherited `#8a7f72` measures 3.54:1 against this canvas, and every `.meta` label in the project is 11px, which WCAG counts as normal text. The new value clears AA on the paper and on the coda's blush, which are the only two grounds it sits on.
+
+**The privacy line uses `--fg-secondary`, not `--fg-muted`** — because the blush band is a darker ground than the paper and muted does not reach AA on it. Measured against the blush, as the phase said to.
+
+**The display face is Fraunces; the letter stays in Newsreader** — because a headline can afford an irregular old-style serif and four hundred words of transcription cannot. Fraunces' `SOFT` and `WONK` axes are the warm, hand-cut feel that was wanted; the same irregularities are friction at reading size.
+
+**WindsorEF and Ano were considered and not used** — because both are commercial licences, and a public repository cannot ship the font files. Buying a webfont licence and gitignoring the files would mean `npm install && npm run dev` no longer renders the project as designed for anyone who clones it.
+
+**The `:::passage` directive emits a `<div>`, which widens the sanitize schema by one tag** — because it needs an element to carry the region and every allowed tag already means something else. The argument for it: `remark-rehype` drops raw HTML from the source, so the only `div` reaching the schema is the one the plugin emits; it carries no URL, no handler and no text of its own; and the single attribute allowed on it is parsed and clamped by `parseRegion` before it reaches a `transform`.
+
+**A region is drawn on the photograph by hand, never derived** — because a derived region can be quietly wrong and there is nothing honest to derive it from. The picker writes `:::passage{at="…"}` into the markdown, which stays the one source of truth, exactly as highlights do.

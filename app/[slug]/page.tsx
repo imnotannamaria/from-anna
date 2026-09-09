@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { ScannedPage } from 'remark-scanned-page'
+import { ScannedPhoto, ScannedTranscription } from 'remark-scanned-page'
 
-import { LetterReader } from '@/components/letter/letter-reader'
+import { LetterView } from '@/components/letter/letter-view'
 import { requireAdmin } from '@/lib/auth/admin'
 import {
   SESSION_COOKIE,
@@ -15,6 +15,7 @@ import {
   normaliseSource,
 } from '@/lib/analytics/visit'
 import { isPubliclyReadable } from '@/lib/letters/access'
+import { letterName } from '@/lib/letters/name'
 import { getLetterBySlug, recordView } from '@/lib/letters/queries'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { splitBlocks } from '@/lib/transcription/split'
@@ -33,6 +34,22 @@ export const metadata: Metadata = {
   title: 'A letter',
   description: 'A handwritten letter.',
   robots: { index: false, follow: false, nocache: true },
+}
+
+/**
+ * The month a letter was sent, formatted on the server and in UTC.
+ *
+ * Formatting a date in a client component would give the server one answer
+ * and the browser another, which React reports as a hydration mismatch and a
+ * reader across a date line sees as the wrong month.
+ */
+function sentOn(date: Date | null): string | null {
+  if (!date) return null
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date)
 }
 
 export default async function LetterPage({
@@ -85,29 +102,74 @@ export default async function LetterPage({
     })
   }
 
-  // One markdown document, split on `---`, so a page whose block is missing
+  // One markdown document, split on `---`, so a sheet whose block is missing
   // still shows its photo rather than vanishing.
   const blocks = splitBlocks(letter.mdContent)
 
+  const photoSrc = (index: number) =>
+    `/api/letters/${letter.id}/pages/${index}`
+
+  const sheets = pages.map((page, i) => ({
+    key: page.id,
+    ratio: page.width / page.height,
+    photo: (
+      <ScannedPhoto
+        imageSrc={photoSrc(page.index)}
+        screenSrc={
+          page.screenBlobUrl ? `${photoSrc(page.index)}?size=screen` : undefined
+        }
+        screenWidth={page.screenWidth ?? undefined}
+        alt={page.alt}
+        width={page.width}
+        height={page.height}
+        // Everything but the opening is below the fold, and each sheet is
+        // large enough to zoom into.
+        priority={false}
+      />
+    ),
+    prose: (
+      <ScannedTranscription
+        markdown={blocks[i] ?? ''}
+        className="letter-prose"
+        knownTags={HIGHLIGHT_TAGS}
+      />
+    ),
+  }))
+
+  const first = pages[0]
+
   return (
-    <LetterReader
+    <LetterView
       letterId={letter.id}
       isPreview={!readable}
-      renderedPages={pages.map((page, i) => (
-        <ScannedPage
-          key={page.id}
-          imageSrc={`/api/letters/${letter.id}/pages/${page.index}`}
-          alt={page.alt}
-          width={page.width}
-          height={page.height}
-          markdown={blocks[i] ?? ''}
-          pageNumber={page.index + 1}
-          totalPages={pages.length}
-          priority={i === 0}
-          knownTags={HIGHLIGHT_TAGS}
-          proseClassName="letter-prose"
-        />
-      ))}
+      name={letterName(letter.slug)}
+      sentOn={sentOn(letter.publishedAt)}
+      // From the environment, never the repository. Absent hides the button
+      // rather than shipping a broken `mailto:`.
+      writeBackEmail={process.env.WRITE_BACK_EMAIL || null}
+      tags={HIGHLIGHT_TAGS}
+      sheets={sheets}
+      heroPhoto={
+        first ? (
+          <ScannedPhoto
+            imageSrc={photoSrc(first.index)}
+            screenSrc={
+              first.screenBlobUrl
+                ? `${photoSrc(first.index)}?size=screen`
+                : undefined
+            }
+            screenWidth={first.screenWidth ?? undefined}
+            // Deliberately empty: the same sheet appears again below with its
+            // real description and its transcription attached. Describing it
+            // twice makes the spoken page longer than the letter, and the
+            // wrapper in the hero is `aria-hidden` for the same reason.
+            alt=""
+            width={first.width}
+            height={first.height}
+            priority
+          />
+        ) : null
+      }
     />
   )
 }

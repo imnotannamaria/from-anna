@@ -22,7 +22,9 @@ An earlier version of this file claimed a word list alone gave billions of combi
 
 **On mobile the photo opens first** — because the handwriting is the point of the project, and opening on the transcription makes it read like any other block of text. Accepted trade-off: if the photo isn't legible at 375px, this becomes the most expensive bug in the project.
 
-**Pages turn one at a time, with a page-turn animation** — because a three-sheet letter scrolling as one column loses the sense of a notebook.
+**On desktop the sheets stack down the scroll, each photograph pinned while its transcription passes it; on mobile they still turn one at a time** — because the sticky section already says where you are, so previous/next was two controls doing what scrolling does. Reversed the original decision below once there was a layout that replaced it rather than removing it.
+
+~~**Pages turn one at a time, with a page-turn animation**~~ — the reasoning still holds where it applies: a letter read as one undifferentiated column loses the sense of a notebook. Stacked sticky sections keep the sheets separate without asking anyone to find a button. See `design/DECISIONS.md`.
 
 **`mdContent` stays on `Letter` and is split on `---` to paginate** — because the transcription has to turn with the photo, and moving the markdown onto `Page` would scatter the letter across rows and kill the idea of one `.md` file that stands alone. It's the same separator the transcription already produces.
 

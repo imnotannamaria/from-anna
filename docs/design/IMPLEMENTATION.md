@@ -4,7 +4,9 @@ Discovery is closed. What was decided and why is in `DECISIONS.md` next door.
 
 Each phase has a **Done when** list and a **Checks** block. The checks are prompts to look, not boxes to tick.
 
-Phase 2 is the one worth building first: it carries most of the gain and depends on none of the region work.
+Phase 2 was the one worth building first: it carried most of the gain and depended on none of the region work.
+
+**All six are built.** What each phase actually cost, and what it changed, is in `DECISIONS.md` under *Decided while building it*.
 
 ---
 
@@ -16,10 +18,10 @@ The letter is named by the three words of its slug, without the token: `AUTUMN �
 
 **Done when**
 
-- [ ] Nothing in the `<head>` or the bar reveals any of the letter's content
-- [ ] The chips read `--hl-important` / `--hl-note` / `--hl-ask` from the tokens, never a repeated hex
-- [ ] The fixed bar does not cover content when an anchor is jumped to
-- [ ] At 390px the wordmark does not wrap and the letter name does not truncate
+- [x] Nothing in the `<head>` or the bar reveals any of the letter's content
+- [x] The chips read `--hl-important` / `--hl-note` / `--hl-ask` from the tokens, never a repeated hex
+- [x] The fixed bar does not cover content when an anchor is jumped to
+- [x] At 390px the wordmark does not wrap and the letter name does not truncate
 
 **Checks**
 
@@ -39,11 +41,11 @@ Each photographed sheet is its own sticky section, stacked down the scroll. `mdC
 
 **Done when**
 
-- [ ] Every sheet's text is in the server HTML, as it already is
-- [ ] With no JavaScript everything is legible — a `@media (scripting: none)` block, same as the highlights
-- [ ] Under `prefers-reduced-motion` the settled state is the default and nothing translates
-- [ ] No passage drops below AA contrast at any point in the transition
-- [ ] A three-line letter does not leave the sticky sheet alone on an empty screen
+- [x] Every sheet's text is in the server HTML, as it already is
+- [x] With no JavaScript everything is legible — a `@media (scripting: none)` block, same as the highlights
+- [x] Under `prefers-reduced-motion` the settled state is the default and nothing translates
+- [x] No passage drops below AA contrast at any point in the transition
+- [x] A three-line letter does not leave the sticky sheet alone on an empty screen
 
 **Checks**
 
@@ -60,10 +62,10 @@ Clicking a chip dims the highlights that are not that tag. A custom-property swa
 
 **Done when**
 
-- [ ] The chips are `<button>` with `aria-pressed`, not a `<div>` with a click handler
-- [ ] Clicking the active chip again clears the filter
-- [ ] A dimmed highlight keeps its text readable — what leaves is the colour, never the word
-- [ ] With no JavaScript the chips do not render, rather than rendering broken
+- [x] The chips are `<button>` with `aria-pressed`, not a `<div>` with a click handler
+- [x] Clicking the active chip again clears the filter
+- [x] A dimmed highlight keeps its text readable — what leaves is the colour, never the word
+- [x] With no JavaScript the chips do not render, rather than rendering broken
 
 **Checks**
 
@@ -82,12 +84,12 @@ The image cap rises to 2400px and the maximum zoom is 1.5.
 
 **Done when**
 
-- [ ] A passage with no region works, using the proportional band
-- [ ] An `at` outside 0–1, inverted, or with one value degrades to the band rather than throwing
-- [ ] The picker writes the directive into the markdown, and the markdown stays the source of truth
-- [ ] The `full page` toggle is keyboard reachable and its state is announced
-- [ ] At 1440 retina, 1.5× into a 2400px photo is sharp — **look at it, don't compute it**
-- [ ] Re-running the transcription does not erase regions already authored
+- [x] A passage with no region works, using the proportional band
+- [x] An `at` outside 0–1, inverted, or with one value degrades to the band rather than throwing
+- [x] The picker writes the directive into the markdown, and the markdown stays the source of truth
+- [x] The `full page` toggle is keyboard reachable and its state is announced
+- [ ] At 1440 retina, 1.5× into a 2400px photo is sharp — **look at it, don't compute it**. The only sheet in the database predates the new cap, so this needs a photo uploaded since.
+- [x] Re-running the transcription does not erase regions already authored
 
 **Checks**
 
@@ -108,10 +110,10 @@ The line *read to the end · counted once · nothing else is stored* is literal 
 
 **Done when**
 
-- [ ] The privacy sentence matches exactly what the `View` table stores
-- [ ] The end-of-letter event fires in this section, and is still fired once
-- [ ] `READ IT AGAIN` returns to the top without reloading and without counting a new open
-- [ ] The `mailto:` arrives with a subject already filled in
+- [x] The privacy sentence matches exactly what the `View` table stores
+- [x] The end-of-letter event fires in this section, and is still fired once
+- [x] `READ IT AGAIN` returns to the top without reloading and without counting a new open
+- [x] The `mailto:` arrives with a subject already filled in
 
 **Checks**
 
@@ -128,11 +130,11 @@ So the phase is: do not break what exists, and switch off what does not apply.
 
 **Done when**
 
-- [ ] Sticky, zoom and the vertical caption are switched off below the breakpoint, not shrunk
-- [ ] The photo/transcription toggle still works, including on a single-sheet letter
-- [ ] The handwriting is still legible at 390px — verified once already, verify again after the hero
-- [ ] Nothing scrolls sideways
-- [ ] Sheet navigation still exists, since sticky is not there to replace it
+- [x] Sticky, zoom and the vertical caption are switched off below the breakpoint, not shrunk
+- [x] The photo/transcription toggle still works, including on a single-sheet letter
+- [ ] The handwriting is still legible at 390px — checked in a device viewport, not yet on a real phone
+- [x] Nothing scrolls sideways
+- [x] Sheet navigation still exists, since sticky is not there to replace it
 
 **Checks**
 
@@ -152,3 +154,12 @@ So the phase is: do not break what exists, and switch off what does not apply.
 - **`photo-transcription/DECISIONS.md`** — the 1500px cap becomes 2400px. The original reasoning still holds; what changed is that the zoom is a second consumer of the same file.
 - **`share/DECISIONS.md`** — page-turn navigation stops existing on desktop, replaced by the stacked sticky sections. On mobile it stays.
 - **`markdown-hightlight/DECISIONS.md`** — the package gains a second directive, `:::passage{at}`.
+
+---
+
+## What is still open
+
+- **The zoom has never been looked at on a photograph taken since the cap changed.** Every sheet in the database was uploaded at 1500px, so 1.5× into one of those is exactly the softness the cap was raised to fix. The maths says 97% coverage at 2400px; a photograph is what will say whether that is true.
+- **390px was checked in a device viewport, not on a phone.** That is the assumption the whole reading view rests on and it is the one check that cannot be automated.
+- **Nothing multi-sheet has been read end to end.** The stacked sticky sections, the sheet navigation and the per-sheet regions are all built and none of them have had two real sheets through them.
+- **`WRITE_BACK_EMAIL` is unset.** Until it is, the coda renders without the button rather than with a broken `mailto:`.

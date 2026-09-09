@@ -2,17 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { renderMarkdown, wrapSelection } from 'remark-scanned-page'
+import { renderMarkdown, wrapPassage, wrapSelection } from 'remark-scanned-page'
 
+import { RegionPicker, type PickerPage } from '@/components/editor/region-picker'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import {
   findIllegibleMarks,
   nextIllegibleMark,
 } from '@/lib/transcription/illegible'
+import { sheetIndexAt } from '@/lib/transcription/split'
 
 type Props = {
   letterId: string
   initialMdContent: string
+  /** The photographed sheets, for the region picker. Empty until they exist. */
+  pages: PickerPage[]
 }
 
 /** Long enough that a fast typist never waits on a parse mid-word. */
@@ -32,8 +36,13 @@ const PREVIEW_DELAY_MS = 250
  * catches hallucination, which comes back plausible and survives a quick
  * reread. Hunting for them by eye is exactly the task that gets skipped.
  */
-export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
+export function TranscriptionEditor({
+  letterId,
+  initialMdContent,
+  pages,
+}: Props) {
   const [value, setValue] = useState(initialMdContent)
+  const [caret, setCaret] = useState(0)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
@@ -86,6 +95,33 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
 
     // The DOM value updates on the next render, so the caret is restored
     // after it, not before.
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(result.selectionStart, result.selectionEnd)
+    })
+  }
+
+  function applyPassage(at?: string) {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const result = wrapPassage(
+      value,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      at,
+    )
+
+    if (result.status === 'refused') {
+      setFailed(true)
+      setMessage(result.message)
+      return
+    }
+
+    setFailed(false)
+    setMessage(at ? `Passage marked at ${at}.` : 'Passage marked.')
+    setValue(result.value)
+
     requestAnimationFrame(() => {
       textarea.focus()
       textarea.setSelectionRange(result.selectionStart, result.selectionEnd)
@@ -182,7 +218,11 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
           ref={textareaRef}
           id="md"
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => {
+            setValue(event.target.value)
+            setCaret(event.target.selectionStart)
+          }}
+          onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
           onKeyDown={onKeyDown}
           spellCheck={false}
           className="editor-surface"
@@ -232,6 +272,16 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
         {failed && 'Failed: '}
         {message}
       </p>
+
+      {pages.length > 0 && (
+        <RegionPicker
+          pages={pages}
+          // Which photograph to show is decided by the `---` before the
+          // caret, which is the same separator that paginates the letter.
+          sheetIndex={sheetIndexAt(value, caret)}
+          onMark={applyPassage}
+        />
+      )}
     </section>
   )
 }

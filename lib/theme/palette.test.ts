@@ -158,6 +158,32 @@ describe('highlight palette', () => {
     expect(new Set(styles).size, `styles were ${styles.join(', ')}`).toBe(3)
   })
 
+  for (const mode of modes) {
+    it(`${mode.name}: a dimmed highlight still carries its words`, () => {
+      // The legend filter takes the colour away, never the text. If this
+      // ever drops below AA, filtering makes half the letter unreadable —
+      // which is a strange price for a way of re-reading it.
+      const dimmed = mode.highlights.get('--hl-dimmed')
+      expect(dimmed, `${mode.name} --hl-dimmed`).toBeDefined()
+
+      const ratio = contrastRatio(mode.fg, dimmed!)
+      expect(
+        ratio,
+        `${mode.name} dimmed: ${mode.fg} on ${dimmed} is ${ratio.toFixed(2)}:1`,
+      ).toBeGreaterThanOrEqual(AA_NORMAL)
+    })
+
+    it(`${mode.name}: a dimmed highlight recedes further than any live one`, () => {
+      // The point of dimming is that the filtered-out tags stop competing.
+      // A dimmed fill that stands out more than a real one inverts that.
+      const dimmed = contrastRatio(mode.canvas, mode.highlights.get('--hl-dimmed')!)
+      for (const tag of ['important', 'note', 'ask'] as const) {
+        const live = contrastRatio(mode.canvas, mode.highlights.get(`--hl-${tag}`)!)
+        expect(dimmed, `${tag} vs dimmed against canvas`).toBeLessThan(live)
+      }
+    })
+  }
+
   it('keeps the two rules that fail silently', () => {
     const base = PACKAGE_CSS.match(/mark\[data-c\]\s*\{([^}]*)\}/m)?.[1] ?? ''
 
@@ -165,5 +191,69 @@ describe('highlight palette', () => {
     expect(base).toMatch(/color:\s*inherit/)
     // Padding only on the first and last line of a wrapped highlight.
     expect(base).toMatch(/box-decoration-break:\s*clone/)
+  })
+})
+
+/**
+ * The rest of the reading surface.
+ *
+ * The highlights were never the only pair on the page. The metadata labels
+ * are 11px and sit on paper rather than white, and the coda sits on a blush
+ * band, which is a different ground and therefore a different measurement.
+ * The app runs in light mode, so light is what these check.
+ */
+describe('the paper surface', () => {
+  const LIGHT = ':root\\[data-mode="light"\\]'
+  const canvas = tokenIn(LIGHT, '--bg-canvas', globals)
+  const muted = tokenIn(LIGHT, '--fg-muted', globals)
+  const secondary = tokenIn(LIGHT, '--fg-secondary', globals)
+  const brand = tokenIn(LIGHT, '--fg-brand', globals)
+  const surface = tokenIn(LIGHT, '--bg-surface', globals)
+
+  /** Flatten an `rgba()` onto an opaque background, the way the screen does. */
+  function over(rgba: string, background: string): string {
+    const parts = rgba.match(/rgba?\(([^)]+)\)/)
+    if (!parts) throw new Error(`${rgba} is not an rgba() value`)
+    const [r, g, b, a = '1'] = parts[1].split(',').map((n) => Number(n.trim()))
+
+    const base = background.replace('#', '')
+    const channel = (i: number) => parseInt(base.slice(i * 2, i * 2 + 2), 16)
+    const mix = (top: number, bottom: number) =>
+      Math.round(top * Number(a) + bottom * (1 - Number(a)))
+
+    return `#${[mix(r, channel(0)), mix(g, channel(1)), mix(b, channel(2))]
+      .map((v) => v.toString(16).padStart(2, '0'))
+      .join('')}`
+  }
+
+  const blush = over(tokenIn(LIGHT, '--bg-surface-brand', globals), canvas)
+
+  it('the muted label colour reaches AA on paper', () => {
+    // Every `.meta` label in the project is 11px, which is normal text by
+    // WCAG's reckoning. Paper is warmer and lighter than white, so a muted
+    // grey tuned against white lands short here.
+    const ratio = contrastRatio(muted, canvas)
+    expect(ratio, `${muted} on ${canvas} is ${ratio.toFixed(2)}:1`)
+      .toBeGreaterThanOrEqual(AA_NORMAL)
+  })
+
+  it('the coda is measured against the blush, not the paper', () => {
+    // The band changes the background, so the text on it is a different pair.
+    for (const [name, colour] of [
+      ['body', tokenIn(LIGHT, '--fg-primary', globals)],
+      ['the privacy line', secondary],
+    ] as const) {
+      const ratio = contrastRatio(colour, blush)
+      expect(ratio, `${name}: ${colour} on ${blush} is ${ratio.toFixed(2)}:1`)
+        .toBeGreaterThanOrEqual(AA_NORMAL)
+    }
+  })
+
+  it('the solid button reads against its own fill', () => {
+    // `write back` is paper-coloured text on brand, which is the one place
+    // in the project where the brand colour is a background.
+    const ratio = contrastRatio(surface, brand)
+    expect(ratio, `${surface} on ${brand} is ${ratio.toFixed(2)}:1`)
+      .toBeGreaterThanOrEqual(AA_NORMAL)
   })
 })

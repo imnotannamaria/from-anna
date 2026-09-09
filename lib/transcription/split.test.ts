@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { joinPages, splitBlocks, splitTranscription } from './split'
+import {
+  joinPages,
+  sheetIndexAt,
+  splitBlocks,
+  splitTranscription,
+} from './split'
 
 describe('splitBlocks', () => {
   it('splits on separator lines', () => {
@@ -104,5 +109,31 @@ describe('joinPages', () => {
     const pages = ['first page\n\nwith two paragraphs', 'second page']
     const result = splitTranscription(joinPages(pages), 2)
     expect(result).toEqual({ status: 'ok', pages })
+  })
+})
+
+describe('sheetIndexAt', () => {
+  const letter = 'One.\n\n---\n\nTwo.\n\n---\n\nThree.'
+
+  it('is on the first sheet before any separator', () => {
+    expect(sheetIndexAt(letter, 0)).toBe(0)
+    expect(sheetIndexAt(letter, 4)).toBe(0)
+  })
+
+  it('counts each separator crossed', () => {
+    expect(sheetIndexAt(letter, letter.indexOf('Two.'))).toBe(1)
+    expect(sheetIndexAt(letter, letter.indexOf('Three.'))).toBe(2)
+  })
+
+  it('does not count a dash inside a word', () => {
+    expect(sheetIndexAt('well-worn hyphen', 16)).toBe(0)
+  })
+
+  it('handles Windows line endings, which leave a trailing \\r', () => {
+    expect(sheetIndexAt('One.\r\n---\r\nTwo.', 12)).toBe(1)
+  })
+
+  it('clamps a caret before the start', () => {
+    expect(sheetIndexAt(letter, -5)).toBe(0)
   })
 })

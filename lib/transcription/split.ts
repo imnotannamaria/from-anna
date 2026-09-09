@@ -91,3 +91,18 @@ export function splitTranscription(
 export function joinPages(pages: string[]): string {
   return pages.map((page) => page.trim()).join(`\n\n${PAGE_SEPARATOR}\n\n`)
 }
+
+/**
+ * Which sheet the caret is on.
+ *
+ * Counting separators is the whole implementation, because `---` is what
+ * paginates a letter — the same line the transcription prompt asks for. It is
+ * what lets the region picker show the right photograph without the editor
+ * having to track two positions at once.
+ */
+export function sheetIndexAt(value: string, caret: number): number {
+  const before = normalise(value).slice(0, Math.max(0, caret))
+  return before
+    .split('\n')
+    .filter((line) => SEPARATOR_LINE.test(line)).length
+}
