@@ -36,9 +36,19 @@ The fills are not entrepta tokens: entrepta's julia preset only overrides the br
 
 **On narrow screens the side bracket becomes a label above the block** — because there is no side margin at 375px.
 
+**The package gained a second container directive, `:::passage{at="0.19 0.31"}`** — because the package is described as "a scanned page with a synchronised transcription", and a region per passage *is* the synchronisation. It belongs here rather than in the app for the same reason the highlight syntax does.
+
+**`at` is optional, and a passage without one falls back to a proportional band** — because that makes the cheap version the default and hand-authoring an upgrade per page. A region that has to be marked on every passage is a feature that stops being used.
+
+**An unusable `at` degrades to the band rather than throwing** — because it arrives from markdown, which arrives from a vision model. `parseRegion` refuses anything that is not two finite fractions in order, and the caller never sees an exception.
+
+**`:::passage` emits a `<div>`, and `div` is now in the sanitize schema** — because it needs an element to carry the region and every other allowed tag already means something. `remark-rehype` drops raw HTML from the source, so the only `div` that reaches the schema is the one this plugin emits; it carries no URL, no handler and no text, and its one attribute is parsed and clamped before use.
+
 **`:mark` nests inside `:::theme`; `:::theme` does not nest inside itself** — because a highlight inside a themed block is the normal case, and a bracket inside a bracket can't be drawn cleanly.
 
 **The sanitize schema allows `mark`, `aside`, links, images, headings, lists, code, emphasis, paragraphs and horizontal rules, and blocks scripts, styles, iframes and `on*` handlers** — because the schema is what holds when the package runs on content its author didn't write.
+
+**A region is drawn on the photograph by hand, never derived** — because a derived region can be quietly wrong and there is nothing honest to derive one from. The picker writes the directive into the markdown, which stays the source of truth.
 
 **The editor is a textarea with a live preview beside it, plus a shortcut that wraps the selection** — because typing the directive by hand every time is the friction that stops people highlighting at all.
 

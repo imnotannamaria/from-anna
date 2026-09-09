@@ -20,6 +20,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./passage": {
+      "types": "./src/passage.ts",
+      "default": "./src/passage.ts"
+    },
     "./styles/scanned-page.css": "./styles/scanned-page.css",
     "./styles/palette.css": "./styles/palette.css"
   },
@@ -69,6 +73,10 @@
       ".": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "./passage": {
+        "types": "./dist/passage.d.ts",
+        "default": "./dist/passage.js"
       },
       "./styles/scanned-page.css": "./styles/scanned-page.css",
       "./styles/palette.css": "./styles/palette.css"

@@ -46,6 +46,12 @@ export const schema = {
     'img',
     'mark',
     'aside',
+    // Only ever ours. `remark-rehype` drops raw HTML from the source unless
+    // `allowDangerousHtml` is set, which it is not, so the only <div> that
+    // reaches here is the one `:::passage` emits. It carries no behaviour, no
+    // URL and no text of its own — just a grouping and one number that is
+    // parsed and clamped by `parseRegion` before anything uses it.
+    'div',
   ],
   attributes: {
     ...defaultSchema.attributes,
@@ -53,6 +59,7 @@ export const schema = {
     // matches nothing and the attribute is stripped without a word.
     mark: ['dataC'],
     aside: ['dataThemeLabel', 'ariaLabel'],
+    div: ['dataPassageAt'],
     a: ['href', 'title'],
     img: ['src', 'alt', 'title', 'width', 'height'],
   },

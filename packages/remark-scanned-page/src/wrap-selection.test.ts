@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { wrapSelection } from './wrap-selection'
+import { wrapPassage, wrapSelection } from './wrap-selection'
 
 describe('wrapSelection', () => {
   it('wraps a selection in the directive', () => {
@@ -74,5 +74,52 @@ describe('wrapSelection', () => {
     const result = wrapSelection('some words here', 5, 10, 'note')
     if (result.status !== 'ok') throw new Error('expected ok')
     expect(result.value).toContain(':mark[words]{c=note}')
+  })
+})
+
+describe('wrapPassage', () => {
+  it('wraps the selected lines with a region', () => {
+    const result = wrapPassage('One.\nTwo.\nThree.', 5, 9, '0.2 0.4')
+    expect(result.status).toBe('ok')
+    if (result.status !== 'ok') return
+    expect(result.value).toBe('One.\n:::passage{at="0.2 0.4"}\nTwo.\n:::\nThree.')
+  })
+
+  it('expands a part-line selection to whole lines', () => {
+    // A container directive on half a line parses into something else.
+    const result = wrapPassage('One two three.', 4, 7, '0 1')
+    expect(result.status).toBe('ok')
+    if (result.status !== 'ok') return
+    expect(result.value).toBe(':::passage{at="0 1"}\nOne two three.\n:::')
+  })
+
+  it('leaves the words selected inside the wrapper', () => {
+    const result = wrapPassage('One.\nTwo.\nThree.', 5, 9, '0.2 0.4')
+    if (result.status !== 'ok') throw new Error('expected ok')
+    expect(
+      result.value.slice(result.selectionStart, result.selectionEnd),
+    ).toBe('Two.')
+  })
+
+  it('writes a passage with no region at all', () => {
+    const result = wrapPassage('Only line.', 0, 10)
+    if (result.status !== 'ok') throw new Error('expected ok')
+    expect(result.value).toBe(':::passage\nOnly line.\n:::')
+  })
+
+  it('refuses to nest', () => {
+    const source = ':::passage{at="0 1"}\nInside.\n:::'
+    const result = wrapPassage(source, 0, source.length)
+    expect(result.status).toBe('refused')
+  })
+
+  it('refuses an empty selection rather than wrapping nothing', () => {
+    expect(wrapPassage('One.\n\nTwo.', 5, 5).status).toBe('refused')
+  })
+
+  it('keeps a highlight inside intact', () => {
+    const result = wrapPassage('A :mark[bit]{c=note} of it.', 0, 27, '0.1 0.2')
+    if (result.status !== 'ok') throw new Error('expected ok')
+    expect(result.value).toContain(':mark[bit]{c=note}')
   })
 })

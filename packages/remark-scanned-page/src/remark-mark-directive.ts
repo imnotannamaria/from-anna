@@ -3,8 +3,9 @@ import type { Plugin } from 'unified'
 import { visit } from 'unist-util-visit'
 
 /**
- * `:mark[text]{c=important}` → `<mark data-c="important">`
- * `:::theme{label="..."}`    → `<aside>` carrying the label
+ * `:mark[text]{c=important}`      → `<mark data-c="important">`
+ * `:::theme{label="..."}`         → `<aside>` carrying the label
+ * `:::passage{at="0.19 0.31"}`    → `<div data-passage-at="0.19 0.31">`
  *
  * Highlights live inside the markdown rather than as offsets in a database,
  * because a transcription of handwriting exists to be corrected, and fixing a
@@ -14,6 +15,18 @@ import { visit } from 'unist-util-visit'
 
 export const MARK_NAME = 'mark'
 export const THEME_NAME = 'theme'
+
+/**
+ * Groups a run of paragraphs and says which band of the sheet they were
+ * written on. The region is what makes the transcription *synchronised*
+ * rather than merely adjacent, and it is optional: a passage with no `at`
+ * falls back to a proportional band, so marking one is an upgrade per page
+ * rather than a tax on every letter.
+ *
+ * The value is never trusted. `parseRegion` in ./passage is the only thing
+ * that reads it, and anything it cannot use degrades to the band.
+ */
+export const PASSAGE_NAME = 'passage'
 
 /** Applied when a highlight has no tag, or a tag nothing recognises. */
 export const DEFAULT_TAG = 'unknown'
@@ -99,6 +112,23 @@ export const remarkMarkDirective: Plugin<[RemarkMarkDirectiveOptions?], Root> = 
 
       if (
         directive.type === 'containerDirective' &&
+        directive.name === PASSAGE_NAME
+      ) {
+        const at = directive.attributes?.at?.trim() || undefined
+
+        directive.data = {
+          ...directive.data,
+          hName: 'div',
+          // A plain div carrying one data attribute. It is a grouping and a
+          // number, with no behaviour and no URL in it — see the note on
+          // `div` in the sanitize schema.
+          hProperties: { dataPassageAt: at },
+        }
+        return
+      }
+
+      if (
+        directive.type === 'containerDirective' &&
         directive.name === THEME_NAME
       ) {
         const label = directive.attributes?.label?.trim() || ''
@@ -117,23 +147,35 @@ export const remarkMarkDirective: Plugin<[RemarkMarkDirectiveOptions?], Root> = 
     })
 
     // Second pass for nesting, so the ancestor chain is already decided.
+    //
+    // A bracket inside a bracket cannot be drawn cleanly, and a passage
+    // inside another passage would give one run of text two gutter numbers
+    // and two regions. Both unwrap rather than render: the second wrapper
+    // goes, the words stay.
+    const unwrapInside: Record<string, readonly string[]> = {
+      [THEME_NAME]: [THEME_NAME],
+      [PASSAGE_NAME]: [PASSAGE_NAME, THEME_NAME],
+    }
+
     visit(tree, (node, index, parent) => {
       const directive = node as unknown as DirectiveNode
       if (
         directive.type !== 'containerDirective' ||
-        directive.name !== THEME_NAME ||
         parent === undefined ||
         index === undefined
       ) {
         return
       }
 
+      const forbidden = unwrapInside[directive.name]
+      if (!forbidden) return
+
       const parentNode = parent as unknown as DirectiveNode
       if (
         parentNode.type === 'containerDirective' &&
-        parentNode.name === THEME_NAME
+        forbidden.includes(parentNode.name)
       ) {
-        // Unwrap: keep the children, drop the second bracket.
+        // Unwrap: keep the children, drop the second wrapper.
         const children = (directive.children ?? []) as never[]
         ;(parent as unknown as { children: unknown[] }).children.splice(
           index,

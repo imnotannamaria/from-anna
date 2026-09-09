@@ -1,6 +1,7 @@
 export {
   DEFAULT_TAG,
   MARK_NAME,
+  PASSAGE_NAME,
   THEME_NAME,
   remarkMarkDirective,
   type RemarkMarkDirectiveOptions,
@@ -8,9 +9,35 @@ export {
 
 export { renderMarkdown, schema } from './render'
 
-export { wrapSelection, type WrapResult } from './wrap-selection'
+/**
+ * Regions. A passage says which band of the sheet it was written on, which is
+ * what makes a transcription *synchronised* rather than merely adjacent.
+ *
+ * `parseRegion` is the only thing that reads an `at` attribute, and it comes
+ * from markdown that came from a vision model — so it degrades to `null`
+ * rather than throwing, and `bandFor` is what fills the gap.
+ */
+export {
+  MIN_BAND,
+  bandFor,
+  parseRegion,
+  regionFor,
+  type Region,
+} from './passage'
 
-export { ScannedPage, type ScannedPageProps } from './scanned-page'
+export {
+  wrapPassage,
+  wrapSelection,
+  type PassageResult,
+  type WrapResult,
+} from './wrap-selection'
+
+export {
+  ScannedPage,
+  ScannedPhoto,
+  ScannedTranscription,
+  type ScannedPageProps,
+} from './scanned-page'
 
 /**
  * Colour maths, exported because filling in the palette is the one job this

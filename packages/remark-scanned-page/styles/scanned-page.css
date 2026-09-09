@@ -101,9 +101,129 @@ aside[data-theme-label]::before {
    No side margin to hang a bracket in at narrow widths, so the label sits
    above the block. It is the same information either way, which is the point
    of writing the theme out rather than relying on the colour.
+
+   Where there is room, the bracket lines up with the passage numbers in the
+   same gutter — a themed block is a passage that happens to carry a name.
 */
-@media (min-width: 900px) {
+@media (min-width: 700px) {
   aside[data-theme-label] {
-    padding-left: 1.5rem;
+    padding-left: 2.25rem;
+  }
+}
+
+/* ============================================================
+   THE SPREAD — a photograph beside its transcription
+   ============================================================ */
+
+.scanned-page {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .scanned-page {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.scanned-figure {
+  margin: 0;
+}
+
+.scanned-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.scanned-caption {
+  margin-top: 0.5rem;
+  font-family: var(--hl-label-font, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   PASSAGES
+   ============================================================
+
+   A passage is one top-level block of the transcription. Numbering runs off
+   a CSS counter rather than anything in the markup, so the numbers are
+   correct before a single line of JavaScript has run — and they are
+   decorative, which is why they live in a pseudo-element and never in the
+   accessibility tree.
+
+   `data-passage` and `data-seen` are added by whatever is driving the
+   reading view. Their absence is the no-JavaScript state, and it is the
+   finished state: nothing here is translated, hidden or faded until
+   something explicitly says it is being animated. A transcription that only
+   becomes legible once a script arrives is a transcription that sometimes
+   never does.
+   ============================================================ */
+
+.scanned-transcription {
+  counter-reset: passage;
+}
+
+.scanned-transcription > * {
+  counter-increment: passage;
+  position: relative;
+}
+
+.scanned-transcription > p::before,
+.scanned-transcription > div[data-passage-at]::before {
+  content: counter(passage, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  font-family: var(--hl-label-font, ui-monospace, monospace);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  /* Decorative: the number is a position, not a word anyone needs read out. */
+  color: var(--passage-number, currentColor);
+  opacity: var(--passage-number-opacity, 0.45);
+  transition: color 400ms ease, opacity 400ms ease;
+}
+
+/*
+   The gutter the numbers and the theme bracket hang in. Only opened where
+   there is room for it — at narrow widths the text takes the full column and
+   the markers sit above rather than beside.
+*/
+@media (min-width: 700px) {
+  .scanned-transcription > * {
+    padding-left: 2.25rem;
+  }
+
+  .scanned-transcription > div[data-passage-at] > *:first-child {
+    margin-top: 0;
+  }
+}
+
+/*
+   The reveal moves the block and nothing else.
+
+   The obvious version fades a passage in from something like 12% opacity,
+   and 12% opacity is unreadable by any measure — so for the whole of the
+   transition the text would be below AA, which is a strange thing to do to
+   the half of the page that exists to be readable. Moving only `translateY`
+   removes the question: contrast never changes, so it can never drop.
+*/
+.scanned-transcription > [data-seen] {
+  transform: translateY(18px);
+  transition: transform 700ms var(--scanned-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.scanned-transcription > [data-seen='true'] {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanned-transcription > [data-seen] {
+    transform: none;
+    transition: none;
   }
 }
