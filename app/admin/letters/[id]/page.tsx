@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { TranscriptionEditor } from '@/components/editor/transcription-editor'
@@ -42,18 +43,31 @@ export default async function LetterAdminPage({
   const blocks = splitBlocks(letter.letter.mdContent)
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-medium">{letter.letter.title}</h1>
-        <p className="text-sm opacity-70">
-          {letter.pages.length} page{letter.pages.length === 1 ? '' : 's'} ·{' '}
-          {letter.letter.status} · {transcribed.length} transcribed
+    <main className="admin-shell admin-shell--wide">
+      <header className="admin-masthead">
+        <p className="meta">
+          <Link href="/admin" className="admin-back">
+            ← Letters
+          </Link>
         </p>
+        <h1 className="display admin-title">{letter.letter.title}</h1>
+        <p className="admin-card-meta">
+          <Link href={`/${letter.letter.slug}`} className="admin-slug">
+            /{letter.letter.slug}
+          </Link>
+          <span aria-hidden="true"> · </span>
+          {letter.pages.length} page{letter.pages.length === 1 ? '' : 's'}
+          <span aria-hidden="true"> · </span>
+          {transcribed.length} transcribed
+          <span aria-hidden="true"> · </span>
+          {letter.letter.status}
+        </p>
+        <span className="rule" aria-hidden="true" />
       </header>
 
       {letter.pages.length > 0 && (
-        <section className="flex flex-col gap-8">
-          <h2 className="font-medium">Pages</h2>
+        <section className="admin-section">
+          <h2 className="meta">Pages</h2>
           {letter.pages.map((page, i) => (
             <ScannedPage
               key={page.id}

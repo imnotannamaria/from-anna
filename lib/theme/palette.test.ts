@@ -51,29 +51,55 @@ function resolve(vars: Map<string, string>, name: string, depth = 0): string {
   return indirect ? resolve(vars, indirect[1], depth + 1) : value
 }
 
-function blockFor(selector: string): Map<string, string> {
-  // The block that actually declares the highlight tokens, not every :root.
+/** Every block matching `selector` that also declares `contains`. */
+function blocksWith(selector: string, contains: string): Map<string, string>[] {
   const pattern = new RegExp(
-    `${selector}\\s*\\{([^}]*--hl-important[^}]*)\\}`,
-    'm',
+    `${selector}\\s*\\{([^}]*${contains}[^}]*)\\}`,
+    'gm',
   )
-  const match = CSS.match(pattern)
-  if (!match) throw new Error(`No highlight block for ${selector}`)
-  return collectVars(match[1])
+  return [...CSS.matchAll(pattern)].map((match) => collectVars(match[1]))
+}
+
+/**
+ * Read a token as the browser would: the last declaration in the file wins.
+ *
+ * Resolving `--fg-primary` from a flat map of the whole stylesheet is what
+ * this replaced, and it was wrong the moment a second block redeclared it —
+ * the dark palette ended up measured against the light theme's ink, and the
+ * test failed on a palette that was fine.
+ */
+function tokenIn(
+  selector: string,
+  name: string,
+  vars: Map<string, string>,
+): string {
+  const blocks = blocksWith(selector, name)
+  const last = blocks.at(-1)
+  if (!last) throw new Error(`No block ${selector} declaring ${name}`)
+  const value = last.get(name)!
+  const indirect = value.match(/^var\((--[\w-]+)\)$/)
+  return indirect ? resolve(vars, indirect[1]) : value
 }
 
 const globals = collectVars(CSS)
-const darkHighlights = blockFor(':root')
-const lightHighlights = blockFor(':root\\[data-mode="light"\\]')
+const darkHighlights = blocksWith(':root', '--hl-important').at(-1)!
+const lightHighlights = blocksWith(
+  ':root\\[data-mode="light"\\]',
+  '--hl-important',
+).at(-1)!
 
 const modes = [
-  { name: 'dark', highlights: darkHighlights, fg: resolve(globals, '--fg-primary') },
-  // The light block redeclares --fg-primary, and `collectVars` keeps the last
-  // declaration, so this is read from the light-mode block directly.
+  {
+    name: 'dark',
+    highlights: darkHighlights,
+    fg: tokenIn(':root', '--fg-primary', globals),
+    canvas: tokenIn(':root', '--bg-canvas', globals),
+  },
   {
     name: 'light',
     highlights: lightHighlights,
-    fg: '#09090b',
+    fg: tokenIn(':root\\[data-mode="light"\\]', '--fg-primary', globals),
+    canvas: tokenIn(':root\\[data-mode="light"\\]', '--bg-canvas', globals),
   },
 ] as const
 
@@ -102,7 +128,7 @@ describe('highlight palette', () => {
 
     it(`${mode.name}: every highlight is visible against the canvas`, () => {
       // A fill indistinguishable from the page is not a highlight.
-      const canvas = mode.name === 'dark' ? resolve(globals, '--bg-canvas') : '#fafafa'
+      const canvas = mode.canvas
       for (const tag of TAGS) {
         const fill = mode.highlights.get(`--hl-${tag}`)!
         expect(

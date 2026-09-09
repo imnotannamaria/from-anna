@@ -151,32 +151,33 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
   }
 
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <label htmlFor="md" className="font-medium">
+    <section className="admin-section">
+      <div className="admin-card-head">
+        <label htmlFor="md" className="meta">
           Transcription
         </label>
-        <span className="text-sm opacity-70">
-          {dirty ? 'Unsaved changes' : 'No unsaved changes'}
+        <span className="meta">
+          {dirty ? 'Unsaved changes' : 'Saved'}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs opacity-70">Highlight selection as</span>
+      <div className="editor-bar">
+        <span className="meta">Highlight as</span>
         {HIGHLIGHT_TAGS.map((tag) => (
           <button
             key={tag}
             type="button"
+            data-tag={tag}
             onClick={() => applyHighlight(tag)}
-            className="rounded border px-2 py-1 text-xs"
+            className="tag-button"
           >
             {tag}
           </button>
         ))}
-        <span className="text-xs opacity-60">or ⌘⇧H for the first</span>
+        <span className="meta">or ⌘⇧H</span>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:items-start">
+      <div className="editor-grid">
         <textarea
           ref={textareaRef}
           id="md"
@@ -184,24 +185,24 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
           spellCheck={false}
-          rows={20}
-          className="w-full rounded-lg border p-3 font-mono text-sm"
+          className="editor-surface"
         />
 
         <div
           aria-label="Preview"
-          className="letter-prose min-h-40 rounded-lg border p-3"
-          // Safe: sanitized by the schema in lib/markdown/render.
+          className="letter-prose editor-preview"
+          data-revealed="true"
+          // Safe: sanitized by the schema in the package.
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="editor-bar">
         <button
           type="button"
           onClick={save}
           disabled={saving || !dirty}
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="pill"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -210,22 +211,23 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
           type="button"
           onClick={jumpToNextMark}
           disabled={marks.length === 0}
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="pill"
         >
-          Go to next [?]
+          Next [?]
         </button>
 
-        <span className="text-sm opacity-80">
+        <span className="count-chip">
           {marks.length === 0
-            ? 'Nothing left marked unreadable.'
-            : `${marks.length} passage${marks.length === 1 ? '' : 's'} the model could not read. Check each one against the photo.`}
+            ? 'nothing unreadable'
+            : `${marks.length} to check against the photo`}
         </span>
       </div>
 
       <p
         role="status"
         aria-live="polite"
-        className={`text-sm ${failed ? 'font-medium' : 'opacity-80'}`}
+        className="editor-status"
+        data-failed={failed ? 'true' : 'false'}
       >
         {failed && 'Failed: '}
         {message}

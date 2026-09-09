@@ -10,9 +10,12 @@ export const metadata: Metadata = {
 }
 
 /**
- * entrepta is dark-first: dark is the default and light is opted into with
- * `data-mode="light"` on this element. No attribute means dark, which is why
- * there is none here.
+ * `data-mode="light"` is deliberate and not a default.
+ *
+ * entrepta ships dark-first with an IDE metaphor, and this is the one project
+ * where that fights the content: the page is a photograph of ink on paper,
+ * and a dark editor chrome around it frames the wrong thing. Light mode is
+ * overridden in `globals.css` to paper rather than white.
  *
  * Fonts come from the `@import` at the top of `globals.css`, which is how
  * entrepta ships them.
@@ -23,7 +26,7 @@ export const metadata: Metadata = {
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" data-mode="light" className="h-full">
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   )
