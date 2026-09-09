@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { AA_NORMAL, contrastRatio } from '../color/contrast'
+import { AA_NORMAL, contrastRatio } from 'remark-scanned-page'
 
 /**
  * Reads the real stylesheet rather than a copy of its values.
@@ -23,6 +23,12 @@ const CSS = readFileSync(join(process.cwd(), 'app/globals.css'), 'utf8').replace
   /\/\*[\s\S]*?\*\//g,
   '',
 )
+
+/** The structural rules ship with the package; only the colours are ours. */
+const PACKAGE_CSS = readFileSync(
+  join(process.cwd(), 'packages/remark-scanned-page/styles/scanned-page.css'),
+  'utf8',
+).replace(/\/\*[\s\S]*?\*\//g, '')
 
 const TAGS = ['important', 'note', 'ask', 'unknown'] as const
 
@@ -107,13 +113,16 @@ describe('highlight palette', () => {
     })
   }
 
+  // The structure lives in the package now, so what this file guards is the
+  // palette: the part that belongs to this project and that the package
+  // deliberately refuses to choose.
   it('gives each tag its own underline style, not just a colour', () => {
     // The fills for `important` and `ask` sit within 0.01 of each other in
     // relative luminance. In greyscale they are the same swatch, so if this
     // ever collapses to one style the tags stop being distinguishable at all.
     const styles = ['important', 'note', 'ask'].map((tag) => {
-      const rule = CSS.match(
-        new RegExp(`mark\\[data-c="${tag}"\\]\\s*\\{([^}]*)\\}`, 'm'),
+      const rule = PACKAGE_CSS.match(
+        new RegExp(`mark\\[data-c='${tag}'\\]\\s*\\{([^}]*)\\}`, 'm'),
       )
       expect(rule, `no rule for ${tag}`).not.toBeNull()
       return rule![1].match(/text-decoration-style:\s*([\w-]+)/)?.[1]
@@ -124,7 +133,7 @@ describe('highlight palette', () => {
   })
 
   it('keeps the two rules that fail silently', () => {
-    const base = CSS.match(/mark\[data-c\]\s*\{([^}]*)\}/m)?.[1] ?? ''
+    const base = PACKAGE_CSS.match(/mark\[data-c\]\s*\{([^}]*)\}/m)?.[1] ?? ''
 
     // Black text on a dark fill in dark mode.
     expect(base).toMatch(/color:\s*inherit/)

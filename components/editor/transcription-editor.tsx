@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { HIGHLIGHT_TAGS } from '@/components/letter/scanned-page'
-import { renderMarkdown } from '@/lib/markdown/render'
-import { wrapSelection } from '@/lib/markdown/wrap-selection'
+import { renderMarkdown, wrapSelection } from 'remark-scanned-page'
+
+import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import {
   findIllegibleMarks,
   nextIllegibleMark,

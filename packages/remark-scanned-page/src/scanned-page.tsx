@@ -1,6 +1,4 @@
-import { renderMarkdown } from '@/lib/markdown/render'
-
-export const HIGHLIGHT_TAGS = ['important', 'note', 'ask'] as const
+import { renderMarkdown } from './render'
 
 export type ScannedPageProps = {
   /** Where the photo is served from. Private blob, behind a route. */
@@ -17,6 +15,11 @@ export type ScannedPageProps = {
   totalPages: number
   /** Photos below the fold should not block the first paint. */
   priority?: boolean
+  /** Tags this project has styling for. Anything else warns and renders neutral. */
+  knownTags?: readonly string[]
+  onUnknownTag?: (tag: string) => void
+  /** Extra classes for the rendered transcription. */
+  proseClassName?: string
 }
 
 /**
@@ -41,17 +44,13 @@ export function ScannedPage({
   pageNumber,
   totalPages,
   priority = false,
+  knownTags,
+  onUnknownTag,
+  proseClassName,
 }: ScannedPageProps) {
   // Sanitized by `renderMarkdown` — the schema is the contract, and the
   // transcription is model output, so it is treated as untrusted throughout.
-  const html = renderMarkdown(markdown, {
-    knownTags: HIGHLIGHT_TAGS,
-    onUnknownTag: (tag) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`Unknown highlight tag "${tag}" in page ${pageNumber}`)
-      }
-    },
-  })
+  const html = renderMarkdown(markdown, { knownTags, onUnknownTag })
 
   return (
     <article
@@ -83,7 +82,7 @@ export function ScannedPage({
       </figure>
 
       <div
-        className="letter-prose"
+        className={proseClassName}
         // Safe: the HTML came out of the sanitize schema in lib/markdown.
         dangerouslySetInnerHTML={{ __html: html }}
       />

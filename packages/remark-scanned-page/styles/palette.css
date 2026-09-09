@@ -1,0 +1,25 @@
+/* ============================================================
+   remark-scanned-page · optional neutral palette
+   ============================================================
+
+   Import this and highlights work immediately, in light and dark, without
+   this package deciding what your accent colours are.
+
+   The fills are deliberately the same neutral grey for every tag. That is
+   not laziness: the three tags stay distinguishable through their underline
+   styles alone, which is the accessible baseline the structure stylesheet
+   guarantees. Colour is the layer you add on top, once you have chosen it
+   and measured it.
+
+   Translucent grey sits legibly over a light or a dark page, so text keeps
+   its contrast either way without this file knowing which mode you are in.
+
+   To replace it, define the four variables yourself and drop this import.
+   ============================================================ */
+
+:root {
+  --hl-important: rgba(128, 128, 128, 0.28);
+  --hl-note: rgba(128, 128, 128, 0.28);
+  --hl-ask: rgba(128, 128, 128, 0.28);
+  --hl-unknown: rgba(128, 128, 128, 0.18);
+}

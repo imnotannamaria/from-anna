@@ -1,0 +1,109 @@
+/* ============================================================
+   remark-scanned-page · structure
+   ============================================================
+
+   Everything here is layout and legibility. There are no colours: this
+   package does not know what your palette is, and baking one in would drag
+   another project's design into yours.
+
+   Define the fills yourself, or start from styles/palette.css:
+
+     :root {
+       --hl-important: #7d2947;
+       --hl-note:      #6b4a12;
+       --hl-ask:       #3d3a7a;
+       --hl-unknown:   #3f3f46;
+     }
+
+   Two things to check when you pick them, both easy to get wrong:
+
+   1. Measure contrast against the highlight fill, not the page background.
+      A <mark> paints over the canvas, so canvas contrast says nothing about
+      whether the highlighted words can be read. `meetsAA` is exported for
+      exactly this.
+
+   2. A fill that passes text contrast can still be invisible against the
+      page. Pale yellow on near-white reads 16:1 for the text and 1.17:1
+      against the canvas, so the highlight does not look like one.
+   ============================================================ */
+
+mark[data-c] {
+  --hl: var(--hl-unknown);
+
+  background: var(--hl);
+  padding: 0.15em 0.2em;
+  border-radius: 2px;
+
+  /*
+     The user agent stylesheet sets `color: black` on <mark>. Without this,
+     a dark theme puts black text on a dark fill.
+  */
+  color: inherit;
+
+  /*
+     Without `clone`, a highlight crossing a line break is padded only at the
+     very start and the very end, so the middle lines sit flush and the shape
+     looks broken. Most highlights wrap.
+  */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+
+  /*
+     The non-colour signal, and not decoration. Two fills chosen for different
+     hues can sit within 0.01 of each other in relative luminance, which makes
+     them the same swatch in greyscale and to anyone who does not separate
+     those hues. The underline style is what carries the difference.
+     WCAG 1.4.1.
+  */
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+mark[data-c='important'] {
+  --hl: var(--hl-important);
+  text-decoration-style: solid;
+}
+
+mark[data-c='note'] {
+  --hl: var(--hl-note);
+  text-decoration-style: dotted;
+}
+
+mark[data-c='ask'] {
+  --hl: var(--hl-ask);
+  text-decoration-style: wavy;
+}
+
+/* ---- themed blocks -------------------------------------------------- */
+
+aside[data-theme-label] {
+  position: relative;
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--hl-bracket, currentColor);
+}
+
+aside[data-theme-label]::before {
+  content: attr(data-theme-label);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--hl-label-font, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hl-bracket, currentColor);
+}
+
+/*
+   No side margin to hang a bracket in at narrow widths, so the label sits
+   above the block. It is the same information either way, which is the point
+   of writing the theme out rather than relying on the colour.
+*/
+@media (min-width: 900px) {
+  aside[data-theme-label] {
+    padding-left: 1.5rem;
+  }
+}

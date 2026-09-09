@@ -52,8 +52,16 @@ The fills are not entrepta tokens: entrepta's julia preset only overrides the br
 
 ---
 
+**The package is an npm workspace in this repo, not a separate one** — because the app importing it by name is what makes a duplicate pipeline impossible. Two repos would mean publishing and bumping a dependency every time the plugin changes, just to test it against the only real consumer.
+
+**In the workspace, `exports` points at the TypeScript source** — because a build step between editing the package and seeing it in the app is friction that gets skipped. `publishConfig` swaps to `dist/` at publish time, so the tarball still ships compiled JS.
+
+**The name is `remark-scanned-page`** — because the package is plugin *and* CSS *and* component, and `remark-mark-directive` would have described only the first. `scanned page` is also what the second plausible user is searching for.
+
+**`styles/palette.css` is one neutral grey for every tag** — because the underline styles already separate them, so the accessible baseline works on install and colour stays an explicit choice rather than an inherited one.
+
+---
+
 ## Open
 
-**The three colour values.** entrepta isn't installed in the repo yet, so the julia tokens haven't been read.
-
-**Package name.** `remark-mark-directive` is the candidate, pending an npm availability check.
+**Installing into a blank Next app.** The one check that would catch a wrong `exports` map, still unverified.

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import 'remark-scanned-page/styles/scanned-page.css'
+
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,6 +16,10 @@ export const metadata: Metadata = {
  *
  * Fonts come from the `@import` at the top of `globals.css`, which is how
  * entrepta ships them.
+ *
+ * The package stylesheet is imported before `globals.css` so this project's
+ * palette is declared after the structure it fills in. Custom properties
+ * resolve at use time, so the order is for readers, not the cascade.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (

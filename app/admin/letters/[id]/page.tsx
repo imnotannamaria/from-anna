@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation'
 
 import { TranscriptionEditor } from '@/components/editor/transcription-editor'
-import { ScannedPage } from '@/components/letter/scanned-page'
+import { ScannedPage } from 'remark-scanned-page'
 import { PageUploader } from '@/components/upload/page-uploader'
 import { TranscribeButton } from '@/components/upload/transcribe-button'
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
 import { getLetterWithPages } from '@/lib/letters/mutations'
+import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { splitBlocks } from '@/lib/transcription/split'
 
 /** Reads the database, so it is never cached. */
@@ -64,6 +65,8 @@ export default async function LetterAdminPage({
               pageNumber={page.index + 1}
               totalPages={letter.pages.length}
               priority={i === 0}
+              knownTags={HIGHLIGHT_TAGS}
+              proseClassName="letter-prose"
             />
           ))}
         </section>

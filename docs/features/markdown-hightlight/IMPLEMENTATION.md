@@ -184,13 +184,21 @@ Plugin, CSS and React component ship together. The plugin alone emits colourless
 
 The package defines no tag vocabulary — only the mechanism and three colour slots. The app fills them with `important`, `note`, `ask`.
 
+Lives at `packages/remark-scanned-page/`, as an npm workspace. The app imports it by name, which is what makes a second copy of the pipeline impossible rather than merely discouraged.
+
+In the workspace, `exports` resolves to the TypeScript source, so editing the package shows up in the app and the tests with no build step in between. `publishConfig` swaps to `dist/` at publish time, and `transpilePackages` in `next.config.ts` is what lets Next compile the source.
+
 **Done when**
 
-- [ ] It installs into a blank Next app and renders with no entrepta present
-- [ ] Types are exported and the build emits declarations
-- [ ] The README documents the syntax, the tokens to fill in, and the sanitize schema
-- [ ] The package name is confirmed free on npm
-- [ ] Licence is MIT, matching the rest of the stack
+- [x] Structure and colour are separated: `styles/scanned-page.css` ships the rules, the app ships only the four token values
+- [x] Types are exported and `npm run build:pkg` emits declarations and source maps
+- [x] The README documents the syntax, the tokens, the two contrast traps, and the sanitize schema
+- [x] `remark-scanned-page` confirmed free on npm
+- [x] MIT, with a LICENSE in the package
+- [x] `npm pack --dry-run` produces a 15.8kB tarball with dist, styles, README and LICENSE
+- [ ] Installed into a blank Next app and rendered — not verified yet, and it is the one check that would catch a wrong `exports` map
+
+`styles/palette.css` is optional and deliberately one neutral grey for every tag. The three stay distinguishable through their underline styles alone, which makes the accessible baseline the default and colour the thing you add once you have measured it.
 
 **Checks**
 
