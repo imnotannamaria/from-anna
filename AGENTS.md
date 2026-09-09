@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # from anna
 
 Handwritten letters, photographed and published. The photo is the visual layer, the transcription is the content.
-Stack: Next.js 16, unified/remark, Neon, Vercel Blob, OpenRouter, Clerk, entrepta. Dark first.
+Stack: Next.js 16, unified/remark, Neon, Vercel Blob, OpenRouter, Clerk, entrepta. Light, on paper.
 
 For setup and env vars, see [README.md](README.md). For why any of it is the way it is, see [docs/](docs/). This file covers conventions to follow when writing code here.
 
@@ -24,7 +24,7 @@ For setup and env vars, see [README.md](README.md). For why any of it is the way
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + entrepta tokens |
-| Design system | entrepta, dark first |
+| Design system | entrepta (julia), run in light mode |
 | Markdown | unified, remark-parse, remark-directive, remark-rehype, rehype-sanitize, rehype-stringify |
 | Database | Postgres (Neon) via Drizzle ORM |
 | File storage | Vercel Blob |
@@ -110,6 +110,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 
 ## Conventions
 
+- **The app runs in light mode, and that is a decision, not a default.** entrepta ships dark-first with an IDE metaphor; here every page frames a photograph of ink on paper, and dark editor chrome frames the wrong thing. `data-mode="light"` is set on `<html>` and the surfaces are overridden to paper rather than white in `globals.css`.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
 - **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists.
@@ -129,6 +130,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 
 - **The plan comes before the code.** Every feature has an `IMPLEMENTATION.md` split into phases, each with a done-when list. If a change doesn't fit a phase, the doc is wrong and should be updated in the same commit — not ignored.
 - **A decision goes in `DECISIONS.md` as one line: X because Y.** Not an essay, not a survey of options nobody seriously considered.
+- **Discovery docs are written in Portuguese.** Every other committed doc is in English, and this is the deliberate exception: a discovery doc asks Anna questions and waits for answers on the `→` lines. Questions someone has to answer are written in the language they think in. Once a discovery closes and becomes a plan, it can be rewritten in English with everything else.
 - **`docs/board.png` is the original sketch and stays as it is.** It disagrees with the docs in places — Railway instead of Neon, `:hl` instead of `:mark` — and that distance is the point. Don't "fix" it.
 - **When you write anything that lands in this repo, ask whether it reads well to someone outside it.** A stranger reading the docs should find a project about publishing handwritten letters, and nothing about my private reasons for building it. That context belongs in `CLAUDE.local.md`, which is gitignored.
 
@@ -159,7 +161,7 @@ Deliver findings as an uncommitted Markdown doc at the repo root (`CODE-REVIEW-<
 # from anna
 
 Handwritten letters, photographed and published. The photo is the visual layer, the transcription is the content.
-Stack: Next.js 16, unified/remark, Neon, Vercel Blob, OpenRouter, Clerk, entrepta. Dark first.
+Stack: Next.js 16, unified/remark, Neon, Vercel Blob, OpenRouter, Clerk, entrepta. Light, on paper.
 
 For setup and env vars, see [README.md](README.md). For why any of it is the way it is, see [docs/](docs/). This file covers conventions to follow when writing code here.
 
@@ -172,7 +174,7 @@ For setup and env vars, see [README.md](README.md). For why any of it is the way
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + entrepta tokens |
-| Design system | entrepta, dark first |
+| Design system | entrepta (julia), run in light mode |
 | Markdown | unified, remark-parse, remark-directive, remark-rehype, rehype-sanitize, rehype-stringify |
 | Database | Postgres (Neon) via Drizzle ORM |
 | File storage | Vercel Blob |
@@ -258,6 +260,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 
 ## Conventions
 
+- **The app runs in light mode, and that is a decision, not a default.** entrepta ships dark-first with an IDE metaphor; here every page frames a photograph of ink on paper, and dark editor chrome frames the wrong thing. `data-mode="light"` is set on `<html>` and the surfaces are overridden to paper rather than white in `globals.css`.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
 - **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists.
@@ -277,6 +280,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 
 - **The plan comes before the code.** Every feature has an `IMPLEMENTATION.md` split into phases, each with a done-when list. If a change doesn't fit a phase, the doc is wrong and should be updated in the same commit — not ignored.
 - **A decision goes in `DECISIONS.md` as one line: X because Y.** Not an essay, not a survey of options nobody seriously considered.
+- **Discovery docs are written in Portuguese.** Every other committed doc is in English, and this is the deliberate exception: a discovery doc asks Anna questions and waits for answers on the `→` lines. Questions someone has to answer are written in the language they think in. Once a discovery closes and becomes a plan, it can be rewritten in English with everything else.
 - **`docs/board.png` is the original sketch and stays as it is.** It disagrees with the docs in places — Railway instead of Neon, `:hl` instead of `:mark` — and that distance is the point. Don't "fix" it.
 - **When you write anything that lands in this repo, ask whether it reads well to someone outside it.** A stranger reading the docs should find a project about publishing handwritten letters, and nothing about my private reasons for building it. That context belongs in `CLAUDE.local.md`, which is gitignored.
 
