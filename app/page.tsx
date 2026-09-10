@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { ScannedTranscription } from 'remark-scanned-page'
 
+import { ExternalLink } from '@/components/ui/external-link'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
 const REPO = 'https://github.com/imnotannamaria/from-anna'
@@ -101,12 +102,12 @@ export default function Home() {
           </p>
 
           <p className="home-actions" style={{ animationDelay: '480ms' }}>
-            <a href={REPO} className="pill pill--solid">
+            <ExternalLink href={REPO} className="pill pill--solid">
               Read the source <span aria-hidden="true">→</span>
-            </a>
-            <a href={PACKAGE} className="pill">
+            </ExternalLink>
+            <ExternalLink href={PACKAGE} className="pill">
               The package
-            </a>
+            </ExternalLink>
           </p>
 
           <p className="meta home-quiet" style={{ animationDelay: '600ms' }}>
@@ -134,9 +135,9 @@ export default function Home() {
             />
             <p className="home-sign">
               — Anna,{' '}
-              <a href={PORTFOLIO} className="home-link">
+              <ExternalLink href={PORTFOLIO} className="home-link">
                 annamaria.app
-              </a>
+              </ExternalLink>
             </p>
           </div>
         </div>
@@ -256,9 +257,9 @@ export default function Home() {
           discouraged. It is not on npm yet.
         </p>
         <p className="home-actions">
-          <a href={PACKAGE} className="pill">
+          <ExternalLink href={PACKAGE} className="pill">
             The package <span aria-hidden="true">→</span>
-          </a>
+          </ExternalLink>
         </p>
       </section>
 
@@ -316,33 +317,33 @@ npm run dev`}</code>
             it, and it is yours rather than an account on something of mine.
           </p>
           <p className="home-actions">
-            <a href={REPO} className="pill pill--solid">
+            <ExternalLink href={REPO} className="pill pill--solid">
               Read the source <span aria-hidden="true">→</span>
-            </a>
-            <a href={`${REPO}/tree/main/docs`} className="pill">
+            </ExternalLink>
+            <ExternalLink href={`${REPO}/tree/main/docs`} className="pill">
               Why it is the way it is
-            </a>
+            </ExternalLink>
           </p>
         </div>
       </section>
 
       <footer className="home-foot">
         <p className="meta">
-          <a href={REPO} className="home-link">
+          <ExternalLink href={REPO} className="home-link">
             source
-          </a>
+          </ExternalLink>
           <span aria-hidden="true"> · </span>
-          <a href={PACKAGE} className="home-link">
+          <ExternalLink href={PACKAGE} className="home-link">
             remark-scanned-page
-          </a>
+          </ExternalLink>
           <span aria-hidden="true"> · </span>
-          <a href={`${REPO}/blob/main/LICENSE`} className="home-link">
+          <ExternalLink href={`${REPO}/blob/main/LICENSE`} className="home-link">
             MIT
-          </a>
+          </ExternalLink>
           <span aria-hidden="true"> · </span>
-          <a href={PORTFOLIO} className="home-link">
+          <ExternalLink href={PORTFOLIO} className="home-link">
             anna
-          </a>
+          </ExternalLink>
         </p>
       </footer>
     </main>
