@@ -2571,8 +2571,27 @@ body::before {
   --fade-to: 0.6;
 }
 
+/* The card is addressed, the way a letter is. Serif, not the mono label. */
 .home-stack-mark {
-  margin: 0 0 1.1rem;
+  margin: 0 0 1.2rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg-secondary);
+}
+
+.home-stack-mark em {
+  font-style: italic;
+  color: var(--fg-brand);
+}
+
+.home-sign {
+  margin: 1.4rem 0 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--fg-secondary);
 }
 
 .home-stack .letter-prose {

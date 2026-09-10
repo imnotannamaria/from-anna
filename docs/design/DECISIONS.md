@@ -116,7 +116,11 @@ They fan to the left because the photograph runs off the right edge of the viewp
 
 **The demonstration is rendered by the package, not screenshotted** — the same plugin, the same sanitize schema, the same stylesheet a published letter goes through. A screenshot drifts from the code the first time either changes; this cannot.
 
-**The opening carries a stack of sheets with a real render on top** — the thing the page is describing rather than a picture of it. It is `aria-hidden`: a fragment of a made-up letter with no context, whose accessible version is the same output further down under a heading that explains it. Same call the letter pages make about their opening photograph.
+**The opening carries a stack of sheets with a real render on top, and what it says is the actual answer** — a note from me about why this exists, laid out as a letter and rendered by the same package a real one goes through. A specimen would have demonstrated the mechanism and answered nothing.
+
+It is **not** `aria-hidden`, unlike the opening photograph on a letter page: those words appear nowhere else, so hiding them would hide content rather than remove a duplicate.
+
+**The card is addressed — *from anna to you*** — because it is a letter, and a letter is addressed. It carries a link to my own site at the bottom, signed, which is where a signature goes.
 
 **There is a note about cost, and it is specific** — every letter is a model call and some storage, so this instance stays personal and there is no sign-up. Saying *no accounts* without saying *why* reads like a moat. The code is MIT and the clone command is directly above it.
 

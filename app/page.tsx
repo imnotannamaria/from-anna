@@ -6,6 +6,7 @@ import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
 const REPO = 'https://github.com/imnotannamaria/from-anna'
 const PACKAGE = `${REPO}/tree/main/packages/remark-scanned-page`
+const PORTFOLIO = 'https://annamaria.app'
 
 export const metadata: Metadata = {
   title: 'from anna — handwritten letters, published',
@@ -25,14 +26,27 @@ export const metadata: Metadata = {
  * the same stylesheet a published letter does. A screenshot would drift from
  * the code the first time either changed; this cannot.
  */
-const OPENING = `:mark[Oi — testando]{c=important}, and then testing in
-English now, because the first thing anyone
-writes in a new notebook is proof that the
-pen works.
+/**
+ * The note on the front door.
+ *
+ * It is a letter about the site, rendered by the same package as a real one —
+ * which is a better demonstration than a specimen would be, and it answers
+ * the question anyone landing here actually has.
+ *
+ * Not `aria-hidden`, unlike the opening photograph on a letter page: this is
+ * the only place these words appear, so hiding them would hide content.
+ */
+const OPENING = `Hi, whoever is testing this site. I'm Anna,
+and I built it because:
 
-:::theme{label="what I actually built"}
-A page that photographs itself and then
-transcribes what it found.
+A few days ago I got a notebook and realised it
+had been a while since I had actually
+:mark[WRITTEN SOMETHING BY HAND]{c=important} (lol).
+
+:::theme{label="and it matters more now"}
+With AI in the middle of how most things get
+made, I think a handwritten letter
+:mark[means even more]{c=note} than it used to.
 :::`
 
 const DEMO = `:::passage
@@ -101,23 +115,29 @@ export default function Home() {
         </div>
 
         {/*
-          A stack of sheets with a letter on top of it — the thing the page is
-          describing, rendered by the package rather than drawn.
+          A stack of sheets with a note on top of it — laid out as a letter,
+          rendered by the same package a real one goes through, and saying the
+          thing anyone landing here actually wants to know.
 
-          `aria-hidden` because it is a fragment of a made-up letter with no
-          context, and the same output appears further down with a heading
-          explaining what it is. Announcing it twice makes the spoken page
-          longer than the read one, which is the same call the letter pages
-          make about their opening photograph.
+          Read by everyone, unlike the opening photograph on a letter page:
+          this is the only place these words appear.
         */}
-        <div className="home-stack" aria-hidden="true">
+        <div className="home-stack">
           <div className="home-stack-sheet" data-revealed="true">
-            <p className="meta home-stack-mark">autumn · bureau · cove</p>
+            <p className="home-stack-mark">
+              from anna <em>to you</em>
+            </p>
             <ScannedTranscription
               markdown={OPENING}
               className="letter-prose"
               knownTags={HIGHLIGHT_TAGS}
             />
+            <p className="home-sign">
+              — Anna,{' '}
+              <a href={PORTFOLIO} className="home-link">
+                annamaria.app
+              </a>
+            </p>
           </div>
         </div>
       </section>
@@ -318,6 +338,10 @@ npm run dev`}</code>
           <span aria-hidden="true"> · </span>
           <a href={`${REPO}/blob/main/LICENSE`} className="home-link">
             MIT
+          </a>
+          <span aria-hidden="true"> · </span>
+          <a href={PORTFOLIO} className="home-link">
+            anna
           </a>
         </p>
       </footer>
