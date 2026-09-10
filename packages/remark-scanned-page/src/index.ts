@@ -12,7 +12,9 @@ export { renderMarkdown, schema } from './render.js'
 export {
   wrapPassage,
   wrapSelection,
+  wrapTheme,
   type PassageResult,
+  type ThemeResult,
   type WrapResult,
 } from './wrap-selection.js'
 

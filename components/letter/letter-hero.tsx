@@ -43,7 +43,7 @@ export function LetterHero({ sentOn, photo, sheetCount }: Props) {
 
         <p className="meta hero-meta" style={{ animationDelay: '460ms' }}>
           {sheetCount === 1 ? 'one sheet' : `${sheetCount} sheets`}
-          {sentOn && <> · {sentOn}</>} · <span>unlisted link</span>
+          {sentOn && <> · {sentOn}</>}
         </p>
 
         <div

@@ -83,7 +83,13 @@ export default async function LetterAdminPage({
         live={isPubliclyReadable(letter.letter)}
       />
 
-      <section className="admin-block" aria-labelledby="photographs">
+      {/* Revealed: nothing here scrolls in, so the highlights and brackets
+          are drawn from the start rather than waiting for a reader. */}
+      <section
+        className="admin-block"
+        aria-labelledby="photographs"
+        data-revealed="true"
+      >
         <h2 className="meta admin-block-title" id="photographs">
           Photographs
         </h2>

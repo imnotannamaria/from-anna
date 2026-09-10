@@ -155,7 +155,9 @@ if (result.status === 'ok') {
 
 Wraps a selection in the directive and tells you where the caret goes. With nothing selected it inserts an empty highlight and puts the caret between the brackets. A selection that already contains a highlight is refused, because nesting does not parse into anything sensible and silently emitting broken markdown is worse than saying no.
 
-`wrapPassage(value, start, end)` is the same shape for `:::passage`. A container directive has to sit on its own lines, so the selection is expanded outwards to whole ones rather than cutting a paragraph in half and producing markdown that means something else.
+`wrapTheme(value, start, end, label?)` is the same shape for `:::theme`: the bracket with a name beside it. A container directive has to sit on its own lines, so the selection is expanded outwards to whole paragraphs: a paragraph, and a highlight inside one, can run over several lines, and a fence between two of them breaks both. The label comes back selected, or as a caret between the quotes when there is none, because the name is the next thing to type. A theme inside a theme is refused (the renderer would unwrap it and the bracket would silently not appear), and so is a selection that takes half of another block with it.
+
+`wrapPassage(value, start, end)` does the same for `:::passage`.
 
 ## Security
 

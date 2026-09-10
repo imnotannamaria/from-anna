@@ -104,6 +104,7 @@ jobs:
             assert.match(html, /<div>/, ':::passage')
 
             assert.equal(pkg.wrapSelection('hello', 0, 5, 'note').status, 'ok', 'wrapSelection')
+            assert.equal(pkg.wrapTheme('hello', 0, 5).status, 'ok', 'wrapTheme')
             assert.equal(pkg.meetsAA('#221d18', '#f7b9cf'), true, 'meetsAA')
 
             const root = './node_modules/remark-scanned-page/'

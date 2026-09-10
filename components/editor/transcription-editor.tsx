@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { renderMarkdown, wrapPassage, wrapSelection } from 'remark-scanned-page'
+import { renderMarkdown, wrapSelection, wrapTheme } from 'remark-scanned-page'
 
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { normaliseCase } from '@/lib/transcription/normalize-case'
@@ -113,11 +113,16 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
     })
   }
 
-  function applyPassage() {
+  /*
+    The bracket down the side, with a name beside it. This button used to
+    group lines into a `:::passage`, which drew nothing once the passage
+    numbers went, so it looked broken. A theme is the grouping you can see.
+  */
+  function applyTheme() {
     const textarea = textareaRef.current
     if (!textarea) return
 
-    const result = wrapPassage(
+    const result = wrapTheme(
       value,
       textarea.selectionStart,
       textarea.selectionEnd,
@@ -130,7 +135,7 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
     }
 
     setFailed(false)
-    setMessage('Grouped into a passage.')
+    setMessage('Grouped. Type the theme’s name between the quotes.')
     setValue(result.value)
 
     requestAnimationFrame(() => {
@@ -239,8 +244,8 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
           </button>
         ))}
         <span className="meta">or ⌘⇧H</span>
-        <button type="button" onClick={applyPassage} className="pill">
-          Group as passage
+        <button type="button" onClick={applyTheme} className="pill">
+          Group under a theme
         </button>
         {/*
           On the edited text, never in the prompt: the raw transcription is

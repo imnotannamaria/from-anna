@@ -89,3 +89,5 @@ Two bugs, one of them invisible from inside this repo: Next, Turbopack and vites
 **The release workflow installs the tarball into an empty project before it publishes** — because that is the only check that catches a broken package, and it caught two. Everything inside this repository resolves specifiers that Node refuses, so nothing here can fail the way a consumer does.
 
 **Trusted publishing rather than an `NPM_TOKEN` secret** — a long-lived credential in repository settings is a credential that outlives the reason it was created. OIDC mints one for the job and it expires with it.
+
+**0.3.0 adds `wrapTheme`, and the editor's grouping button makes a theme** — "Group as passage" drew nothing once the passage numbers were gone, so it looked broken. The grouping worth a button is the one you can see: the bracket with a name beside it. `wrapPassage` and `:::passage` stay, so no letter that uses them changes. `wrapTheme` refuses a theme inside a theme (the renderer would unwrap it and the bracket would silently not appear) and a selection that takes half of another block.

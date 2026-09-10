@@ -159,3 +159,7 @@ Read on a real letter, on a real phone, at `from-anna.vercel.app`.
 **The fonts are self-hosted through `next/font`** — the Google Fonts `@import` at the top of `globals.css` never reached the browser: the build dropped it, and every page had been set in Times New Roman, Georgia and Menlo since the first deploy. `next/font` downloads them at build time, serves them from this domain and does not depend on where a line sits in a stylesheet.
 
 **No enlarged first letter** — the letterpress nod on the first letter read as a mistake rather than a flourish, most of all on a letter that opens with a date.
+
+**No "unlisted link" in the opening** — the line under the heading says how many sheets and when; how the link was shared is not something the reader needs told on the page they are already reading.
+
+**The editor preview draws the brackets and the highlight sweep** — it is `.letter-prose` and `data-revealed` on the same element, which the descendant selectors never matched, so a theme drew its label and no bracket there.

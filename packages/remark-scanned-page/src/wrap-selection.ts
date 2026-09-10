@@ -140,3 +140,137 @@ export function wrapPassage(
     selectionEnd: selectionStart + selected.length,
   }
 }
+
+/** A paragraph break: a line with nothing on it. */
+const PARAGRAPH_BREAK = /\n[ \t]*\n/g
+
+/** Expand `[from, to)` out to whole paragraphs. */
+function toWholeParagraphs(value: string, from: number, to: number) {
+  let start = 0
+  let end = value.length
+  for (const match of value.matchAll(PARAGRAPH_BREAK)) {
+    const after = match.index + match[0].length
+    if (after <= from) start = after
+    if (match.index >= to) {
+      end = match.index
+      break
+    }
+  }
+  return { start, end }
+}
+
+export type ThemeResult =
+  | {
+      status: 'ok'
+      value: string
+      /** The label, selected, so typing replaces it. Empty means a caret. */
+      selectionStart: number
+      selectionEnd: number
+    }
+  | {
+      status: 'refused'
+      reason: 'empty' | 'nested' | 'partial'
+      message: string
+    }
+
+const FENCE_OPEN = /^\s*:{3,}\s*([A-Za-z][\w-]*)/
+const FENCE_CLOSE = /^\s*:{3,}\s*$/
+
+/**
+ * The container directives still open at the end of `lines`, innermost
+ * last, or `null` if a fence closes something that was never opened.
+ */
+function openContainers(lines: string[]): string[] | null {
+  const stack: string[] = []
+  for (const line of lines) {
+    const open = FENCE_OPEN.exec(line)
+    if (open) {
+      stack.push(open[1])
+      continue
+    }
+    if (FENCE_CLOSE.test(line)) {
+      if (stack.length === 0) return null
+      stack.pop()
+    }
+  }
+  return stack
+}
+
+/**
+ * Wrap the selected lines in `:::theme{label="…"}`: the bracket down the
+ * side, with a name beside it.
+ *
+ * Expanded out to whole paragraphs, because a container directive has to sit
+ * on lines of its own, and a paragraph, or a highlight inside one, can run
+ * over several lines. The label comes back selected —
+ * or, when empty, as a caret between the quotes — because a theme is only as
+ * useful as its name, and the name is the next thing to type.
+ *
+ * Refused, rather than written wrong:
+ * - a theme inside a theme, which the renderer unwraps, so the bracket would
+ *   silently not appear;
+ * - a selection holding half of another block, one `:::` without its pair,
+ *   which would close the wrong thing.
+ */
+export function wrapTheme(
+  value: string,
+  start: number,
+  end: number,
+  label = '',
+): ThemeResult {
+  const from = Math.max(0, Math.min(start, end))
+  const to = Math.min(value.length, Math.max(start, end))
+
+  // A blank line under the cursor is not something to group.
+  const line = toWholeLines(value, from, to)
+  if (value.slice(line.start, line.end).trim() === '') {
+    return {
+      status: 'refused',
+      reason: 'empty',
+      message: 'Put the cursor in the lines you want to group first.',
+    }
+  }
+
+  // Whole paragraphs, not whole lines. A paragraph can run over several
+  // lines and so can a highlight inside it: fencing off one line put `:::`
+  // in the middle of a `:mark[…]`, which then rendered as plain text.
+  const lines = toWholeParagraphs(value, from, to)
+  const selected = value.slice(lines.start, lines.end)
+
+  const around = openContainers(value.slice(0, lines.start).split('\n'))
+  const inside = openContainers(selected.split('\n'))
+
+  if (around?.includes('theme') || inside?.includes('theme') || /^\s*:{3,}\s*theme/m.test(selected)) {
+    return {
+      status: 'refused',
+      reason: 'nested',
+      message: 'That is already under a theme. Themes cannot nest.',
+    }
+  }
+
+  if (inside === null || inside.length > 0) {
+    return {
+      status: 'refused',
+      reason: 'partial',
+      message:
+        'That selection takes half of another block with it. Select the whole block, or none of it.',
+    }
+  }
+
+  // A quote would end the attribute early.
+  const name = label.replace(/"/g, "'")
+  const before = ':::theme{label="'
+  const next =
+    value.slice(0, lines.start) +
+    `${before}${name}"}\n${selected}\n:::` +
+    value.slice(lines.end)
+
+  const labelStart = lines.start + before.length
+
+  return {
+    status: 'ok',
+    value: next,
+    selectionStart: labelStart,
+    selectionEnd: labelStart + name.length,
+  }
+}

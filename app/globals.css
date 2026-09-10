@@ -729,6 +729,7 @@ body::before {
    around it are reached, not when the page loads.
 */
 [data-revealed="true"] .letter-prose mark[data-c],
+.letter-prose[data-revealed="true"] mark[data-c],
 .letter-prose > [data-seen="true"] mark[data-c] {
   background-size: 100% 100%;
   text-decoration-color: currentColor;
@@ -768,6 +769,10 @@ body::before {
 }
 
 [data-revealed="true"] .letter-prose aside[data-theme-label]::after,
+/* The editor preview is `.letter-prose` and revealed on the same element,
+   which the descendant selector above never matched: the bracket stayed at
+   scale zero there, so grouping under a theme looked like it did nothing. */
+.letter-prose[data-revealed="true"] aside[data-theme-label]::after,
 .letter-prose > aside[data-theme-label][data-seen="true"]::after {
   transform: scaleY(1);
   opacity: 0.75;
@@ -1123,10 +1128,6 @@ body::before {
   background-repeat: no-repeat;
   background-size: 0% 100%;
   animation: sweep 700ms var(--ease-out-quint) 900ms forwards;
-}
-
-.hero-meta span {
-  color: var(--fg-secondary);
 }
 
 .hero-cue {
