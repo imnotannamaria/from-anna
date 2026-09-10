@@ -1,0 +1,133 @@
+name: Release
+
+# Only the package. The app deploys from Vercel on every push; this workflow
+# exists for the one thing in the repository that other people install.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/remark-scanned-page/**'
+      - '.github/workflows/release.yml'
+
+# Never let two releases run at once. A queued run must wait, not cancel: a
+# publish that is interrupted halfway leaves a version claimed and unusable,
+# and npm does not let you republish over it.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish if the version changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Lets npm mint a short-lived publish credential for this job. This is
+      # what trusted publishing uses, and it is why there is no NPM_TOKEN
+      # anywhere in here.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1, and the npm bundled with a
+      # given Node 22 build lags behind that. Pin it rather than gamble on
+      # whatever ships with the runner today.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The version in the file is the decision. If it already exists on the
+      # registry there is nothing to do, which is what every push that touched
+      # the package without bumping it looks like.
+      - name: Read the version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./packages/remark-scanned-page/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "remark-scanned-page@$VERSION" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "remark-scanned-page@$VERSION is already on npm. Nothing to do."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "remark-scanned-page@$VERSION is new."
+          fi
+
+      - name: Typecheck
+        if: steps.version.outputs.published == 'false'
+        run: npm run typecheck
+
+      - name: Test
+        if: steps.version.outputs.published == 'false'
+        run: npm test
+
+      - name: Build the package
+        if: steps.version.outputs.published == 'false'
+        run: npm run build:pkg
+
+      # The check that matters, and the only one that can catch what broke
+      # this package twice before its first release: `publishConfig` never
+      # rewrote the entry points, and ESM relative imports had no `.js`
+      # extension. Neither is visible from inside the repo, because Next,
+      # Turbopack and vitest all resolve what Node refuses.
+      #
+      # So: pack it, install the tarball somewhere with none of this
+      # repository's resolution in scope, and run it.
+      - name: Install the tarball and run it
+        if: steps.version.outputs.published == 'false'
+        run: |
+          set -euo pipefail
+          TARBALL="$(cd packages/remark-scanned-page && npm pack --silent)"
+          TARBALL="$PWD/packages/remark-scanned-page/$TARBALL"
+
+          mkdir -p "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y > /dev/null
+          npm install --silent "$TARBALL" react react-dom
+
+          node --input-type=module -e "
+            import assert from 'node:assert/strict'
+            import fs from 'node:fs'
+
+            const pkg = await import('remark-scanned-page')
+
+            const html = pkg.renderMarkdown(':::passage\nA :mark[phrase]{c=note} of it.\n:::')
+            assert.match(html, /<mark data-c=\"note\">phrase<\/mark>/, 'renderMarkdown')
+            assert.match(html, /<div>/, ':::passage')
+
+            assert.equal(pkg.wrapSelection('hello', 0, 5, 'note').status, 'ok', 'wrapSelection')
+            assert.equal(pkg.meetsAA('#221d18', '#f7b9cf'), true, 'meetsAA')
+
+            const root = './node_modules/remark-scanned-page/'
+            for (const file of ['styles/scanned-page.css', 'styles/palette.css', 'dist/index.d.ts']) {
+              assert.ok(fs.existsSync(root + file), file + ' is missing from the tarball')
+            }
+
+            console.log('the published shape works')
+          "
+
+      - name: Publish
+        if: steps.version.outputs.published == 'false'
+        run: npm publish
+        working-directory: packages/remark-scanned-page
+
+      - name: Tag it
+        if: steps.version.outputs.published == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="remark-scanned-page@$VERSION"
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "https://www.npmjs.com/package/remark-scanned-page/v/$VERSION"

@@ -41,7 +41,15 @@ one thing the reader arrives at.
 :::
 ```
 
-No table of offsets, no join. The `.md` file carries everything, so fixing a comma doesn't break the highlighting. That layer is being extracted into a standalone package — see [docs/features/markdown-hightlight/](docs/features/markdown-hightlight/).
+No table of offsets, no join. The `.md` file carries everything, so fixing a comma doesn't break the highlighting.
+
+That layer is a package of its own, published as [**remark-scanned-page**](https://www.npmjs.com/package/remark-scanned-page):
+
+```bash
+npm install remark-scanned-page
+```
+
+Its source is in [packages/remark-scanned-page/](packages/remark-scanned-page/), and why it is the way it is is in [docs/features/markdown-hightlight/](docs/features/markdown-hightlight/).
 
 ## Reading a letter
 
@@ -66,6 +74,18 @@ Everything the reading view adds is an enhancement over a page that already work
 | Auth | Clerk |
 | OG images | `next/og` |
 | Deploy | Vercel |
+
+## Continuous integration
+
+Two workflows, in [.github/workflows/](.github/workflows/).
+
+**CI** runs lint, typecheck, tests and a build on every push to `main` and every pull request. It needs no secrets: every value this app reads is looked up at request time, so `next build` needs none of them — and a CI that needed the production database to compile is a CI nobody can run from a fork.
+
+**Release** runs only when `packages/remark-scanned-page/` changes. It reads the version out of the package's own `package.json`, does nothing if that version is already on npm, and otherwise packs the tarball, **installs it into an empty project and runs it**, then publishes and tags.
+
+That install step is the point. It is the only check that can catch what broke this package twice before its first release — `publishConfig` never rewrote the entry points, and ESM relative imports had no `.js` extension. Next, Turbopack and vitest all resolve what Node refuses, so neither failure was visible from inside the repository.
+
+Publishing uses npm [trusted publishing](https://docs.npmjs.com/trusted-publishers), so there is no `NPM_TOKEN` in the repository — the job mints a short-lived credential through OIDC.
 
 ## Getting started
 

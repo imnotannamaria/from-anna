@@ -120,7 +120,10 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **The app runs in light mode, and that is a decision, not a default.** entrepta ships dark-first with an IDE metaphor; here every page frames a photograph of ink on paper, and dark editor chrome frames the wrong thing. `data-mode="light"` is set on `<html>` and the surfaces are overridden to paper rather than white in `globals.css`.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
-- **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists.
+- **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists. `proxy.ts` refuses as well, and that is about the **status code**, not the access: see the next rule.
+- **A `loading.tsx` above a `notFound()` makes the status 200.** The Suspense boundary sends the headers before the page has decided anything, so the body becomes the 404 page while the status line still says the request succeeded. Either refuse before the render starts, or don't put a loading boundary above a route that answers 404.
+- **No sign-in button, no sign-up, no account UI on the public site.** There are no public accounts; the home page says so and that has to stay true. The only door is `/admin/sign-in`, linked from nowhere.
+- **Signed in is not allowed in.** `ADMIN_USER_IDS` is what decides, and an empty list denies everyone — including me. That is the failure mode to want.
 - **Pages that read Postgres are dynamic, not ISR.** A view recorded inside a cached render either double-counts or never runs at all.
 - **Model output is untrusted text.** It reaches the page through the sanitize schema, never as raw HTML. The schema allows `mark`, `aside`, links, images, headings, lists, code, emphasis, paragraphs and rules, restricts href and src to `https:`, and blocks scripts, styles, iframes and every `on*` handler. Loosening it needs an argument in the diff.
 - **The transcription is content, not a nicety.** An image of text is invisible to a screen reader. The transcription can never be the hidden half of a toggle that only exists after hydration, and it ships in the server HTML.
@@ -136,6 +139,9 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **A public error page never prints the error.** A stack trace is a map of the code and a message can carry a path or a token. Show the digest.
 - **satori doesn't resolve CSS custom properties.** OG images use numeric font sizes; a `var(--...)` there renders at size zero.
 - **Chrome won't resize below about 550px.** For a real 375px check, use the device toolbar, not a window drag.
+- **`publishConfig` does not rewrite `main` or `exports`.** npm treats it as config options — registry, access, tag — and warns about anything else as an unknown key. A package that relies on it to swap entry points at publish time ships a broken tarball.
+- **A published ESM package needs `.js` on every relative import.** Next, Turbopack and vitest all resolve extensionless specifiers, so nothing inside this repo can fail on it and every real consumer will. The package builds with `moduleResolution: "NodeNext"` so TypeScript checks what Node will do.
+- **The only check that catches either of those is packing and installing it.** `npm pack`, then `npm i ./the.tgz` in an empty directory and import it. Do that before publishing, not after.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.
 
 ---
@@ -277,7 +283,10 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **The app runs in light mode, and that is a decision, not a default.** entrepta ships dark-first with an IDE metaphor; here every page frames a photograph of ink on paper, and dark editor chrome frames the wrong thing. `data-mode="light"` is set on `<html>` and the surfaces are overridden to paper rather than white in `globals.css`.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
-- **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists.
+- **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists. `proxy.ts` refuses as well, and that is about the **status code**, not the access: see the next rule.
+- **A `loading.tsx` above a `notFound()` makes the status 200.** The Suspense boundary sends the headers before the page has decided anything, so the body becomes the 404 page while the status line still says the request succeeded. Either refuse before the render starts, or don't put a loading boundary above a route that answers 404.
+- **No sign-in button, no sign-up, no account UI on the public site.** There are no public accounts; the home page says so and that has to stay true. The only door is `/admin/sign-in`, linked from nowhere.
+- **Signed in is not allowed in.** `ADMIN_USER_IDS` is what decides, and an empty list denies everyone — including me. That is the failure mode to want.
 - **Pages that read Postgres are dynamic, not ISR.** A view recorded inside a cached render either double-counts or never runs at all.
 - **Model output is untrusted text.** It reaches the page through the sanitize schema, never as raw HTML. The schema allows `mark`, `aside`, links, images, headings, lists, code, emphasis, paragraphs and rules, restricts href and src to `https:`, and blocks scripts, styles, iframes and every `on*` handler. Loosening it needs an argument in the diff.
 - **The transcription is content, not a nicety.** An image of text is invisible to a screen reader. The transcription can never be the hidden half of a toggle that only exists after hydration, and it ships in the server HTML.
@@ -286,6 +295,9 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`IntersectionObserver` never fires on a zero-size element.** Put the trigger on something with a real box.
 - **satori doesn't resolve CSS custom properties.** OG images use numeric font sizes; a `var(--...)` there renders at size zero.
 - **Chrome won't resize below about 550px.** For a real 375px check, use the device toolbar, not a window drag.
+- **`publishConfig` does not rewrite `main` or `exports`.** npm treats it as config options — registry, access, tag — and warns about anything else as an unknown key. A package that relies on it to swap entry points at publish time ships a broken tarball.
+- **A published ESM package needs `.js` on every relative import.** Next, Turbopack and vitest all resolve extensionless specifiers, so nothing inside this repo can fail on it and every real consumer will. The package builds with `moduleResolution: "NodeNext"` so TypeScript checks what Node will do.
+- **The only check that catches either of those is packing and installing it.** `npm pack`, then `npm i ./the.tgz` in an empty directory and import it. Do that before publishing, not after.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.
 
 ---

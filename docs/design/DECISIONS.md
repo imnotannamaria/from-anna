@@ -124,7 +124,7 @@ It is **not** `aria-hidden`, unlike the opening photograph on a letter page: tho
 
 **There is a note about cost, and it is specific** — every letter is a model call and some storage, so this instance stays personal and there is no sign-up. Saying *no accounts* without saying *why* reads like a moat. The code is MIT and the clone command is directly above it.
 
-**`remark-scanned-page` is linked to the repository, not to npm** — because it is not published yet, and a link that 404s is worse than an honest sentence saying so.
+**`remark-scanned-page` links to npm, with the source beside it** — the install line is what someone reading that section wants; the repository is what they want after deciding. It linked to the repository alone while the package was unpublished, because a link that 404s is worse than an honest sentence saying so.
 
 ---
 

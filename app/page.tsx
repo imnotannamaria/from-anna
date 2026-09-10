@@ -6,7 +6,9 @@ import { ExternalLink } from '@/components/ui/external-link'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
 const REPO = 'https://github.com/imnotannamaria/from-anna'
-const PACKAGE = `${REPO}/tree/main/packages/remark-scanned-page`
+/** Where you install it from. The source lives at `${REPO}` alongside it. */
+const PACKAGE = 'https://www.npmjs.com/package/remark-scanned-page'
+const PACKAGE_SOURCE = `${REPO}/tree/main/packages/remark-scanned-page`
 const PORTFOLIO = 'https://annamaria.app'
 
 export const metadata: Metadata = {
@@ -254,11 +256,19 @@ export default function Home() {
         <p className="home-body">
           It lives in this repository as a workspace, which is what makes a
           second copy of the pipeline impossible rather than merely
-          discouraged. It is not on npm yet.
+          discouraged — and it publishes from here.
         </p>
+
+        <pre className="home-code home-code--wide">
+          <code>npm install remark-scanned-page</code>
+        </pre>
+
         <p className="home-actions">
-          <ExternalLink href={PACKAGE} className="pill">
-            The package <span aria-hidden="true">→</span>
+          <ExternalLink href={PACKAGE} className="pill pill--solid">
+            On npm <span aria-hidden="true">→</span>
+          </ExternalLink>
+          <ExternalLink href={PACKAGE_SOURCE} className="pill">
+            Its source
           </ExternalLink>
         </p>
       </section>
