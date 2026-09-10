@@ -142,6 +142,14 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`publishConfig` does not rewrite `main` or `exports`.** npm treats it as config options — registry, access, tag — and warns about anything else as an unknown key. A package that relies on it to swap entry points at publish time ships a broken tarball.
 - **A published ESM package needs `.js` on every relative import.** Next, Turbopack and vitest all resolve extensionless specifiers, so nothing inside this repo can fail on it and every real consumer will. The package builds with `moduleResolution: "NodeNext"` so TypeScript checks what Node will do.
 - **The only check that catches either of those is packing and installing it.** `npm pack`, then `npm i ./the.tgz` in an empty directory and import it. Do that before publishing, not after.
+- **The lockfile has to be generated on Linux, not on this Mac.** npm prunes the transitive dependencies of optional packages that do not apply to the machine it ran on, so a lockfile written here is missing entries `npm ci` needs on a runner — and the error it gives (`Missing: @emnapi/runtime from lock file`) tells you to run `npm install`, which is the thing that broke it. After adding or updating a dependency:
+
+  ```bash
+  docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:22 \
+    npm install --package-lock-only --no-audit --no-fund
+  ```
+
+  It is purely additive — nothing already resolved moves — and `npm ci` then works on both.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.
 
 ---
@@ -298,6 +306,14 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`publishConfig` does not rewrite `main` or `exports`.** npm treats it as config options — registry, access, tag — and warns about anything else as an unknown key. A package that relies on it to swap entry points at publish time ships a broken tarball.
 - **A published ESM package needs `.js` on every relative import.** Next, Turbopack and vitest all resolve extensionless specifiers, so nothing inside this repo can fail on it and every real consumer will. The package builds with `moduleResolution: "NodeNext"` so TypeScript checks what Node will do.
 - **The only check that catches either of those is packing and installing it.** `npm pack`, then `npm i ./the.tgz` in an empty directory and import it. Do that before publishing, not after.
+- **The lockfile has to be generated on Linux, not on this Mac.** npm prunes the transitive dependencies of optional packages that do not apply to the machine it ran on, so a lockfile written here is missing entries `npm ci` needs on a runner — and the error it gives (`Missing: @emnapi/runtime from lock file`) tells you to run `npm install`, which is the thing that broke it. After adding or updating a dependency:
+
+  ```bash
+  docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:22 \
+    npm install --package-lock-only --no-audit --no-fund
+  ```
+
+  It is purely additive — nothing already resolved moves — and `npm ci` then works on both.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.
 
 ---

@@ -87,6 +87,19 @@ That install step is the point. It is the only check that can catch what broke t
 
 Publishing uses npm [trusted publishing](https://docs.npmjs.com/trusted-publishers), so there is no `NPM_TOKEN` in the repository — the job mints a short-lived credential through OIDC.
 
+### The lockfile is generated on Linux
+
+npm prunes the transitive dependencies of optional packages that do not apply to the machine it ran on. A lockfile written on a Mac is therefore missing entries `npm ci` needs on a runner, and the error it gives — `Missing: @emnapi/runtime from lock file` — advises running `npm install`, which is exactly what caused it.
+
+So after adding or updating a dependency:
+
+```bash
+docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:22 \
+  npm install --package-lock-only --no-audit --no-fund
+```
+
+It only ever adds: nothing already resolved changes version, and `npm ci` then works on both platforms.
+
 ## Getting started
 
 ```bash
