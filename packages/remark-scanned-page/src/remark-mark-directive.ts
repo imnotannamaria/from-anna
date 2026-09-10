@@ -5,7 +5,7 @@ import { visit } from 'unist-util-visit'
 /**
  * `:mark[text]{c=important}`      → `<mark data-c="important">`
  * `:::theme{label="..."}`         → `<aside>` carrying the label
- * `:::passage{at="0.19 0.31"}`    → `<div data-passage-at="0.19 0.31">`
+ * `:::passage`                    → `<div>` grouping a run of paragraphs
  *
  * Highlights live inside the markdown rather than as offsets in a database,
  * because a transcription of handwriting exists to be corrected, and fixing a
@@ -17,14 +17,13 @@ export const MARK_NAME = 'mark'
 export const THEME_NAME = 'theme'
 
 /**
- * Groups a run of paragraphs and says which band of the sheet they were
- * written on. The region is what makes the transcription *synchronised*
- * rather than merely adjacent, and it is optional: a passage with no `at`
- * falls back to a proportional band, so marking one is an upgrade per page
- * rather than a tax on every letter.
+ * Groups a run of paragraphs into one block of the transcription: one entry
+ * in the reveal, one number in the gutter, one thing the reader arrives at.
  *
- * The value is never trusted. `parseRegion` in ./passage is the only thing
- * that reads it, and anything it cannot use degrades to the band.
+ * It used to carry an `at` region naming the band of the sheet the words were
+ * written on, which drove a photograph that zoomed to follow the reading.
+ * That is gone — see `docs/design/DECISIONS.md` — and what is left is the
+ * grouping, which was the useful half.
  */
 export const PASSAGE_NAME = 'passage'
 
@@ -114,15 +113,12 @@ export const remarkMarkDirective: Plugin<[RemarkMarkDirectiveOptions?], Root> = 
         directive.type === 'containerDirective' &&
         directive.name === PASSAGE_NAME
       ) {
-        const at = directive.attributes?.at?.trim() || undefined
-
         directive.data = {
           ...directive.data,
           hName: 'div',
-          // A plain div carrying one data attribute. It is a grouping and a
-          // number, with no behaviour and no URL in it — see the note on
-          // `div` in the sanitize schema.
-          hProperties: { dataPassageAt: at },
+          // A bare div. It carries no attributes at all, which is what makes
+          // it safe to allow in the sanitize schema — see the note there.
+          hProperties: {},
         }
         return
       }

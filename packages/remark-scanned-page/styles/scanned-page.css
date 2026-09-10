@@ -174,7 +174,7 @@ aside[data-theme-label]::before {
 }
 
 .scanned-transcription > p::before,
-.scanned-transcription > div[data-passage-at]::before {
+.scanned-transcription > div::before {
   content: counter(passage, decimal-leading-zero);
   position: absolute;
   left: 0;
@@ -198,7 +198,7 @@ aside[data-theme-label]::before {
     padding-left: 2.25rem;
   }
 
-  .scanned-transcription > div[data-passage-at] > *:first-child {
+  .scanned-transcription > div > *:first-child {
     margin-top: 0;
   }
 }

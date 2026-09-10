@@ -10,9 +10,11 @@ Decision log. X because Y. Closed on 2026-09-09.
 
 **Image processing runs in the client: 2400px longest side, JPEG quality 80** — because the photo then arrives small, which cuts upload time and keeps image work out of a serverless function.
 
-Was 1500px. The reading view now zooms into the photograph to follow the passage being read, which is a second consumer of the same file that did not exist when the cap was chosen. Measured, not guessed: the sticky photo occupies 616px at a 1440 viewport, so on a retina screen a 1500px source covered 91% of what it needed *at rest*. See `design/DECISIONS.md`.
+Was 1500px. It was first raised for a reading view that zoomed into the photograph, and that zoom has since been removed. What kept the number is the decision above it: **only one version is stored and the original is thrown away**, so the one that is kept is the archive copy of a handwritten letter. A reader who wants to look closely — browser zoom, pinch on a phone — gets a sheet worth looking at.
 
-**A second, smaller output is stored alongside it, at 1200px** — because nothing below the reading view's breakpoint zooms, so a phone would otherwise download a sheet it can never use. One file gives `srcset` no choice to make. Nullable in the schema: pages uploaded before this existed fall back to the one file they have.
+That is a weaker argument than the measured one it replaced, and 1500px would also have been defensible. See `design/DECISIONS.md`.
+
+**A second, smaller output is stored alongside it, at 1200px** — because a phone has no use for the archive copy and `srcset` cannot choose between sizes that do not exist. Nullable in the schema: pages uploaded before this existed fall back to the one file they have.
 
 **Colour is kept, no grayscale conversion** — because only one version is stored, so that version is the one people see on the published page. Ink on paper is half the point, and JPEG already compresses chroma hard, so grayscale saved little and made the page look like a photocopy.
 

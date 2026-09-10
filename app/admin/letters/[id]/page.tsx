@@ -96,17 +96,6 @@ export default async function LetterAdminPage({
         <TranscriptionEditor
           letterId={letter.letter.id}
           initialMdContent={letter.letter.mdContent}
-          pages={letter.pages.map((page) => ({
-            index: page.index,
-            // The narrow output is the right one here: the picker is a
-            // thumbnail, and a region is a fraction either way.
-            src: `/api/letters/${letter.letter.id}/pages/${page.index}${
-              page.screenBlobUrl ? '?size=screen' : ''
-            }`,
-            alt: page.alt,
-            width: page.width,
-            height: page.height,
-          }))}
         />
       )}
 

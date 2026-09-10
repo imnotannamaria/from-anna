@@ -140,40 +140,30 @@ describe('sanitizing', () => {
 })
 
 describe(':::passage', () => {
-  it('renders a div carrying the region', () => {
-    const html = renderMarkdown(':::passage{at="0.19 0.31"}\nText.\n:::')
-    expect(html).toContain('<div data-passage-at="0.19 0.31">')
-    expect(html).toContain('<p>Text.</p>')
-  })
-
-  it('survives sanitizing, which is where a dashed hProperties key dies', () => {
-    const html = renderMarkdown(':::passage{at="0.2 0.4"}\nText.\n:::')
-    expect(html).toContain('data-passage-at')
-  })
-
-  it('renders without a region, because the region is optional', () => {
-    const html = renderMarkdown(':::passage\nText.\n:::')
+  it('renders a bare div grouping the paragraphs', () => {
+    const html = renderMarkdown(':::passage\nText.\n\nMore.\n:::')
     expect(html).toContain('<div>')
-    expect(html).not.toContain('data-passage-at')
+    expect(html).toContain('<p>Text.</p>')
+    expect(html).toContain('<p>More.</p>')
   })
 
-  it('keeps a nonsense region in the attribute and leaves rejecting it to the reader', () => {
-    // Clamping here would hide the mistake. `parseRegion` refuses it at the
-    // point of use, and the passage falls back to its proportional band.
-    const html = renderMarkdown(':::passage{at="9 nonsense"}\nText.\n:::')
-    expect(html).toContain('data-passage-at="9 nonsense"')
+  it('carries no attributes, which is why the div is safe to allow', () => {
+    const html = renderMarkdown(':::passage{at="0.2 0.4" onclick="x"}\nText.\n:::')
+    expect(html).toContain('<div>')
+    expect(html).not.toContain('at=')
+    expect(html).not.toContain('onclick')
   })
 
   it('holds highlights and themed blocks', () => {
     const html = renderMarkdown(
-      ':::passage{at="0.1 0.2"}\nA :mark[phrase]{c=note} of it.\n:::',
+      ':::passage\nA :mark[phrase]{c=note} of it.\n:::',
     )
     expect(html).toContain('<mark data-c="note">phrase</mark>')
   })
 
   it('unwraps a passage nested inside a passage', () => {
     const html = renderMarkdown(
-      ':::::passage{at="0.1 0.2"}\n\n::::passage{at="0.3 0.4"}\nInner.\n::::\n\n:::::',
+      ':::::passage\n\n::::passage\nInner.\n::::\n\n:::::',
     )
     expect(html.match(/<div/g) ?? []).toHaveLength(1)
     expect(html).toContain('Inner.')
@@ -181,25 +171,25 @@ describe(':::passage', () => {
 
   it('unwraps a passage nested inside a theme, and keeps the words', () => {
     const html = renderMarkdown(
-      '::::theme{label="a name"}\n\n:::passage{at="0.1 0.2"}\nInner.\n:::\n\n::::',
+      '::::theme{label="a name"}\n\n:::passage\nInner.\n:::\n\n::::',
     )
     expect(html).toContain('<aside')
-    expect(html).not.toContain('data-passage-at')
+    expect(html).not.toContain('<div>')
     expect(html).toContain('Inner.')
   })
 
   it('still allows a theme inside a passage, which is the normal case', () => {
     const html = renderMarkdown(
-      '::::passage{at="0.1 0.2"}\n\n:::theme{label="a name"}\nInner.\n:::\n\n::::',
+      '::::passage\n\n:::theme{label="a name"}\nInner.\n:::\n\n::::',
     )
-    expect(html).toContain('data-passage-at="0.1 0.2"')
+    expect(html).toContain('<div>')
     expect(html).toContain('<aside')
   })
 
   it('does not let a div through from the source markdown', () => {
     // The div in the schema is only ever the one this plugin emits: raw HTML
     // in the source is dropped before sanitizing ever sees it.
-    const html = renderMarkdown('<div data-passage-at="0 1">smuggled</div>')
+    const html = renderMarkdown('<div class="smuggled">text</div>')
     expect(html).not.toContain('<div')
   })
 })

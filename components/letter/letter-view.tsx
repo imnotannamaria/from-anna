@@ -8,26 +8,9 @@ import {
   useSyncExternalStore,
 } from 'react'
 
-import { regionFor } from 'remark-scanned-page/passage'
-
 import { LetterCoda } from './letter-coda'
 import { LetterHero } from './letter-hero'
 import { ReaderBar } from './reader-bar'
-
-/**
- * How far into the sheet the passage zoom goes.
- *
- * Measured, not chosen. The sticky photograph occupies 616px at a 1440
- * viewport and 728px at 1920, so on a retina screen it needs roughly 1230 to
- * 1460 device pixels to be sharp at rest. Against the 2400px stored sheet
- * that is a comfortable margin at rest and 97% coverage at 1.5×. Past that it
- * starts to soften, and a soft photograph of handwriting is the one thing
- * this page cannot afford.
- *
- * Raising the stored image is what buys more zoom. Raising this alone only
- * buys blur.
- */
-const MAX_ZOOM = 1.5
 
 export type SheetProps = {
   key: string
@@ -35,7 +18,7 @@ export type SheetProps = {
   photo: React.ReactNode
   /** `<ScannedTranscription>`, rendered on the server. The content. */
   prose: React.ReactNode
-  /** `width / height` of the photo, so the frame never crops it. */
+  /** `width / height` of the photo, so the frame reserves the right box. */
   ratio: number
 }
 
@@ -76,6 +59,9 @@ type Active = { sheet: number; passage: number }
  * 3. **`position: sticky` dies silently** if any ancestor has `overflow`
  *    other than `visible`. There is no error and no warning; the photograph
  *    simply scrolls away.
+ *
+ * The photograph used to zoom and pan to the band of the sheet the current
+ * passage was written on. It is gone: see `docs/design/DECISIONS.md`.
  */
 export function LetterView({
   letterId,
@@ -92,10 +78,10 @@ export function LetterView({
   const reported = useRef(false)
 
   const [active, setActive] = useState<Active | null>(null)
-  const [following, setFollowing] = useState(true)
   const [filter, setFilter] = useState<string | null>(null)
   const [showing, setShowing] = useState<'photo' | 'text'>('photo')
   const [progress, setProgress] = useState(0)
+  const [heroShift, setHeroShift] = useState(0)
 
   // The chips and the photo/transcription toggle are enhancements: with no
   // JavaScript they do nothing, so they do not render rather than rendering
@@ -194,54 +180,26 @@ export function LetterView({
     }
   }, [sheets])
 
-  /* ---- following the line -------------------------------------------
-     Each sheet is told where to look through custom properties, so the
-     photograph moves in CSS and nothing here touches a layout value. */
+  /* ---- reading position ---------------------------------------------
+     Which passage is being read, marked on the passage itself so the number
+     in its gutter can say so. It is the only thing on screen that tracks a
+     reader's position through a sheet, and it costs one attribute. */
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
 
     root.querySelectorAll<HTMLElement>('[data-sheet]').forEach((sheetEl) => {
       const sheet = Number(sheetEl.dataset.sheet)
-      const count = Number(sheetEl.dataset.passageCount) || 1
       const isActive = active?.sheet === sheet
-      const index = isActive ? active.passage : 0
 
-      const passages = Array.from(
+      Array.from(
         sheetEl.querySelector('.scanned-transcription')?.children ?? [],
-      ) as HTMLElement[]
-
-      // The number in the gutter is the only thing on screen that names the
-      // passage the photograph is following. It is not the only signal —
-      // the sheet moves and the band moves with it — but it is the one that
-      // survives the photograph being switched off on a phone.
-      passages.forEach((passage, i) => {
-        passage.dataset.active = isActive && i === index ? 'true' : 'false'
+      ).forEach((passage, i) => {
+        ;(passage as HTMLElement).dataset.active =
+          isActive && i === active?.passage ? 'true' : 'false'
       })
-
-      const el = passages[index]
-
-      // `at` came out of markdown, which came out of a vision model. It is a
-      // number that ends up inside a `transform`, so it is parsed and
-      // clamped, never interpolated — and anything unusable falls back to
-      // the proportional band rather than throwing.
-      const region = regionFor(el?.dataset.passageAt, index, count)
-      const centre = (region.top + region.bottom) / 2
-      const on = isActive && following
-
-      sheetEl.dataset.following = on ? 'true' : 'false'
-      sheetEl.style.setProperty('--zoom', on ? String(MAX_ZOOM) : '1')
-      sheetEl.style.setProperty(
-        '--pan',
-        on ? `${((0.5 - centre) * 100).toFixed(2)}%` : '0%',
-      )
-      sheetEl.style.setProperty('--band-top', `${(region.top * 100).toFixed(2)}%`)
-      sheetEl.style.setProperty(
-        '--band-height',
-        `${((region.bottom - region.top) * 100).toFixed(2)}%`,
-      )
     })
-  }, [active, following])
+  }, [active])
 
   /* ---- progress ------------------------------------------------------
      Shown because the coda says "counted once, nothing else is stored" out
@@ -261,7 +219,12 @@ export function LetterView({
 
     const update = () => {
       frame = 0
-      setProgress(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0)
+      const y = window.scrollY
+      setProgress(max > 0 ? Math.min(1, Math.max(0, y / max)) : 0)
+      // The opening photograph drifts slower than the words beside it. Capped,
+      // because past a certain distance it stops reading as depth and starts
+      // reading as a bug — and it is only ever a transform.
+      setHeroShift(Math.min(y * 0.14, 96))
     }
 
     const onScroll = () => {
@@ -334,7 +297,10 @@ export function LetterView({
       className="reader"
       data-filter={filter ?? ''}
       data-showing={showing}
-      style={{ ['--progress' as string]: `${(progress * 100).toFixed(2)}%` }}
+      style={{
+        ['--progress' as string]: `${(progress * 100).toFixed(2)}%`,
+        ['--hero-shift' as string]: `${heroShift.toFixed(1)}px`,
+      }}
     >
       <ReaderBar
         name={name}
@@ -383,32 +349,16 @@ export function LetterView({
             id={`sheet-${i}`}
             className="sheet"
             data-sheet={i}
-            data-following="false"
             aria-label={`Sheet ${i + 1} of ${sheets.length}`}
             style={{ ['--sheet-ratio' as string]: String(sheet.ratio) }}
           >
             <div className="sheet-photo">
-              <div className="sheet-frame">
-                <div className="sheet-zoom">
-                  {sheet.photo}
-                  <span className="sheet-band" aria-hidden="true" />
-                </div>
-              </div>
+              <div className="sheet-frame">{sheet.photo}</div>
 
               <div className="sheet-frame-foot">
                 <p className="meta">
                   Sheet {i + 1} of {sheets.length}
                 </p>
-                {enhanced && (
-                  <button
-                    type="button"
-                    className="pill"
-                    aria-pressed={following}
-                    onClick={() => setFollowing((on) => !on)}
-                  >
-                    {following ? 'Full page' : 'Follow the line'}
-                  </button>
-                )}
               </div>
             </div>
 

@@ -4,19 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { renderMarkdown, wrapPassage, wrapSelection } from 'remark-scanned-page'
 
-import { RegionPicker, type PickerPage } from '@/components/editor/region-picker'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import {
   findIllegibleMarks,
   nextIllegibleMark,
 } from '@/lib/transcription/illegible'
-import { sheetIndexAt } from '@/lib/transcription/split'
 
 type Props = {
   letterId: string
   initialMdContent: string
-  /** The photographed sheets, for the region picker. Empty until they exist. */
-  pages: PickerPage[]
 }
 
 /** Long enough that a fast typist never waits on a parse mid-word. */
@@ -36,13 +32,8 @@ const PREVIEW_DELAY_MS = 250
  * catches hallucination, which comes back plausible and survives a quick
  * reread. Hunting for them by eye is exactly the task that gets skipped.
  */
-export function TranscriptionEditor({
-  letterId,
-  initialMdContent,
-  pages,
-}: Props) {
+export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
   const [value, setValue] = useState(initialMdContent)
-  const [caret, setCaret] = useState(0)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
@@ -101,7 +92,7 @@ export function TranscriptionEditor({
     })
   }
 
-  function applyPassage(at?: string) {
+  function applyPassage() {
     const textarea = textareaRef.current
     if (!textarea) return
 
@@ -109,7 +100,6 @@ export function TranscriptionEditor({
       value,
       textarea.selectionStart,
       textarea.selectionEnd,
-      at,
     )
 
     if (result.status === 'refused') {
@@ -119,7 +109,7 @@ export function TranscriptionEditor({
     }
 
     setFailed(false)
-    setMessage(at ? `Passage marked at ${at}.` : 'Passage marked.')
+    setMessage('Grouped into a passage.')
     setValue(result.value)
 
     requestAnimationFrame(() => {
@@ -211,6 +201,9 @@ export function TranscriptionEditor({
           </button>
         ))}
         <span className="meta">or ⌘⇧H</span>
+        <button type="button" onClick={applyPassage} className="pill">
+          Group as passage
+        </button>
       </div>
 
       <div className="editor-grid">
@@ -218,11 +211,7 @@ export function TranscriptionEditor({
           ref={textareaRef}
           id="md"
           value={value}
-          onChange={(event) => {
-            setValue(event.target.value)
-            setCaret(event.target.selectionStart)
-          }}
-          onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
+          onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
           spellCheck={false}
           className="editor-surface"
@@ -273,15 +262,6 @@ export function TranscriptionEditor({
         {message}
       </p>
 
-      {pages.length > 0 && (
-        <RegionPicker
-          pages={pages}
-          // Which photograph to show is decided by the `---` before the
-          // caret, which is the same separator that paginates the letter.
-          sheetIndex={sheetIndexAt(value, caret)}
-          onMark={applyPassage}
-        />
-      )}
     </section>
   )
 }

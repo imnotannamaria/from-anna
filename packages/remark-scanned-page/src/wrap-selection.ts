@@ -89,21 +89,16 @@ function toWholeLines(value: string, from: number, to: number) {
 }
 
 /**
- * Wrap the selected lines in `:::passage{at="top bottom"}`.
+ * Wrap the selected lines in `:::passage`, grouping them into one block.
  *
  * A container directive has to sit on its own lines, so the selection is
  * expanded outwards to whole ones rather than cutting a paragraph in half and
  * producing markdown that parses into something else entirely.
- *
- * `at` is optional here as it is everywhere: a passage with no region falls
- * back to a proportional band, so this is also how you group paragraphs
- * without saying where on the sheet they came from.
  */
 export function wrapPassage(
   value: string,
   start: number,
   end: number,
-  at?: string,
 ): PassageResult {
   const from = Math.max(0, Math.min(start, end))
   const to = Math.min(value.length, Math.max(start, end))
@@ -128,7 +123,7 @@ export function wrapPassage(
     }
   }
 
-  const opening = at ? `:::passage{at="${at}"}` : ':::passage'
+  const opening = ':::passage'
   const next =
     value.slice(0, lines.start) +
     `${opening}\n${selected}\n:::` +

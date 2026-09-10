@@ -11,8 +11,8 @@ This has :mark[honestly been one of the best weeks]{c=important} I've had.
 A block grouped under a theme, with :mark[a highlight]{c=note} inside it.
 :::
 
-:::passage{at="0.19 0.31"}
-A passage, and which band of the sheet it was written on.
+:::passage
+A run of paragraphs as one block of the transcription.
 :::
 ```
 
@@ -121,29 +121,21 @@ Two fills chosen for different hues can land within 0.01 of each other in relati
 
 So each tag also carries its own underline style — solid, dotted, wavy — and that is what survives. It is why `styles/palette.css` can be one neutral grey for every tag and the three still read as different. WCAG 1.4.1.
 
-## Regions: the synchronised half
+## Passages
 
-A `:::passage` says which horizontal band of the sheet its words came from, as fractions of the sheet's height:
+A `:::passage` groups a run of paragraphs into one block of the transcription — one entry in the reveal, one number in the gutter, one thing a reader arrives at. It emits a bare `<div>`; the stylesheet does the rest.
 
 ```md
-:::passage{at="0.19 0.31"}
-Roughly a fifth to a third of the way down the page.
+:::passage
+Two paragraphs that belong together.
+
+They get one number and arrive as one thing.
 :::
 ```
 
-That is what lets a reading view follow the line: as a passage comes into view, the photograph can pan and zoom to the part of the sheet it was written on.
+It carried an `at` attribute once — `:::passage{at="0.19 0.31"}` — naming the band of the sheet the words were written on, which drove a photograph that zoomed to follow the reading. That was built and then removed: two columns already say *these words, that page*, and a photograph that moves on its own while you read makes the half of the screen you are not looking at the half that is moving. The grouping was the half worth keeping.
 
-**`at` is optional, and that is the point.** A passage without one falls back to a proportional band — divide the sheet by the number of passages and give this one its share. So the cheap version is the default and marking a region by hand is an upgrade for the pages that deserve it, rather than a tax on every page you publish.
-
-The package does the arithmetic and refuses anything it cannot use:
-
-```ts
-import { regionFor, parseRegion, bandFor } from 'remark-scanned-page/passage'
-
-regionFor(el.dataset.passageAt, index, total) // → { top, bottom }
-```
-
-`parseRegion` returns `null` — never throws — for a value that is not two finite numbers between 0 and 1 in order, and `regionFor` falls back to `bandFor`. If your transcription came from a vision model, that is not a nicety: the attribute is model output like everything else, and it ends up inside a `transform`.
+The schema allows **no attribute at all** on the div, which is a smaller thing to defend than one attribute with a clamp behind it.
 
 `:::passage` does not nest inside itself or inside `:::theme`; the inner one unwraps and its words are kept.
 
@@ -161,13 +153,13 @@ if (result.status === 'ok') {
 
 Wraps a selection in the directive and tells you where the caret goes. With nothing selected it inserts an empty highlight and puts the caret between the brackets. A selection that already contains a highlight is refused, because nesting does not parse into anything sensible and silently emitting broken markdown is worse than saying no.
 
-`wrapPassage(value, start, end, at?)` is the same shape for `:::passage`. A container directive has to sit on its own lines, so the selection is expanded outwards to whole ones rather than cutting a paragraph in half and producing markdown that means something else.
+`wrapPassage(value, start, end)` is the same shape for `:::passage`. A container directive has to sit on its own lines, so the selection is expanded outwards to whole ones rather than cutting a paragraph in half and producing markdown that means something else.
 
 ## Security
 
 Output goes through `rehype-sanitize`. The schema allows `mark`, `aside`, links, images, headings, lists, code, emphasis, paragraphs and rules; it blocks scripts, styles, iframes and every `on*` handler, and restricts `href` to `https:` and `mailto:` and `src` to `https:`.
 
-`div` is allowed, with `data-passage-at` and nothing else on it. `remark-rehype` drops raw HTML from the source, so the only `div` that reaches the schema is the one `:::passage` emits — and its one attribute is parsed and clamped by `parseRegion` before anything uses it.
+`div` is allowed and no attribute is allowed on it. `remark-rehype` drops raw HTML from the source, so the only `div` that reaches the schema is the bare one `:::passage` emits.
 
 Protocols matter as much as tag names — allowing `<a>` while allowing `javascript:` in its href is allowing script execution with extra steps.
 
