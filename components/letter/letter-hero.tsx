@@ -68,8 +68,14 @@ export function LetterHero({ name, sentOn, photo, sheetCount }: Props) {
           Decorative, and the reason is above: the same sheet is below with
           its real description and its transcription. Hiding it here keeps the
           spoken version of the page as short as the read one.
+
+          The two sheets behind it are drawn by the stylesheet. A letter is
+          two or three pages and this is the only place on the site that can
+          say so without a caption.
         */}
-        <div aria-hidden="true">{photo}</div>
+        <div className="hero-sheet" aria-hidden="true">
+          {photo}
+        </div>
         <span className="hero-caption" aria-hidden="true">
           sheet 01 · as photographed
         </span>

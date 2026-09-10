@@ -94,14 +94,14 @@ Inline: :mark[text worth reading first]{c=important}
 A group of paragraphs under one theme.
 :::
 
-:::passage{at="0.19 0.31"}
-A passage, and which band of the sheet it was written on.
+:::passage
+A run of paragraphs as one block of the transcription.
 :::
 ```
 
 `:mark` nests inside `:::theme`. `:::theme` does not nest inside itself, and `:::passage` nests inside neither — the inner one unwraps and its words are kept.
 
-**`at` is optional and a passage without one falls back to a proportional band.** That is what makes the cheap version the default and hand-marking a region an upgrade per page. It is also model output that ends up inside a `transform`, so it is parsed and clamped by `parseRegion`, never interpolated.
+**`:::passage` emits a bare `<div>` and the schema allows no attribute on it.** It carried an `at` region once, aiming a photograph that zoomed to follow the reading; that was built and removed. Don't put it back without reading `docs/design/DECISIONS.md` first.
 
 Three tags in the app — `important`, `note`, `ask`. The **package** defines no vocabulary at all, only the mechanism and three colour slots. An unknown tag renders neutral and warns in the dev console; it never breaks a build.
 
@@ -129,7 +129,10 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **`IntersectionObserver` never fires on a zero-size element.** Put the trigger on something with a real box.
 - **`position: sticky` dies silently if any ancestor has `overflow` other than `visible`.** No error, no warning — the photograph just scrolls away. The reading view clips the hero with `overflow-x: clip`, which does not create a scroll container, and `overflow-x: hidden` is nowhere near `html` or `body`.
 - **Nothing in the reading view creates content.** The transcription is server-rendered and complete before hydration; the client adds `data-` attributes to text that is already painted. Passage numbers are a CSS counter, so they are right before any script runs.
-- **Two stored outputs per photo: 2400px and 1200px.** The desktop zoom needs the first and a phone must never download it. `srcset` is the only way to say that, and `sizes` alone cannot help when there is one file.
+- **Two stored outputs per photo: 2400px and 1200px.** The large one is the archive copy — the original is thrown away — and a phone must never download it. `srcset` is the only way to say that, and `sizes` alone cannot help when there is one file.
+- **A skeleton is `aria-hidden` and one live line announces.** A dozen grey rectangles read out one at a time is worse than silence.
+- **The 404 reads identically for a wrong link, an unpublished letter, an expired one and someone else's.** Anything that tells them apart gives back what the unguessable slug withholds.
+- **A public error page never prints the error.** A stack trace is a map of the code and a message can carry a path or a token. Show the digest.
 - **satori doesn't resolve CSS custom properties.** OG images use numeric font sizes; a `var(--...)` there renders at size zero.
 - **Chrome won't resize below about 550px.** For a real 375px check, use the device toolbar, not a window drag.
 - **Before committing, run `npm run lint` and `npx tsc --noEmit`.** A green commit is the baseline; don't commit a red one without saying so.

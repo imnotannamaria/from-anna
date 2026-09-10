@@ -4,9 +4,11 @@ Discovery is closed. What was decided and why is in `DECISIONS.md` next door.
 
 Each phase has a **Done when** list and a **Checks** block. The checks are prompts to look, not boxes to tick.
 
-Phase 2 was the one worth building first: it carried most of the gain and depended on none of the region work.
+Phase 2 was the one worth building first: it carried most of the gain and depended on none of the region work. That judgement held — it is the phase the reading view is made of, and phase 4 is the one that came back out.
 
-**All six are built.** What each phase actually cost, and what it changed, is in `DECISIONS.md` under *Decided while building it*.
+**Five of the six are built and phase 4 was reversed.** What each phase actually cost is in `DECISIONS.md`, under *Decided while building it* and *Reversed after building it*.
+
+A seventh piece was added afterwards and is not a phase, because it was not planned: the 404, the error page, the skeletons and the typed loading line. It is in `DECISIONS.md` under *Waiting, and going wrong*.
 
 ---
 
@@ -74,29 +76,19 @@ Clicking a chip dims the highlights that are not that tag. A custom-property swa
 
 ---
 
-## Phase 4 — Follow the line
+## Phase 4 — Follow the line · **removed**
 
-A `:::passage{at="0.19 0.31"}` directive in the package, a region picker in the editor, and the `full page` / `follow the line` toggle.
+Built as specified, looked at, and taken out again. The photograph zoomed and
+panned to the band of the sheet the current passage was written on; `at`
+regions, the region picker and the region maths all existed to feed it.
 
-A passage with no `at` falls back to the proportional band. **The band is the default; the region is the upgrade.**
+It did not read as intended. Two columns already say *these words, that page*;
+a photograph that moves on its own while you read makes the half of the screen
+you are not looking at the half that is moving.
 
-The image cap rises to 2400px and the maximum zoom is 1.5.
-
-**Done when**
-
-- [x] A passage with no region works, using the proportional band
-- [x] An `at` outside 0–1, inverted, or with one value degrades to the band rather than throwing
-- [x] The picker writes the directive into the markdown, and the markdown stays the source of truth
-- [x] The `full page` toggle is keyboard reachable and its state is announced
-- [ ] At 1440 retina, 1.5× into a 2400px photo is sharp — **look at it, don't compute it**. The only sheet in the database predates the new cap, so this needs a photo uploaded since.
-- [x] Re-running the transcription does not erase regions already authored
-
-**Checks**
-
-- **Security** — `at` comes from markdown, which comes from a vision model. It is a number that ends up in a `transform`: parse and clamp it, never interpolate it.
-- **Bugs** — the zoom is a `transform` on the image and the sheet already has a max-height. The two fight unless the origin is explicit.
-- **Performance** — 2400px per sheet, up to five sheets, all in the DOM: everything but the first is `loading="lazy"`.
-- **Accessibility** — the moving photograph is decorative. The transcription is the content and must never depend on the zoom to be read.
+`:::passage` survives as a grouping — one block of the transcription, one
+number in the gutter — which was the useful half. The reasoning is in
+`DECISIONS.md` under *Reversed after building it*.
 
 ---
 
@@ -151,15 +143,14 @@ So the phase is: do not break what exists, and switch off what does not apply.
 
 ## What changes in decisions already recorded
 
-- **`photo-transcription/DECISIONS.md`** — the 1500px cap becomes 2400px. The original reasoning still holds; what changed is that the zoom is a second consumer of the same file.
+- **`photo-transcription/DECISIONS.md`** — the 1500px cap becomes 2400px, with a second 1200px output. The reason changed after phase 4 came out: it is now the archive copy of the photograph, not the source for a zoom.
 - **`share/DECISIONS.md`** — page-turn navigation stops existing on desktop, replaced by the stacked sticky sections. On mobile it stays.
-- **`markdown-hightlight/DECISIONS.md`** — the package gains a second directive, `:::passage{at}`.
+- **`markdown-hightlight/DECISIONS.md`** — the package gains a second directive, `:::passage`. It was specified with an `at` region and shipped without one.
 
 ---
 
 ## What is still open
 
-- **The zoom has never been looked at on a photograph taken since the cap changed.** Every sheet in the database was uploaded at 1500px, so 1.5× into one of those is exactly the softness the cap was raised to fix. The maths says 97% coverage at 2400px; a photograph is what will say whether that is true.
 - **390px was checked in a device viewport, not on a phone.** That is the assumption the whole reading view rests on and it is the one check that cannot be automated.
-- **Nothing multi-sheet has been read end to end.** The stacked sticky sections, the sheet navigation and the per-sheet regions are all built and none of them have had two real sheets through them.
+- **Nothing multi-sheet has been read end to end.** The stacked sticky sections and the sheet navigation are built and neither has had two real sheets through it.
 - **`WRITE_BACK_EMAIL` is unset.** Until it is, the coda renders without the button rather than with a broken `mailto:`.

@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { TypeLine } from '@/components/ui/type-line'
+
 type Props = {
   letterId: string
   pageCount: number
@@ -90,6 +92,18 @@ export function TranscribeButton({
       {alreadyTranscribed && !running && (
         <p className="text-sm opacity-80">
           Running again replaces the raw transcription of every page.
+        </p>
+      )}
+
+      {running && (
+        <p className="meta transcribing" aria-hidden="true">
+          {/*
+            It is a vision model reading handwriting and writing it out, and
+            this is the one place in the project where a loading state can say
+            what is happening rather than that something is. The real message
+            is announced by the live region below.
+          */}
+          <TypeLine duration={2200}>reading the handwriting…</TypeLine>
         </p>
       )}
 

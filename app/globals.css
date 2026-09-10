@@ -1032,6 +1032,7 @@ body::before {
 
 .hero {
   display: grid;
+  min-height: min(100vh, 58rem);
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
   gap: clamp(2rem, 6vw, 5rem);
@@ -1071,6 +1072,22 @@ body::before {
 .hero-title em {
   font-style: italic;
   color: var(--fg-brand);
+  /*
+     Underlined the way a pen underlines: after the words, not with them.
+     `text-decoration` rather than a positioned pseudo-element, because the
+     phrase wraps at narrow widths and only a decoration wraps with it.
+  */
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.04em;
+  text-underline-offset: 0.1em;
+  text-decoration-color: transparent;
+  animation: ink 800ms ease 1000ms both;
+}
+
+@keyframes ink {
+  to {
+    text-decoration-color: color-mix(in srgb, var(--fg-brand) 40%, transparent);
+  }
 }
 
 .hero-rule {
@@ -1130,33 +1147,103 @@ body::before {
 .hero-photo {
   position: relative;
   justify-self: end;
+  /* The tilt is on the wrapper, so the sheets behind it turn with it. */
+  rotate: -1.6deg;
   width: 100%;
   max-width: 34rem;
   /* Runs to the edge of the viewport rather than stopping at the gutter. */
   margin-right: calc(clamp(1.25rem, 5vw, 4rem) * -1);
+  /*
+     Parallax. The photograph drifts slower than the words beside it, which is
+     the difference between a picture on a page and an object on a desk. A
+     transform and nothing else, so it never triggers layout.
+  */
+  transform: translateY(var(--hero-shift, 0px));
+  will-change: transform;
 }
 
+/*
+   A letter is two or three sheets, and this is the only place on the site
+   that can say so without writing it down. Two more sheets, drawn rather
+   than loaded: they are the same paper as everything else and they cost
+   nothing.
+
+   They fan out to the *left* because the photograph runs off the right edge
+   of the viewport, and a sheet peeking into a clipped margin is a sheet
+   nobody sees.
+*/
+.hero-sheet {
+  position: relative;
+}
+
+.hero-sheet::before,
+.hero-sheet::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+  opacity: 0;
+  /* Opacity only. `rise` would replace the transform that fans them out. */
+  animation: fade-in 900ms var(--ease-out-quint) both;
+}
+
+.hero-sheet::before {
+  inset: -1.2% -1.2%;
+  transform: rotate(-5.4deg) translate(-2.5%, 1.4%);
+  animation-delay: 120ms;
+}
+
+.hero-sheet::after {
+  inset: -2.6% -2.6%;
+  transform: rotate(-9deg) translate(-5.5%, 3%);
+  animation-delay: 40ms;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: var(--fade-to, 1);
+  }
+}
+
+.hero-sheet::after {
+  --fade-to: 0.62;
+}
+
+.hero-sheet::before {
+  --fade-to: 0.85;
+}
+
+/*
+   The photographed sheet is laid on top of them, wiped in from the bottom
+   edge the way a sheet slides onto a desk. The wipe is on the photograph
+   alone: `clip-path` on the wrapper would cut the two behind it back to the
+   photograph's own box, which is exactly the shape they exist to escape.
+*/
 .hero-photo .scanned-photo {
+  position: relative;
+  z-index: 1;
   max-height: 78vh;
   object-fit: cover;
   object-position: top;
   border-radius: 3px;
   background: var(--bg-surface);
   box-shadow: var(--shadow-lift);
-  opacity: 0;
-  /* A transform, never an animated margin: the tilt must not relayout. */
-  transform: rotate(-1.6deg);
-  animation: settle 1100ms var(--ease-out-quint) 240ms forwards;
+  animation: lay-down 1000ms var(--ease-out-quint) 320ms both;
 }
 
-@keyframes settle {
+@keyframes lay-down {
   from {
     opacity: 0;
-    transform: translateY(20px) rotate(-1.6deg) scale(0.985);
+    clip-path: inset(0 0 100% 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0) rotate(-1.6deg) scale(1);
+    clip-path: inset(0 0 0 0);
   }
 }
 
@@ -1167,7 +1254,9 @@ body::before {
 */
 .hero-caption {
   position: absolute;
-  left: -0.9rem;
+  /* Far enough left to sit on the blank sheets rather than on the dark edge
+     of the photograph, where a muted grey is unreadable. */
+  left: -3.2rem;
   bottom: -1.4rem;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1215,10 +1304,9 @@ body::before {
 }
 
 /*
-   The frame is the sheet's own aspect ratio, so nothing is cropped and the
-   region maths stays exact: a fraction of the frame is the same fraction of
-   the photograph. `max-width` rather than `max-height` keeps a tall portrait
-   sheet inside the viewport by narrowing it instead of letting it overflow.
+   The frame is the sheet's own aspect ratio, so nothing is cropped.
+   `max-width` rather than `max-height` keeps a tall portrait sheet inside the
+   viewport by narrowing it instead of letting it overflow.
 */
 .sheet-frame {
   position: relative;
@@ -1232,53 +1320,11 @@ body::before {
   box-shadow: var(--shadow-page);
 }
 
-.sheet-zoom {
-  position: absolute;
-  inset: 0;
-  /* Origin is explicit. The frame already caps the size, and a default
-     origin plus a cap is how a zoom ends up fighting a max-height. */
-  transform-origin: center center;
-  transform: scale(var(--zoom, 1)) translateY(var(--pan, 0%));
-  transition: transform 900ms var(--ease-out-quint);
-  will-change: transform;
-}
-
-.sheet-zoom .scanned-photo {
+.sheet-frame .scanned-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-}
-
-/*
-   Where on the sheet the passage being read was written. Inside the zoomed
-   layer on purpose, so it marks a part of the photograph rather than a part
-   of the screen.
-*/
-.sheet-band {
-  position: absolute;
-  /*
-     Inside the zoomed layer, so it marks a part of the photograph rather
-     than a part of the screen — which means its own left edge is zoomed out
-     of the frame along with everything else. At scale Z only the middle 1/Z
-     of the layer is inside the frame, so the offset has to be measured from
-     the middle rather than from an edge that is no longer on screen.
-  */
-  left: calc(50% - 50% / var(--zoom, 1) + 2.5%);
-  width: 2px;
-  top: var(--band-top, 0%);
-  height: var(--band-height, 100%);
-  border-radius: 2px;
-  background: var(--fg-brand);
-  opacity: 0;
-  transition:
-    top 900ms var(--ease-out-quint),
-    height 900ms var(--ease-out-quint),
-    opacity 400ms ease;
-}
-
-.sheet[data-following="true"] .sheet-band {
-  opacity: 0.85;
 }
 
 .sheet-frame-foot {
@@ -1304,7 +1350,7 @@ body::before {
   margin-top: clamp(2.5rem, 7vh, 4.5rem);
 }
 
-.sheet-text .letter-prose > div[data-passage-at] > * + * {
+.sheet-text .letter-prose > div > * + * {
   margin-top: 1.1em;
 }
 
@@ -1313,10 +1359,9 @@ body::before {
 }
 
 /*
-   The active passage's number in the gutter. It is the only thing on screen
-   that says which passage the photograph is following, so it is not
-   decoration — but it is also not the only signal, because the photograph
-   moves and the band moves with it.
+   The active passage's number in the gutter: a quiet mark of where in the
+   sheet you are. Never the only signal for anything — it says position, not
+   meaning, and the words are all still there without it.
 */
 .letter-prose > [data-passage] {
   --passage-number: var(--fg-muted);
@@ -1459,11 +1504,7 @@ body::before {
 
   .reader-name,
   .legend,
-  .hero-caption,
-  .sheet-band,
-  /* Nothing follows the line here, so the control that switches it off is a
-     button that does nothing. */
-  .sheet-frame-foot .pill {
+  .hero-caption {
     display: none;
   }
 
@@ -1509,11 +1550,6 @@ body::before {
     max-width: none;
   }
 
-  .sheet-zoom {
-    /* Off, not shrunk. */
-    transform: none;
-  }
-
   .sheet-text {
     padding-top: 0;
   }
@@ -1540,10 +1576,21 @@ body::before {
   .hero-lede,
   .hero-meta,
   .hero-cue,
+  .hero-sheet::before,
+  .hero-sheet::after,
   .hero-photo .scanned-photo,
+  .hero-title em,
   .hero-lede mark[data-c] {
     animation: none;
     opacity: 1;
+  }
+
+  .hero-title em {
+    text-decoration-color: color-mix(in srgb, var(--fg-brand) 40%, transparent);
+  }
+
+  .hero-photo {
+    transform: none;
   }
 
   .hero-cue-arrow {
@@ -1554,8 +1601,6 @@ body::before {
     background-size: 100% 100%;
   }
 
-  .sheet-zoom,
-  .sheet-band,
   .pill,
   .chip,
   .reader-progress span {
@@ -2058,6 +2103,277 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* ============================================================
+   WAITING, AND GOING WRONG
+   ============================================================
+
+   Three surfaces nobody designs until they need one: the skeleton, the 404
+   and the error. They are on the same paper as everything else on purpose —
+   a page that changes visual language the moment something goes wrong reads
+   as a different site having a different problem.
+   ============================================================ */
+
+/* ---- typing ----------------------------------------------------------
+
+   A line that types itself out, in CSS. The width animates in `steps(n)`
+   where n is the character count, which is why the component measures the
+   string and hands it over as a custom property.
+
+   The text is clipped, never built up, so it is complete in the DOM from the
+   first frame and a screen reader gets the sentence rather than the
+   performance.
+   -------------------------------------------------------------------- */
+
+.type-line {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  border-right: 1px solid var(--fg-brand);
+  width: calc(var(--type-chars, 20) * 1ch);
+  animation:
+    type-out var(--type-duration, 1600ms) steps(var(--type-chars, 20))
+      var(--type-delay, 0ms) both,
+    /* Blinks a few times and then stops. A caret that never goes away on a
+       line that finished typing is a cursor nobody is holding. */
+    type-caret 900ms steps(1) var(--type-delay, 0ms) 6 forwards;
+}
+
+@keyframes type-out {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes type-caret {
+  0% {
+    border-color: var(--fg-brand);
+  }
+  50%,
+  100% {
+    border-color: transparent;
+  }
+}
+
+/* ---- skeletons -------------------------------------------------------
+
+   Shaped like the thing they stand in for, never a spinner in the middle of
+   an empty page. Every one of them is `aria-hidden`, with a single live line
+   doing the announcing: a dozen grey rectangles read out one at a time is
+   worse than silence.
+   -------------------------------------------------------------------- */
+
+.skeleton {
+  display: block;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--border-subtle) 0%,
+      var(--bg-surface) 40%,
+      var(--border-subtle) 80%
+    );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.skeleton-line {
+  height: 0.85rem;
+  margin: 0.55rem 0;
+}
+
+.skeleton-title {
+  height: 2.4rem;
+  border-radius: 6px;
+  margin: 0.75rem 0;
+}
+
+.skeleton-chip {
+  display: inline-block;
+  width: 5.5rem;
+  height: 1.9rem;
+  border-radius: 999px;
+}
+
+.skeleton-figure {
+  width: 4rem;
+  height: 2.2rem;
+}
+
+.skeleton-surface {
+  min-height: 24rem;
+  border-radius: 12px;
+}
+
+.skeleton-sheet {
+  width: 100%;
+  aspect-ratio: 0.75;
+  max-height: 62vh;
+  border-radius: 3px;
+  box-shadow: var(--shadow-page);
+}
+
+.skeleton-stack {
+  margin-top: 1.5rem;
+}
+
+.skeleton-figures {
+  display: flex;
+  gap: clamp(1.5rem, 5vw, 3.5rem);
+  margin-top: 1rem;
+}
+
+.admin-card--skeleton {
+  animation: none;
+  opacity: 1;
+}
+
+.hero--loading {
+  min-height: auto;
+  /* The copy sits at the top rather than centring against a tall placeholder,
+     so the typed line is where the reader is already looking. */
+  align-items: start;
+}
+
+/* ---- the blank sheet, and the smudged one ---------------------------- */
+
+.state {
+  position: relative;
+  z-index: 2;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: clamp(3rem, 10vh, 7rem) clamp(1.25rem, 5vw, 4rem);
+}
+
+.state-inner {
+  position: relative;
+  max-width: 40rem;
+}
+
+/*
+   A sheet with nothing on it. It is the honest picture of a 404 on a site
+   made of letters, and it is drawn rather than loaded — an image here would
+   be a request made to say that a request failed.
+*/
+.state-sheet {
+  position: absolute;
+  /* Behind the words, always. It is atmosphere; the sentence is the page. */
+  z-index: -1;
+  top: -5rem;
+  right: -11rem;
+  width: 17rem;
+  aspect-ratio: 0.75;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+  transform: rotate(4deg);
+  opacity: 0;
+  animation: rise 900ms var(--ease-out-quint) 120ms forwards;
+  pointer-events: none;
+}
+
+.state-sheet-rules {
+  position: absolute;
+  inset: 12% 10%;
+  background-image: repeating-linear-gradient(
+    var(--bg-surface) 0 1.35rem,
+    var(--border-subtle) 1.35rem 1.4rem
+  );
+  opacity: 0.85;
+}
+
+.state-blot {
+  position: absolute;
+  left: 22%;
+  top: 34%;
+  width: 4.5rem;
+  height: 3.2rem;
+  border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
+  background: var(--fg-primary);
+  opacity: 0.14;
+  filter: blur(1px);
+}
+
+.state-eyebrow {
+  opacity: 0;
+  animation: rise 700ms var(--ease-out-quint) 200ms forwards;
+}
+
+.state-title {
+  margin: 0.8rem 0 0;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  opacity: 0;
+  animation: rise 700ms var(--ease-out-quint) 300ms forwards;
+}
+
+.state-title em {
+  font-style: italic;
+  color: var(--fg-brand);
+}
+
+.state-lede {
+  margin: 1.6rem 0 0;
+  max-width: 42ch;
+  font-size: 1.05rem;
+  line-height: 1.68;
+  color: var(--fg-secondary);
+  text-wrap: pretty;
+  opacity: 0;
+  animation: rise 700ms var(--ease-out-quint) 420ms forwards;
+}
+
+.state-actions {
+  margin: 2.2rem 0 0;
+  opacity: 0;
+  animation: rise 700ms var(--ease-out-quint) 540ms forwards;
+}
+
+.state-digest {
+  margin-top: 2rem;
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+
+.state--admin .state-title {
+  font-size: clamp(2rem, 4.5vw, 3rem);
+}
+
+.transcribing {
+  margin: 0;
+  color: var(--fg-brand);
+}
+
+@media (max-width: 767px) {
+  .state-sheet {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-line,
+  .skeleton {
+    animation: none;
+  }
+
+  .type-line {
+    width: auto;
+    border-right-color: transparent;
+  }
+
+  .state-sheet,
+  .state-eyebrow,
+  .state-title,
+  .state-lede,
+  .state-actions {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ============================================================

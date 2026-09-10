@@ -35,9 +35,9 @@ This has :mark[honestly been one of the best weeks]{c=important} I've had.
 A whole block grouped under a theme, with :mark[a highlight]{c=note} inside it.
 :::
 
-:::passage{at="0.19 0.31"}
-A passage, and where on the sheet it was written. On a wide screen the
-photograph follows the line you are reading.
+:::passage
+A run of paragraphs grouped into one passage: one number in the gutter,
+one thing the reader arrives at.
 :::
 ```
 
@@ -45,7 +45,7 @@ No table of offsets, no join. The `.md` file carries everything, so fixing a com
 
 ## Reading a letter
 
-On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. A passage can say which band of the sheet it came from, and the photograph follows it; a passage that doesn't gets a proportional band instead, so marking one is worth doing for the pages that need it and skipping for the ones that don't.
+On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. The transcription is split into passages, numbered quietly in the margin, each arriving as you reach it.
 
 On a phone there is one column, so nothing pins and nothing zooms: the photograph opens first and one tap gets you the transcription. Both halves are in the HTML either way — which half is on screen is a CSS decision, never something that depends on JavaScript having run.
 

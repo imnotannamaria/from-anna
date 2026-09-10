@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Compiled package output. It is a build artifact, it is gitignored, and
+    // linting it reports on source that was already linted.
+    "packages/*/dist/**",
   ]),
 ]);
 

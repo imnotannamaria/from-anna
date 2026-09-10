@@ -12,21 +12,11 @@ Decision log. X because Y. Closed on 2026-09-09, from a design comp reviewed aga
 
 **Mobile keeps the toggle that already exists: photo first, one tap to the transcription** — because neither half survives being half a phone wide, and the handwriting is what someone opened the link to see.
 
-**The passage-following zoom is desktop only** — because it needs two columns to make sense, and a phone has one.
+~~**Crop regions, and a photograph that zooms to follow the passage being read.**~~ **Built, looked at, removed.** See *Reversed after building it* at the end.
 
-**Crop regions are optional, and a passage without one falls back to a proportional band** — because that makes the cheap version the default and hand-authoring an upgrade per page, rather than a tax on every letter. Cost per letter is the complaint this project started from, so a feature that adds work to every single one is a feature that will stop being used.
+**The stored image cap is 2400px, with a second 1200px output served through `srcset`** — because only one version of a photograph is kept and the original is thrown away, so the one that is kept is the archive copy of a handwritten letter and had better not be regretted. A reader who wants to look closely at the handwriting — browser zoom, pinch on a phone — gets a sheet worth looking at, and `srcset` keeps the default download small.
 
-It also removes a whole failure mode: a derived region can be wrong, and there is no derivation.
-
-**Regions live in the markdown as `:::passage{at="0.19 0.31"}`, not in a table** — because a table of offsets into mutable text breaks the first time a comma moves, which is the same reasoning that kept highlights out of the database. The `.md` file keeps carrying everything.
-
-**The `:::passage` directive belongs to `remark-scanned-page`, not the app** — because the package is described as "a scanned page with a synchronised transcription", and a region per passage *is* the synchronisation.
-
-**The stored image cap goes from 1500px to 2400px, and the maximum zoom from 1.75 to 1.5** — because measurement said so, not taste. The sticky photo occupies 616px at 1440 and 728px at 1920, so on a retina screen the old 1125px source covered **91% at zoom 1** — already slightly soft before any zoom at all — and 52% at the comp's 1.75×. At 2400px and 1.5× it lands at 97% on 1440 retina.
-
-Choosing the crop by hand decides *where* to zoom. It does not add detail. The two problems are independent and both had to be answered.
-
-This partly reverses the decision in `photo-transcription/DECISIONS.md` that capped images at 1500px. That reasoning still holds — one stored version, and it is the one people see — but the zoom is a second consumer of the same file, and it did not exist when the cap was chosen.
+The cap was originally raised for the passage zoom, which is gone. This is the reason that survived it, and it is a different and weaker one: 1500px would also have been defensible.
 
 **Existing photos are re-uploaded rather than migrated** — because there is exactly one test letter, and reprocessing would need the original, which is deliberately not kept.
 
@@ -69,3 +59,51 @@ This partly reverses the decision in `photo-transcription/DECISIONS.md` that cap
 **The `:::passage` directive emits a `<div>`, which widens the sanitize schema by one tag** — because it needs an element to carry the region and every allowed tag already means something else. The argument for it: `remark-rehype` drops raw HTML from the source, so the only `div` reaching the schema is the one the plugin emits; it carries no URL, no handler and no text of its own; and the single attribute allowed on it is parsed and clamped by `parseRegion` before it reaches a `transform`.
 
 **A region is drawn on the photograph by hand, never derived** — because a derived region can be quietly wrong and there is nothing honest to derive it from. The picker writes `:::passage{at="…"}` into the markdown, which stays the one source of truth, exactly as highlights do.
+
+---
+
+## Reversed after building it
+
+**Following the line is gone.** The photograph no longer zooms and pans to the band of the sheet the current passage was written on, and there is no `at` region, no region picker and no `parseRegion`.
+
+It was built, and it did not read as intended. Two columns already say "these words, that page"; adding a photograph that moves on its own while you read makes the half of the screen you are not looking at the half that is moving. A reader following a line of text does not want the picture beside it to be doing something.
+
+What went with it, and why the whole chain went rather than just the animation:
+
+- **`at` on `:::passage`.** A region is a number that only ever existed to aim a zoom. With nothing to aim, it is an attribute nobody can see the effect of.
+- **The region picker, `parseRegion`, `bandFor`, `regionFor`, `sheetIndexAt`.** All of it was there to produce or consume `at`.
+- **`div` in the sanitize schema now allows no attributes at all**, which is a smaller thing to defend than one attribute with a clamp behind it.
+
+**`:::passage` stays**, as a grouping. It is one block of the transcription: one entry in the reveal, one number in the gutter, one thing a reader arrives at. That was the useful half all along, and it does not need a region to work.
+
+**The maximum zoom, at 1.5, is gone with it.** The measurement that produced it stands and is recorded above; there is simply nothing left to apply it to.
+
+---
+
+## Waiting, and going wrong
+
+**The 404, the error page and the skeletons are on the same paper as everything else** — because a page that changes visual language the moment something goes wrong reads as a different site having a different problem.
+
+**The 404 reads identically for a wrong link, an unpublished letter, an expired one, and someone else's** — because anything that distinguishes them hands back the one fact the unguessable slug exists to withhold. It is the same reasoning that made the letter route answer 404 rather than 403.
+
+**The error page never prints the error** — a stack trace on a public page is a map of the code, and a message can carry a path, a query or a token. The digest is shown instead: it is the server's own reference and useless to anyone else.
+
+**Skeletons are shaped like the thing they stand in for, and every one is `aria-hidden`** — a dozen grey rectangles read out one at a time is worse than silence, so one live line does the announcing.
+
+**The typed line is CSS, not JavaScript** — because it has to work inside a `loading.tsx`, which is a file that sometimes exists for four hundred milliseconds and cannot wait for hydration to say anything. The text is clipped rather than built up, so a screen reader gets the sentence and not the performance.
+
+**The favicon is drawn shapes, no letterform** — a favicon is 16px before it is anything else, and a glyph there would depend on a font the browser has no reason to have.
+
+---
+
+## The opening
+
+**The hero photograph sits on two blank sheets, fanned out behind it** — because a letter is two or three pages and this is the only place on the site that can say so without writing it down. Drawn in CSS, not loaded: it is the same paper as the rest of the page and costs no request.
+
+They fan to the left because the photograph runs off the right edge of the viewport, and a sheet peeking into a clipped margin is a sheet nobody sees.
+
+**The photograph is wiped in from its bottom edge, and the blank sheets arrive first** — a sheet being laid down on a stack, rather than a card fading in. The wipe is on the photograph alone: `clip-path` on the wrapper cut the sheets behind it back to the photograph's own box, which is the shape they exist to escape.
+
+**The opening photograph drifts slower than the words beside it on scroll** — the difference between a picture on a page and an object on a desk. Capped, and only ever a transform.
+
+**"by hand" is underlined by a `text-decoration` that inks in after the words** — not a positioned pseudo-element, because the phrase wraps at narrow widths and only a decoration wraps with it.
