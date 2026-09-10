@@ -83,7 +83,11 @@ export function LetterView({
   const reported = useRef(false)
 
   const [filter, setFilter] = useState<string | null>(null)
-  const [showing, setShowing] = useState<'photo' | 'text'>('photo')
+  // On a phone the halves take turns, and the transcription goes first. The
+  // opening has already shown the photograph at full size, so starting on it
+  // again read as photo, photo, then finally the words. It is also the right
+  // answer with no JavaScript, where there is no toggle to reach the text.
+  const [showing, setShowing] = useState<'photo' | 'text'>('text')
   const [progress, setProgress] = useState(0)
   const [heroShift, setHeroShift] = useState(0)
 

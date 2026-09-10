@@ -163,3 +163,5 @@ Read on a real letter, on a real phone, at `from-anna.vercel.app`.
 **No "unlisted link" in the opening** — the line under the heading says how many sheets and when; how the link was shared is not something the reader needs told on the page they are already reading.
 
 **The editor preview draws the brackets and the highlight sweep** — it is `.letter-prose` and `data-revealed` on the same element, which the descendant selectors never matched, so a theme drew its label and no bracket there.
+
+**On a phone the transcription shows first, the photograph one tap away** — the opening has just shown the photograph at full size, so starting the sheets on it again read as photo, photo, then the words. With no JavaScript there is no toggle, and the half that shows has to be the one you can read.
