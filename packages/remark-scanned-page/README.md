@@ -1,5 +1,7 @@
 # remark-scanned-page
 
+[![npm](https://img.shields.io/npm/v/remark-scanned-page.svg)](https://www.npmjs.com/package/remark-scanned-page)
+
 Publish a scanned page with a synchronised transcription and an accessible fallback.
 
 Photograph a page, put the transcription beside it, and mark the passages worth reading first. The highlights live inside the markdown as directives, so the `.md` file carries everything by itself.

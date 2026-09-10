@@ -13,12 +13,12 @@
     "README.md",
     "LICENSE"
   ],
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./styles/scanned-page.css": "./styles/scanned-page.css",
     "./styles/palette.css": "./styles/palette.css"
@@ -62,16 +62,15 @@
     "typescript": "^5"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "./styles/scanned-page.css": "./styles/scanned-page.css",
-      "./styles/palette.css": "./styles/palette.css"
-    }
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imnotannamaria/from-anna.git",
+    "directory": "packages/remark-scanned-page"
+  },
+  "homepage": "https://github.com/imnotannamaria/from-anna/tree/main/packages/remark-scanned-page#readme",
+  "bugs": {
+    "url": "https://github.com/imnotannamaria/from-anna/issues"
   }
 }

@@ -5,23 +5,23 @@ export {
   THEME_NAME,
   remarkMarkDirective,
   type RemarkMarkDirectiveOptions,
-} from './remark-mark-directive'
+} from './remark-mark-directive.js'
 
-export { renderMarkdown, schema } from './render'
+export { renderMarkdown, schema } from './render.js'
 
 export {
   wrapPassage,
   wrapSelection,
   type PassageResult,
   type WrapResult,
-} from './wrap-selection'
+} from './wrap-selection.js'
 
 export {
   ScannedPage,
   ScannedPhoto,
   ScannedTranscription,
   type ScannedPageProps,
-} from './scanned-page'
+} from './scanned-page.js'
 
 /**
  * Colour maths, exported because filling in the palette is the one job this
@@ -37,4 +37,4 @@ export {
   meetsAA,
   relativeLuminance,
   type Rgb,
-} from './contrast'
+} from './contrast.js'

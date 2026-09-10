@@ -1,5 +1,5 @@
-import { renderMarkdown } from './render'
-import type { RemarkMarkDirectiveOptions } from './remark-mark-directive'
+import { renderMarkdown } from './render.js'
+import type { RemarkMarkDirectiveOptions } from './remark-mark-directive.js'
 
 type PhotoProps = {
   /** Where the photo is served from. Private blob, behind a route. */

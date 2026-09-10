@@ -3,18 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run build:pkg",
     "dev": "next dev",
+    "prebuild": "npm run build:pkg",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "pretest": "npm run build:pkg",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:pkg": "npm run build --workspace remark-scanned-page"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.2",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/blob": "^2.8.0",
     "class-variance-authority": "^0.7.1",

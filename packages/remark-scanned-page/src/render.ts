@@ -8,7 +8,7 @@ import { unified } from 'unified'
 import {
   type RemarkMarkDirectiveOptions,
   remarkMarkDirective,
-} from './remark-mark-directive'
+} from './remark-mark-directive.js'
 
 /**
  * The sanitize schema.

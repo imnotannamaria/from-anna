@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { renderMarkdown } from './render'
+import { renderMarkdown } from './render.js'
 
 describe('highlights', () => {
   it('turns :mark into a mark carrying its tag', () => {

@@ -186,7 +186,9 @@ The package defines no tag vocabulary — only the mechanism and three colour sl
 
 Lives at `packages/remark-scanned-page/`, as an npm workspace. The app imports it by name, which is what makes a second copy of the pipeline impossible rather than merely discouraged.
 
-In the workspace, `exports` resolves to the TypeScript source, so editing the package shows up in the app and the tests with no build step in between. `publishConfig` swaps to `dist/` at publish time, and `transpilePackages` in `next.config.ts` is what lets Next compile the source.
+`exports` resolves to `dist/`, and `predev` / `prebuild` / `pretest` build the package first — so a fresh clone works and nothing ever runs against a stale or missing build.
+
+This replaced a `publishConfig` swap that did not work: npm treats `publishConfig` as config options and never rewrote `main` or `exports`, so the tarball's entry pointed at a `src/` that `files` excluded.
 
 **Done when**
 
@@ -196,7 +198,7 @@ In the workspace, `exports` resolves to the TypeScript source, so editing the pa
 - [x] `remark-scanned-page` confirmed free on npm
 - [x] MIT, with a LICENSE in the package
 - [x] `npm pack --dry-run` produces a 15.8kB tarball with dist, styles, README and LICENSE
-- [ ] Installed into a blank Next app and rendered — not verified yet, and it is the one check that would catch a wrong `exports` map
+- [x] Installed from a tarball into a clean project and exercised — it caught two bugs that made the package unusable: `publishConfig` never swapped the entry points, and ESM relative imports had no `.js` extension
 
 `styles/palette.css` is optional and deliberately one neutral grey for every tag. The three stay distinguishable through their underline styles alone, which makes the accessible baseline the default and colour the thing you add once you have measured it.
 
@@ -207,10 +209,13 @@ In the workspace, `exports` resolves to the TypeScript source, so editing the pa
 
 ---
 
-## Before publishing
+## Published
 
-- Install entrepta and read the julia colour tokens. It isn't in `package.json` yet.
-- Check `remark-mark-directive` is free on npm.
+`0.1.0` is on npm: https://www.npmjs.com/package/remark-scanned-page
+
+Releases run from `.github/workflows/release.yml` — bump the version in the package's `package.json`, push to `main`, and it publishes if that version is new. It packs the tarball and installs it into an empty project first, which is the step that would have caught both of the bugs that made `0.1.0` unpublishable the first time.
+
+Publishing uses npm trusted publishing, so there is no `NPM_TOKEN` anywhere in the repository.
 
 ## Out of scope
 

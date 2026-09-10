@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { contrastRatio, hexToRgb, meetsAA, relativeLuminance } from './contrast'
+import { contrastRatio, hexToRgb, meetsAA, relativeLuminance } from './contrast.js'
 
 describe('hexToRgb', () => {
   it('parses a six-digit hex', () => {

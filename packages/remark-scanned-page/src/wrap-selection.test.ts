@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { wrapPassage, wrapSelection } from './wrap-selection'
+import { wrapPassage, wrapSelection } from './wrap-selection.js'
 
 describe('wrapSelection', () => {
   it('wraps a selection in the directive', () => {

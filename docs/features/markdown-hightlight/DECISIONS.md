@@ -62,7 +62,9 @@ It shipped with an `at` attribute naming the band of the sheet the words were wr
 
 **The package is an npm workspace in this repo, not a separate one** — because the app importing it by name is what makes a duplicate pipeline impossible. Two repos would mean publishing and bumping a dependency every time the plugin changes, just to test it against the only real consumer.
 
-**In the workspace, `exports` points at the TypeScript source** — because a build step between editing the package and seeing it in the app is friction that gets skipped. `publishConfig` swaps to `dist/` at publish time, so the tarball still ships compiled JS.
+~~**In the workspace, `exports` points at the TypeScript source, and `publishConfig` swaps to `dist/` at publish time.**~~ **That was never true.** npm treats `publishConfig` as a bag of *config options* — registry, access, tag. It does not rewrite `main` or `exports`, and npm 11 warns about them as unknown keys. So the tarball shipped `dist/` with its entry pointing at `src/index.ts`, which `files` deliberately excluded: **every install would have failed with `ERR_MODULE_NOT_FOUND`.**
+
+**`exports` points at `dist/`, and `predev` / `prebuild` / `pretest` build the package first** — the friction the original decision was avoiding, paid in a second of `tsc` rather than in a broken package. A fresh clone runs `npm run dev` and it builds on the way.
 
 **The name is `remark-scanned-page`** — because the package is plugin *and* CSS *and* component, and `remark-mark-directive` would have described only the first. `scanned page` is also what the second plausible user is searching for.
 
@@ -70,6 +72,18 @@ It shipped with an `at` attribute naming the band of the sheet the words were wr
 
 ---
 
-## Open
+**Relative imports inside the package carry a `.js` extension, and the build resolves as `NodeNext`** — because the package is ESM and Node ESM refuses an extensionless specifier. TypeScript emitted `from './render'` verbatim, which every bundler resolves and no Node consumer can. `moduleResolution: "bundler"` had been letting it through; `NodeNext` is what a published ESM package is actually resolved by, so it is what should be checking.
 
-**Installing into a blank Next app.** The one check that would catch a wrong `exports` map, still unverified.
+Two bugs, one of them invisible from inside this repo: Next, Turbopack and vitest all resolve extensionless specifiers, so nothing here could ever have failed on it.
+
+---
+
+## Closed
+
+**Installed from a tarball into a clean project and exercised.** `npm pack`, `npm i ./remark-scanned-page-0.1.0.tgz` in an empty directory, then import it and run it. It failed twice before it passed, which is exactly why the check was on the list.
+
+**Releasing is driven by the version in `package.json`, not by changesets** — because changesets exists to coordinate versions across many packages and a "Version Packages" pull request, and there is one package here. Bumping a number and pushing is the whole ceremony this repo needs; a release bot would be more machinery than the thing it releases.
+
+**The release workflow installs the tarball into an empty project before it publishes** — because that is the only check that catches a broken package, and it caught two. Everything inside this repository resolves specifiers that Node refuses, so nothing here can fail the way a consumer does.
+
+**Trusted publishing rather than an `NPM_TOKEN` secret** — a long-lived credential in repository settings is a credential that outlives the reason it was created. OIDC mints one for the job and it expires with it.
