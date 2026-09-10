@@ -155,3 +155,7 @@ Read on a real letter, on a real phone, at `from-anna.vercel.app`.
 **A refused `/admin` renders the real 404 page** — the proxy answered with the right status and an empty body, which a browser paints as a blank white page. It now rewrites to a path that does not exist, so Next renders `not-found.tsx` with the 404 it already carries.
 
 **The opening photograph drifts 48px at most, and the opening clips on both axes** — at 96px, with the two drawn sheets fanned behind it, it slid over the first line of the transcription. The words are the point of the page; a decoration never gets to cover them. Below 900px it does not drift at all, because in one column the photograph sits directly on top of the letter.
+
+**The fonts are self-hosted through `next/font`** — the Google Fonts `@import` at the top of `globals.css` never reached the browser: the build dropped it, and every page had been set in Times New Roman, Georgia and Menlo since the first deploy. `next/font` downloads them at build time, serves them from this domain and does not depend on where a line sits in a stylesheet.
+
+**No enlarged first letter** — the letterpress nod on the first letter read as a mistake rather than a flourish, most of all on a letter that opens with a date.

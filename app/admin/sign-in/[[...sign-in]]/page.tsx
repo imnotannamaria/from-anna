@@ -82,7 +82,10 @@ export default async function AdminSignInPage() {
               variables: {
                 colorPrimary: '#b8305f',
                 borderRadius: '8px',
-                fontFamily: 'Newsreader, Georgia, serif',
+                // The token, not the name: `next/font` serves Newsreader
+                // under a generated family name, so "Newsreader" matches
+                // nothing.
+                fontFamily: 'var(--font-serif)',
               },
             }}
           />
