@@ -2,6 +2,8 @@ import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import { Fraunces, Inter, JetBrains_Mono, Newsreader } from 'next/font/google'
 
+import { SiteAnalytics } from '@/components/site-analytics'
+
 import 'remark-scanned-page/styles/scanned-page.css'
 
 import './globals.css'
@@ -84,6 +86,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" data-mode="light" className={`h-full ${fontVariables}`}>
       <body className="flex min-h-full flex-col">
         <ClerkProvider>{children}</ClerkProvider>
+        <SiteAnalytics />
       </body>
     </html>
   )

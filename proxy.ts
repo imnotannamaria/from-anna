@@ -27,13 +27,15 @@ function issueReadingSession(request: NextRequest, response: NextResponse) {
   // front page and not the desk: someone who only read about the project
   // has no reason to leave carrying a six-month identifier. An API call is
   // made by someone who already has one, and Clerk's handshake is not a
-  // reader at all.
+  // reader at all. Neither is Vercel Analytics reporting a visit to the
+  // front page, which would otherwise hand the cookie out after all.
   const path = request.nextUrl.pathname
   if (
     path === '/' ||
     path.startsWith('/admin') ||
     path.startsWith('/api/') ||
-    path.startsWith('/__clerk')
+    path.startsWith('/__clerk') ||
+    path.startsWith('/_vercel')
   ) {
     return
   }

@@ -101,3 +101,5 @@ It creates a **draft with no pages and no text**, which is the honest order: a l
 **Nothing on the site can be framed, and only the origin leaves as a referrer** — the desk has a delete button a decoy iframe could aim at, and a letter's address now carries its title.
 
 **The letter's markdown is split into exactly one block per sheet** — a `---` the letter uses as a rule of its own over-split it, and the blocks past the last sheet were silently never rendered. They fold into the last sheet instead.
+
+**Vercel Web Analytics for the site, scrubbed before it leaves the browser** — it answers what the `views` table does not: how many people read the front page, from where, on what. A `beforeSend` drops `/admin`, strips the query string (`?from=` is a name) and reports every letter as `/letter`, because a letter's path carries its title. Per-letter numbers stay in the `views` table. It has to be switched on in the Vercel project (Analytics tab) before anything is collected.
