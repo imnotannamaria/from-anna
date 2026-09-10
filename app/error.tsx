@@ -41,9 +41,8 @@ export default function Error({
         </h1>
 
         <p className="state-lede">
-          This is the site failing, not the letter. Nothing has been changed
-          and nothing has been lost — the same link will work once whatever
-          just happened stops happening.
+          This is the site failing, not the letter. Nothing changed and
+          nothing was lost. The same link will work again in a moment.
         </p>
 
         <p className="state-actions">

@@ -37,11 +37,10 @@ export default function NotFound() {
         </h1>
 
         <p className="state-lede">
-          Either the link is wrong, or the letter it pointed at is no longer
-          being shared. Every letter here has an unguessable address and is
-          meant for one person, so there is no index to look through and
-          nothing to search — if one was sent to you, the link you were given
-          is the only way in.
+          Either the link is wrong, or the letter it pointed at isn&rsquo;t
+          being shared anymore. Every letter here is meant for one person, so
+          there&rsquo;s no list to look through. If one was sent to you, the
+          link you got is the only way in.
         </p>
 
         <p className="state-actions">

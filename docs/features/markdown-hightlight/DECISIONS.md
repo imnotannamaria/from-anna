@@ -36,7 +36,9 @@ The fills are not entrepta tokens: entrepta's julia preset only overrides the br
 
 **On narrow screens the side bracket becomes a label above the block** — because there is no side margin at 375px.
 
-**The package gained a second container directive, `:::passage`** — because a transcription needs a unit bigger than a paragraph and smaller than a sheet: one entry in the reveal, one number in the gutter, one thing a reader arrives at.
+**The package gained a second container directive, `:::passage`** — because a transcription needs a unit bigger than a paragraph and smaller than a sheet: one entry in the reveal, one thing a reader arrives at.
+
+**0.2.0 removed the passage numbers and the gutter they sat in** — they shipped in 0.1.0 as a CSS counter, and they were one app's design decision leaking into a package default. A letter read as running text reads better than one read as a numbered list.
 
 It shipped with an `at` attribute naming the band of the sheet the words were written on, which drove a photograph that zoomed to follow the reading. That came back out — see `design/DECISIONS.md` — and with it went `parseRegion`, `bandFor` and the region picker. **The grouping was the half worth keeping.**
 

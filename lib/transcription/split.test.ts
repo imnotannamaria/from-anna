@@ -1,10 +1,40 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  blocksForSheets,
   joinPages,
   splitBlocks,
   splitTranscription,
 } from './split'
+
+describe('blocksForSheets', () => {
+  it('gives one block per sheet when the counts agree', () => {
+    expect(blocksForSheets('one\n\n---\n\ntwo', 2)).toEqual(['one', 'two'])
+  })
+
+  it('folds a rule the letter uses for itself into the last sheet', () => {
+    // One sheet, and the letter has a `---` of its own. The words after it
+    // used to be dropped from the published page.
+    expect(blocksForSheets('before\n\n---\n\nafter', 1)).toEqual([
+      'before\n\n---\n\nafter',
+    ])
+  })
+
+  it('keeps the earlier sheets as they were', () => {
+    expect(blocksForSheets('a\n---\nb\n---\nc\n---\nd', 2)).toEqual([
+      'a',
+      'b\n\n---\n\nc\n\n---\n\nd',
+    ])
+  })
+
+  it('leaves fewer blocks than sheets alone', () => {
+    expect(blocksForSheets('only one', 3)).toEqual(['only one'])
+  })
+
+  it('returns the blocks untouched when there are no sheets', () => {
+    expect(blocksForSheets('a\n---\nb', 0)).toEqual(['a', 'b'])
+  })
+})
 
 describe('splitBlocks', () => {
   it('splits on separator lines', () => {

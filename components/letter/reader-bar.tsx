@@ -1,7 +1,8 @@
 'use client'
 
 type Props = {
-  name: string[]
+  /** Who it is for, if I said. `null` reads as "you". */
+  recipient: string | null
   tags: readonly string[]
   filter: string | null
   onFilter: (tag: string | null) => void
@@ -14,20 +15,17 @@ type Props = {
 /**
  * The bar that stays.
  *
- * Nothing in it comes from inside the letter. The name is the three words of
- * the slug, which the reader already has in their address bar, and the
- * counter is their own position — a fixed strip that is on screen the whole
- * way down is the last place to put something private.
+ * Addressed, the way a letter is: *from anna to you*, or to whoever it was
+ * written for. That line is the whole centre of the bar and nothing else
+ * goes there.
  *
- * Three regions and one width, so something has to give at 390px. What gives
- * is the name and the chips: the name reappears in full in the opening, where
- * it has a line to itself, and filtering by colour is a way of re-reading a
- * letter rather than a way of reading it. What stays is the wordmark and the
- * photo/transcription toggle, because that toggle is the only control on a
- * phone that changes what you can see.
+ * At 390px the chips go — filtering by colour is a way of re-reading a letter
+ * rather than a way of reading it. The address and the photo/transcription
+ * toggle stay, because the toggle is the only control on a phone that changes
+ * what you can see.
  */
 export function ReaderBar({
-  name,
+  recipient,
   tags,
   filter,
   onFilter,
@@ -38,14 +36,14 @@ export function ReaderBar({
 }: Props) {
   return (
     <header className="reader-bar">
-      {/* Decorative: the same fact is written out in the coda. */}
+      {/* Decorative: how far down the letter you are. */}
       <div className="reader-progress" aria-hidden="true">
         <span style={{ transform: `scaleX(${progress})` }} />
       </div>
 
-      <span className="display reader-wordmark">from anna</span>
-
-      <p className="meta reader-name">{name.join(' · ')}</p>
+      <p className="reader-name">
+        from anna <em>to {recipient ?? 'you'}</em>
+      </p>
 
       <div className="reader-controls">
         {enhanced && (

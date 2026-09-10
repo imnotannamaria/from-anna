@@ -1,9 +1,13 @@
-import { put } from '@vercel/blob'
+import { del, put } from '@vercel/blob'
 import type { NextRequest } from 'next/server'
 
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
 import { MAX_PAGES_PER_LETTER } from '@/lib/db/schema'
-import { TooManyPagesError, addPages } from '@/lib/letters/mutations'
+import {
+  TooManyPagesError,
+  addPages,
+  getLetterWithPages,
+} from '@/lib/letters/mutations'
 import { MAX_DIMENSION, OUTPUT_TYPE, SCREEN_DIMENSION } from '@/lib/images/process'
 
 /** Reads the database, so it can never be cached. */
@@ -106,14 +110,31 @@ export async function POST(
     )
   }
 
+  // Checked before anything is stored. A photograph put in the Blob store for
+  // a letter that does not exist, or one that is already full, is a file
+  // nothing points at and nothing will ever delete.
+  const letter = await getLetterWithPages(id)
+  if (!letter) return new Response('Not found', { status: 404 })
+  if (letter.pages.length + files.length > MAX_PAGES_PER_LETTER) {
+    return Response.json(
+      { error: `A letter holds at most ${MAX_PAGES_PER_LETTER} pages.` },
+      { status: 400 },
+    )
+  }
+
+  const stored: string[] = []
+
   try {
     // Private: the photo is the letter's content, and a public URL would
     // outlive unpublishing and expiry.
-    const store = (file: File) =>
-      put(`letters/${id}/${crypto.randomUUID()}.jpg`, file, {
+    const store = async (file: File) => {
+      const blob = await put(`letters/${id}/${crypto.randomUUID()}.jpg`, file, {
         access: 'private',
         contentType: OUTPUT_TYPE,
       })
+      stored.push(blob.url)
+      return blob
+    }
 
     const uploaded = await Promise.all(
       files.map(async (file, i) => {
@@ -137,6 +158,11 @@ export async function POST(
     const rows = await addPages(id, uploaded)
     return Response.json({ pages: rows }, { status: 201 })
   } catch (error) {
+    // Nothing was attached, so nothing that went up should stay. The check
+    // above makes this rare: a failed write, or two uploads racing for the
+    // last free page.
+    if (stored.length > 0) await del(stored).catch(() => {})
+
     if (error instanceof TooManyPagesError) {
       return Response.json({ error: error.message }, { status: 400 })
     }

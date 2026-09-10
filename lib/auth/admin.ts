@@ -18,7 +18,7 @@ export type AdminContext = {
   bypassEnabled: boolean
   /** The signed-in Clerk user id. `null` when signed out. */
   userId: string | null
-  /** Emails or ids allowed in. Empty means nobody is allowed yet. */
+  /** Clerk user ids allowed in. Empty means nobody is allowed yet. */
   allowlist: string[]
 }
 
@@ -79,9 +79,9 @@ export async function requireAdmin(): Promise<void> {
 /**
  * The signed-in user id, whether or not they are allowed in.
  *
- * Only the sign-in page uses this, to solve the bootstrap problem: the
- * allowlist is a list of Clerk user ids, and you cannot know your own until
- * you have signed in once.
+ * Only the sign-in page uses this, to tell "signed in and allowed" (sent on
+ * to the desk) from "signed in and not" (offered a way to sign out). It never
+ * displays the id: that page is public.
  */
 export async function currentUserId(): Promise<string | null> {
   const { userId } = await auth()

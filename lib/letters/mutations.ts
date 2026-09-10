@@ -4,7 +4,7 @@ import { asc, eq } from 'drizzle-orm'
 
 import { getDb } from '../db/client'
 import { MAX_PAGES_PER_LETTER, letters, pages } from '../db/schema'
-import { generateSlug } from '../slug'
+import { slugFromTitle, withSuffix } from '../slug'
 
 export class TooManyPagesError extends Error {
   constructor(readonly attempted: number) {
@@ -15,38 +15,107 @@ export class TooManyPagesError extends Error {
   }
 }
 
+/** A slug I typed myself is already in use. Never renamed behind my back. */
+export class SlugTakenError extends Error {
+  constructor(readonly slug: string) {
+    super(`/${slug} is already taken by another letter.`)
+    this.name = 'SlugTakenError'
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Error && /unique|duplicate/i.test(error.message)
+}
+
 /**
- * Create a draft letter.
+ * Start a letter: a draft with no pages and no text.
  *
- * Slug collisions are astronomically unlikely but not impossible, so the
- * unique index is allowed to reject one and the insert is retried. The
- * database is the authority on uniqueness, not the generator.
+ * The slug is either one I typed, which is used exactly and refused if taken,
+ * or one made from the title and today's date, which gets `-2`, `-3` if a
+ * letter with the same title was already started today. The unique index is
+ * the authority on collisions, not a read beforehand that two requests could
+ * both pass.
  */
 export async function createLetter(input: {
   title: string
   recipient?: string | null
+  /** Already checked by `checkCustomSlug`. Omit to generate one. */
+  slug?: string
 }) {
-  for (let attempt = 0; attempt < 5; attempt++) {
+  const insert = (slug: string) =>
+    getDb()
+      .insert(letters)
+      .values({
+        slug,
+        title: input.title,
+        recipient: input.recipient ?? null,
+      })
+      .returning()
+
+  if (input.slug) {
     try {
-      const [row] = await getDb()
-        .insert(letters)
-        .values({
-          slug: generateSlug(),
-          title: input.title,
-          recipient: input.recipient ?? null,
-        })
-        .returning()
+      const [row] = await insert(input.slug)
       return row
     } catch (error) {
-      const isDuplicate =
-        error instanceof Error && /unique|duplicate/i.test(error.message)
-      if (!isDuplicate || attempt === 4) throw error
+      if (isUniqueViolation(error)) throw new SlugTakenError(input.slug)
+      throw error
     }
   }
-  throw new Error('Could not allocate a unique slug')
+
+  const base = slugFromTitle(input.title, new Date())
+  for (let attempt = 1; attempt <= 20; attempt++) {
+    try {
+      const [row] = await insert(withSuffix(base, attempt))
+      return row
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error
+    }
+  }
+  throw new Error(`Could not find a free slug starting with ${base}`)
+}
+
+/**
+ * Delete a letter and everything under it.
+ *
+ * Pages and views go with it through `on delete cascade`. The photographs are
+ * in the Blob store, which the database cannot reach, so their URLs are
+ * returned for the caller to delete there.
+ *
+ * The row goes first. If the blob delete then fails, what is left is a
+ * private file nothing points at — unreachable without the store token, and
+ * cheap. The other order could leave a letter whose photographs are gone.
+ */
+export async function deleteLetter(
+  letterId: string,
+): Promise<{ deleted: boolean; blobUrls: string[] }> {
+  const found = await getLetterWithPages(letterId)
+  if (!found) return { deleted: false, blobUrls: [] }
+
+  const blobUrls = found.pages.flatMap((page) =>
+    [page.blobUrl, page.screenBlobUrl].filter((url): url is string => !!url),
+  )
+
+  await getDb().delete(letters).where(eq(letters.id, letterId))
+
+  return { deleted: true, blobUrls }
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Whether a string can be a letter id at all.
+ *
+ * Anything that is not a UUID cannot match a row, and sent to Postgres it
+ * comes back as a type error, so `/api/letters/nope/pages/0` answered 500
+ * where every other miss answers 404.
+ */
+export function isLetterId(value: string): boolean {
+  return UUID.test(value)
 }
 
 export async function getLetterWithPages(letterId: string) {
+  if (!isLetterId(letterId)) return null
+
   const [letter] = await getDb()
     .select()
     .from(letters)
@@ -144,6 +213,8 @@ export async function setLetterStatus(
   letterId: string,
   input: { status?: 'draft' | 'published'; expiresAt?: Date | null },
 ) {
+  if (!isLetterId(letterId)) return null
+
   const [existing] = await getDb()
     .select({ status: letters.status, publishedAt: letters.publishedAt })
     .from(letters)
@@ -179,6 +250,8 @@ export async function setLetterStatus(
  * Keeping them apart is what makes the seeding guard meaningful.
  */
 export async function saveMdContent(letterId: string, mdContent: string) {
+  if (!isLetterId(letterId)) return null
+
   const [row] = await getDb()
     .update(letters)
     .set({ mdContent, updatedAt: new Date() })

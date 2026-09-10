@@ -24,7 +24,7 @@ Photograph the page  →  Transcribe  →  Edit and highlight  →  Publish  →
 2. Upload the photos; they're resized and compressed in the browser before they leave it
 3. Press transcribe — a vision model returns markdown, one block per page
 4. Fix the transcription against the photo and mark the passages worth reading first
-5. Publish, which generates a readable but unguessable slug
+5. Publish. The link is the title and the day it was started — `carta-pro-joao-2026-09-10` — or one I type myself
 
 Highlights live inside the markdown itself, as directives:
 
@@ -36,7 +36,7 @@ A whole block grouped under a theme, with :mark[a highlight]{c=note} inside it.
 :::
 
 :::passage
-A run of paragraphs grouped into one passage: one number in the gutter,
+A run of paragraphs grouped into one passage,
 one thing the reader arrives at.
 :::
 ```
@@ -53,11 +53,11 @@ Its source is in [packages/remark-scanned-page/](packages/remark-scanned-page/),
 
 ## Reading a letter
 
-On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. The transcription is split into passages, numbered quietly in the margin, each arriving as you reach it.
+On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. The bar at the top says who it is for: *from anna to you*, or to whoever I wrote it to.
 
 On a phone there is one column, so nothing pins and nothing zooms: the photograph opens first and one tap gets you the transcription. Both halves are in the HTML either way — which half is on screen is a CSS decision, never something that depends on JavaScript having run.
 
-Everything the reading view adds is an enhancement over a page that already works: the transcription is rendered on the server, the highlights are painted with no script, and the passage numbers come from a CSS counter.
+Everything the reading view adds is an enhancement over a page that already works: the transcription is rendered on the server, and the highlights are painted with no script.
 
 ## Stack
 

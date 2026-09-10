@@ -25,8 +25,8 @@ export type SheetProps = {
 type Props = {
   letterId: string
   isPreview: boolean
-  /** The three words of the slug. Never anything from inside the letter. */
-  name: string[]
+  /** Who it is for, if I said. The bar reads "to you" when this is null. */
+  recipient: string | null
   /** Formatted on the server, in UTC, so it cannot disagree with itself. */
   sentOn: string | null
   /** From an env var, never the repository. Null hides the button. */
@@ -37,7 +37,12 @@ type Props = {
   heroPhoto: React.ReactNode
 }
 
-type Active = { sheet: number; passage: number }
+/**
+ * How far, in px, the opening photograph drifts. The same number is
+ * `--hero-drift` in `globals.css`, which reserves that much room below it:
+ * past that the photograph would slide over the first lines of the letter.
+ */
+const HERO_DRIFT = 48
 
 /**
  * The reading view.
@@ -66,7 +71,7 @@ type Active = { sheet: number; passage: number }
 export function LetterView({
   letterId,
   isPreview,
-  name,
+  recipient,
   sentOn,
   writeBackEmail,
   tags,
@@ -77,7 +82,6 @@ export function LetterView({
   const codaRef = useRef<HTMLElement>(null)
   const reported = useRef(false)
 
-  const [active, setActive] = useState<Active | null>(null)
   const [filter, setFilter] = useState<string | null>(null)
   const [showing, setShowing] = useState<'photo' | 'text'>('photo')
   const [progress, setProgress] = useState(0)
@@ -138,8 +142,7 @@ export function LetterView({
 
     if (found.length === 0) return
 
-    // Two observers, because they answer different questions. This one asks
-    // "has the reader got here yet", which is generous on purpose: a passage
+    // "Has the reader got here yet", which is generous on purpose: a passage
     // still translated while it sits fully on screen is a bug.
     const reveal = new IntersectionObserver(
       (entries) => {
@@ -152,60 +155,16 @@ export function LetterView({
       { threshold: 0, rootMargin: '0px 0px -8% 0px' },
     )
 
-    // And this one asks "which passage is being read", which is a narrow band
-    // across the upper middle of the viewport. Threshold zero plus a margin
-    // rather than a ratio, because a passage taller than the band would never
-    // reach any ratio and would never become active.
-    const visible = new Set<Element>()
-    const reading = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.add(entry.target)
-          else visible.delete(entry.target)
-        }
-        const first = found.find((candidate) => visible.has(candidate.el))
-        if (first) setActive({ sheet: first.sheet, passage: first.index })
-      },
-      { threshold: 0, rootMargin: '-25% 0px -45% 0px' },
-    )
+    // A second observer used to track which passage was being read, to light
+    // the number in its gutter. The numbers are gone, and so is it.
+    for (const { el } of found) reveal.observe(el)
 
-    for (const { el } of found) {
-      reveal.observe(el)
-      reading.observe(el)
-    }
-
-    return () => {
-      reveal.disconnect()
-      reading.disconnect()
-    }
+    return () => reveal.disconnect()
   }, [sheets])
 
-  /* ---- reading position ---------------------------------------------
-     Which passage is being read, marked on the passage itself so the number
-     in its gutter can say so. It is the only thing on screen that tracks a
-     reader's position through a sheet, and it costs one attribute. */
-  useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-
-    root.querySelectorAll<HTMLElement>('[data-sheet]').forEach((sheetEl) => {
-      const sheet = Number(sheetEl.dataset.sheet)
-      const isActive = active?.sheet === sheet
-
-      Array.from(
-        sheetEl.querySelector('.scanned-transcription')?.children ?? [],
-      ).forEach((passage, i) => {
-        ;(passage as HTMLElement).dataset.active =
-          isActive && i === active?.passage ? 'true' : 'false'
-      })
-    })
-  }, [active])
-
   /* ---- progress ------------------------------------------------------
-     Shown because the coda says "counted once, nothing else is stored" out
-     loud, and a reader can only judge that claim against something they can
-     see. It turns the measurement from something hidden into something
-     admitted. */
+     How far down the letter you are, as a line under the bar. Decorative,
+     and a transform, so following the scroll never repaints anything. */
   useEffect(() => {
     let frame = 0
     // The scrollable height is measured on mount and when the document
@@ -224,7 +183,7 @@ export function LetterView({
       // The opening photograph drifts slower than the words beside it. Capped,
       // because past a certain distance it stops reading as depth and starts
       // reading as a bug — and it is only ever a transform.
-      setHeroShift(Math.min(y * 0.14, 96))
+      setHeroShift(Math.min(y * 0.14, HERO_DRIFT))
     }
 
     const onScroll = () => {
@@ -303,7 +262,7 @@ export function LetterView({
       }}
     >
       <ReaderBar
-        name={name}
+        recipient={recipient}
         tags={tags}
         filter={filter}
         onFilter={setFilter}
@@ -322,7 +281,6 @@ export function LetterView({
         )}
 
         <LetterHero
-          name={name}
           sentOn={sentOn}
           photo={heroPhoto}
           sheetCount={sheets.length}
@@ -370,7 +328,6 @@ export function LetterView({
       <LetterCoda
         ref={codaRef}
         writeBackEmail={writeBackEmail}
-        name={name}
         onReadAgain={scrollToTop}
         enhanced={enhanced}
       />

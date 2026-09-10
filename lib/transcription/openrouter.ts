@@ -31,9 +31,9 @@ export type TranscriptionResult = {
 /**
  * Transcribe every page of a letter in one call.
  *
- * The images are sent as URLs rather than base64, because the photos are
- * already on Vercel Blob and publicly reachable, and the text part comes
- * first — OpenRouter's docs recommend that ordering.
+ * The images arrive as `data:` URLs: the Blob store is private, so OpenRouter
+ * could not fetch a blob URL itself. The text part comes first, which is the
+ * ordering OpenRouter's docs recommend.
  *
  * There is no retry. A hidden retry spends a call without anyone seeing it,
  * and a failed request is not billed, so retrying is the caller's decision to

@@ -33,7 +33,7 @@ export const SCREEN_DIMENSION = 1200
 /** JPEG quality. Handwriting needs contrast, not fidelity. */
 export const JPEG_QUALITY = 0.8
 
-export const MAX_PAGES_PER_LETTER = 5
+export { MAX_PAGES_PER_LETTER } from '../letters/limits'
 
 export const OUTPUT_TYPE = 'image/jpeg'
 
@@ -52,10 +52,41 @@ export type ProcessedImage = {
 export class ImageDecodeError extends Error {
   constructor(readonly fileName: string) {
     super(
-      `Could not read "${fileName}". If it is a HEIC file, convert it to JPEG first.`,
+      `Couldn’t open “${fileName}”. It may be damaged, or a format this browser can’t read. Try another photo of the same page.`,
     )
     this.name = 'ImageDecodeError'
   }
+}
+
+/**
+ * A HEIC or HEIF photo, by type or by name.
+ *
+ * Both, because browsers disagree: Safari reports `image/heic`, desktop
+ * Chrome reports an empty type for the same file. Checked without loading
+ * anything, so a JPEG upload never pays for the converter.
+ */
+export function looksLikeHeic(file: { name: string; type: string }): boolean {
+  return (
+    /^image\/hei[cf](-sequence)?$/i.test(file.type) ||
+    /\.hei[cf]$/i.test(file.name)
+  )
+}
+
+/**
+ * Convert a HEIC photo to JPEG, in the browser.
+ *
+ * Converting is our job, not the job of the person uploading: an iPhone takes
+ * HEIC by default, and "export it as JPEG first" is a step nobody should have
+ * to know about. `heic-to` is libheif compiled to wasm, and it is several
+ * megabytes, so it is imported here, on demand, and only for a file that
+ * needs it.
+ *
+ * Quality is high on purpose: this is an intermediate, and the real encode to
+ * the stored sizes happens afterwards.
+ */
+async function convertHeic(file: File): Promise<Blob> {
+  const { heicTo } = await import('heic-to')
+  return heicTo({ blob: file, type: 'image/jpeg', quality: 0.95 })
 }
 
 /**
@@ -91,22 +122,34 @@ export function fitWithin(
 /**
  * Decode a file the way the browser wants to.
  *
- * `createImageBitmap` is the fast path and does the decode off the main
- * thread. Safari has historically not accepted every source through it, so an
- * `<img>` + object URL is the fallback. A file neither path can decode — a
- * `.heic` dropped into desktop Chrome, mostly — raises `ImageDecodeError`,
- * which the caller shows against that one file while the others carry on.
+ * A HEIC is converted to JPEG first. Then `createImageBitmap` is the fast
+ * path and does the decode off the main thread; Safari has historically not
+ * accepted every source through it, so an `<img>` + object URL is the
+ * fallback. A file nothing can decode raises `ImageDecodeError`, which the
+ * caller shows against that one file while the others carry on.
  */
 async function decode(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  // Safari can decode HEIC natively, Chrome and Firefox cannot. Converting
+  // every HEIC rather than only the ones a browser refuses keeps the stored
+  // photo identical whichever browser uploaded it.
+  let source: Blob = file
+  if (looksLikeHeic(file)) {
+    try {
+      source = await convertHeic(file)
+    } catch {
+      throw new ImageDecodeError(file.name)
+    }
+  }
+
   if (typeof createImageBitmap === 'function') {
     try {
-      return await createImageBitmap(file)
+      return await createImageBitmap(source)
     } catch {
       // Fall through to the <img> path.
     }
   }
 
-  const url = URL.createObjectURL(file)
+  const url = URL.createObjectURL(source)
   try {
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image()

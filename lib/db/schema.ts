@@ -25,9 +25,12 @@ export const letters = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     slug: text('slug').notNull(),
-    /** Internal, never rendered on the published page. */
+    /**
+     * Internal, never rendered on the published page. The default slug is
+     * made from it, though, so unless a slug is typed it is in the address.
+     */
     title: text('title').notNull(),
-    /** Internal, never rendered on the published page. */
+    /** Shown: the reading bar says "from anna to <recipient>", or "to you". */
     recipient: text('recipient'),
     mdContent: text('md_content').notNull().default(''),
     status: letterStatus('status').notNull().default('draft'),
@@ -155,10 +158,7 @@ export const views = pgTable(
   ],
 )
 
-export const MAX_PAGES_PER_LETTER = 5
-
-/** The separator the transcription prompt requires between pages. */
-export const PAGE_SEPARATOR = '---'
+export { MAX_PAGES_PER_LETTER } from '../letters/limits'
 
 export type Letter = typeof letters.$inferSelect
 export type NewLetter = typeof letters.$inferInsert

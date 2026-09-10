@@ -26,7 +26,9 @@ The access mode cannot be changed after a store is created, which is itself an a
 
 Two consequences, both accepted: OpenRouter cannot fetch a private URL, so the images travel as base64 data URLs in the request body (~400KB per page, which is what the five-page cap is sized against); and photos are served by a route rather than a CDN URL.
 
-**HEIC is accepted and converted in the client via canvas** — because Safari on iPhone already hands over JPEG from a file input, so the case is rare. If canvas can't decode it, the file shows an error asking for JPEG. No conversion library in v1.
+~~**HEIC is converted via canvas only, and a file canvas cannot decode asks for a JPEG.**~~ **Reversed after the first deploy:** a photo straight off an iPhone failed with "convert it to JPEG first", and converting is our job, not the job of the person uploading.
+
+**HEIC is converted to JPEG in the browser with `heic-to`** — libheif compiled to wasm, maintained, LGPL-3.0, which is fine as a dependency of the app and never reaches the published package. It is several megabytes, so it is imported on demand and only for a file that looks like HEIC by type or by extension; a JPEG upload never downloads it. It stays in the client because keeping image work out of a serverless function still holds.
 
 **Transcription runs from a button, not automatically after upload** — because it leaves room to look at the photos and retake a bad one before spending a call on a blurry image.
 
@@ -40,6 +42,8 @@ Two consequences, both accepted: OpenRouter cannot fetch a private URL, so the i
 
 **Reprocessing overwrites the raw** — because a wrong transcription has no historical value, and reprocessing will happen often while the model isn't settled.
 
+**A letter written in capitals is transcribed in capitals, and the editor has a button to normalise it** — rather than an instruction in the prompt, because the raw transcription is meant to be what was on the page, and a model told to rewrite case is a model rewriting rather than transcribing. The button runs on the edited text, keeps link targets, directive attributes and `[?]` exactly, and says every time that it cannot tell names from ordinary words.
+
 **Illegible passages come back as `[?]` and are highlighted in the editor** — because OCR hallucination reads as plausible text. What the model flagged as unread is exactly what has to be checked against the photo.
 
 **No `userId` on `Letter`** — because the app is single-user and Clerk owns identity, so the column would always hold the same value.
@@ -47,6 +51,12 @@ Two consequences, both accepted: OpenRouter cannot fetch a private URL, so the i
 **`slug` is unique in the database, not just in the generator** — because a collision has to fail at insert time. A generator that "won't collide" is an assumption, and a unique index is a guarantee.
 
 **Transcription stays app code, with no public `Transcriber` interface** — because it's a fetch and a prompt. The reusable piece of this repo is the highlight layer, decided in `markdown-hightlight/DECISIONS.md`.
+
+**Photos upload one per request** — a Vercel Function refuses a body over 4.5MB, and three sheets at 2400px can pass that together when none does alone. It also makes a failure belong to one card: what went up stays up, and what did not stays on screen.
+
+**The route checks the letter and its free pages before storing anything, and deletes what it stored if attaching fails** — otherwise a refused upload left photographs in the Blob store that nothing pointed at.
+
+**The editor measures "unsaved" against what it last saved, and is no longer remounted on refresh** — against the prop, a saved letter kept saying "Unsaved changes"; remounted on every refresh, publishing the letter threw away whatever was being typed.
 
 ---
 

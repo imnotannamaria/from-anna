@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { renderMarkdown, wrapPassage, wrapSelection } from 'remark-scanned-page'
 
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
+import { normaliseCase } from '@/lib/transcription/normalize-case'
 import {
   findIllegibleMarks,
   nextIllegibleMark,
@@ -34,6 +35,26 @@ const PREVIEW_DELAY_MS = 250
  */
 export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
   const [value, setValue] = useState(initialMdContent)
+
+  // What the server holds, as far as this editor knows: the text it loaded,
+  // or the text it last saved. "Unsaved" is measured against this and not
+  // against the prop, which only changes on a refresh. Measured against the
+  // prop, a saved letter kept saying "Unsaved changes" and kept warning on
+  // closing the tab.
+  const [saved, setSaved] = useState(initialMdContent)
+  const [fromServer, setFromServer] = useState(initialMdContent)
+
+  // The server handed over something new: a transcription seeded the letter,
+  // or the page refreshed after publishing. It replaces the text only when
+  // nothing here is unsaved. The editor used to be remounted on every
+  // refresh instead, which threw away whatever was being typed the moment
+  // anything else on the page was clicked.
+  if (initialMdContent !== fromServer) {
+    setFromServer(initialMdContent)
+    setSaved(initialMdContent)
+    if (value === saved) setValue(initialMdContent)
+  }
+
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
@@ -51,7 +72,7 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
     knownTags: HIGHLIGHT_TAGS,
   }), [previewSource])
 
-  const dirty = value !== initialMdContent
+  const dirty = value !== saved
   const marks = findIllegibleMarks(value)
 
   // Closing the tab mid-edit loses the corrections, and there is no draft
@@ -118,6 +139,21 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
     })
   }
 
+  function applyNormalise() {
+    const next = normaliseCase(value)
+    if (next === value) {
+      setFailed(false)
+      setMessage('Nothing to change: it is already in ordinary case.')
+      return
+    }
+    setValue(next)
+    setFailed(false)
+    // It cannot know which words are names. Say so, every time.
+    setMessage(
+      'Capitals normalised. Check names and places: it can’t tell those apart. Nothing is saved until you save.',
+    )
+  }
+
   function jumpToNextMark() {
     const textarea = textareaRef.current
     if (!textarea) return
@@ -146,6 +182,9 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
   }
 
   async function save() {
+    // What was sent, not what is in the box when the answer comes back:
+    // anything typed while saving is still unsaved.
+    const sent = value
     setSaving(true)
     setFailed(false)
     setMessage('Saving…')
@@ -154,7 +193,7 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
       const response = await fetch(`/api/letters/${letterId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mdContent: value }),
+        body: JSON.stringify({ mdContent: sent }),
       })
 
       if (!response.ok) {
@@ -164,10 +203,9 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
         return
       }
 
+      setSaved(sent)
       setMessage('Saved.')
-      // Deliberately no router.refresh(): re-rendering the server component
-      // would hand the textarea a new `initialMdContent` and fight whatever
-      // is being typed.
+      // No router.refresh(): nothing else on the page depends on the text.
     } catch {
       setFailed(true)
       setMessage('Could not reach the server. Nothing was saved.')
@@ -203,6 +241,14 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
         <span className="meta">or ⌘⇧H</span>
         <button type="button" onClick={applyPassage} className="pill">
           Group as passage
+        </button>
+        {/*
+          On the edited text, never in the prompt: the raw transcription is
+          what was on the page, and a letter written in capitals was written
+          in capitals.
+        */}
+        <button type="button" onClick={applyNormalise} className="pill">
+          Normalise capitals
         </button>
       </div>
 

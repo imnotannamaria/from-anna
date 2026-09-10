@@ -23,10 +23,20 @@ import { isAdminAllowed, readAdminContext } from '@/lib/auth/admin'
 function issueReadingSession(request: NextRequest, response: NextResponse) {
   if (request.cookies.has(SESSION_COOKIE)) return
 
-  // The cookie belongs to reading a letter. An API call is already made by
-  // someone who has one, and Clerk's own handshake is not a reader at all.
+  // The cookie belongs to reading a letter, and to nothing else. Not the
+  // front page and not the desk: someone who only read about the project
+  // has no reason to leave carrying a six-month identifier. An API call is
+  // made by someone who already has one, and Clerk's handshake is not a
+  // reader at all.
   const path = request.nextUrl.pathname
-  if (path.startsWith('/api/') || path.startsWith('/__clerk')) return
+  if (
+    path === '/' ||
+    path.startsWith('/admin') ||
+    path.startsWith('/api/') ||
+    path.startsWith('/__clerk')
+  ) {
+    return
+  }
 
   // No cookie for a bot or a link preview: they are filtered out of the
   // count anyway, and handing one out would only make them look like people
@@ -76,8 +86,15 @@ export const proxy = clerkMiddleware(async (auth, request) => {
 
   if (refusesAdmin(request, userId)) {
     // 404, never 403. A 403 confirms the thing exists, and this answer has to
-    // be the same one a made-up path gets.
-    return new NextResponse(null, { status: 404 })
+    // be the same one a made-up path gets — status *and* body.
+    //
+    // It used to be `new NextResponse(null, { status: 404 })`, which had the
+    // right status and an empty body, so a browser painted a blank white
+    // page. Rewriting to a path that does not exist makes Next render the
+    // real `not-found.tsx`, with the 404 it already carries.
+    return NextResponse.rewrite(new URL('/__nothing-here', request.url), {
+      status: 404,
+    })
   }
 
   const response = NextResponse.next()

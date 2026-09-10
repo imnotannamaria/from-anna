@@ -10,10 +10,11 @@ import { useState } from 'react'
  * called it, so the only letter in the database had been inserted by hand
  * through Drizzle Studio.
  *
- * Two fields, and neither of them is ever rendered on the published page.
- * `title` is how I find it in this list; `recipient` is who I wrote it for.
- * Both are mine — the reader gets the three words of the slug and nothing
- * about how the letter is filed.
+ * `title` is how I find it in this list and is never shown on the published
+ * page, but the default link is made from it, so the hint says so.
+ * `recipient` is shown: the reading bar says *from anna to <recipient>*.
+ * The link is optional; left empty, it is made from the title and today's
+ * date.
  *
  * It creates a **draft with no pages**, and goes straight to it. A letter
  * exists so photographs have somewhere to go, so the useful next screen is
@@ -23,6 +24,7 @@ export function NewLetter() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [recipient, setRecipient] = useState('')
+  const [slug, setSlug] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -38,7 +40,7 @@ export function NewLetter() {
       const response = await fetch('/api/letters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, recipient }),
+        body: JSON.stringify({ title, recipient, slug }),
       })
 
       const body = await response.json().catch(() => null)
@@ -106,9 +108,31 @@ export function NewLetter() {
         </div>
       </div>
 
-      <p className="editor-hint">
-        Neither of these is ever shown on the published page. It starts as a
-        draft with no pages, which is a 404 to everyone but you.
+      <div className="admin-new-slug">
+        <label htmlFor="new-slug" className="meta field-label">
+          Link <span className="admin-new-optional">optional</span>
+        </label>
+        <div className="admin-new-slug-field">
+          <span className="admin-new-slug-prefix" aria-hidden="true">
+            from-anna.vercel.app/
+          </span>
+          <input
+            id="new-slug"
+            className="field"
+            value={slug}
+            onChange={(event) => setSlug(event.target.value)}
+            maxLength={80}
+            placeholder="made from the title and today’s date"
+            aria-describedby="new-slug-hint"
+          />
+        </div>
+      </div>
+
+      <p className="editor-hint" id="new-slug-hint">
+        The title is for you, but the link is made from it unless you type
+        one, so keep it something you would not mind in an address. The
+        recipient shows at the top of the letter as “from anna to …”. It
+        starts as a draft, which only you can open.
       </p>
 
       <div className="editor-bar">

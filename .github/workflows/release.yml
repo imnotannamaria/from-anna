@@ -36,10 +36,11 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # Trusted publishing needs npm >= 11.5.1, and the npm bundled with a
-      # given Node 22 build lags behind that. Pin it rather than gamble on
-      # whatever ships with the runner today.
+      # given Node 22 build lags behind that. Held to major 11 rather than
+      # `latest`, so a future npm 12 cannot change how this publishes on a
+      # day nobody is watching.
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Install dependencies
         run: npm ci

@@ -642,6 +642,9 @@ body::before {
   /* Old-style figures and proper hanging punctuation where available. */
   font-variant-numeric: oldstyle-nums;
   hyphens: auto;
+  /* A URL or an email in a letter is one long word. Without this it runs out
+     of the column at 375px instead of wrapping. */
+  overflow-wrap: break-word;
 }
 
 .letter-prose > * + * {
@@ -748,7 +751,7 @@ body::before {
 
 .letter-prose aside[data-theme-label] {
   /* The drawn bracket below replaces the border. The gutter it hangs in
-     comes from the package, so it lines up with the passage numbers. */
+     comes from the package. */
   border-left-width: 0;
   position: relative;
 }
@@ -869,7 +872,8 @@ body::before {
   right: 0;
   z-index: 7;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* Equal outer columns, so the centre is the centre of the bar. */
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: clamp(0.75rem, 3vw, 1.5rem);
   min-height: var(--bar-h);
@@ -901,21 +905,29 @@ body::before {
   will-change: transform;
 }
 
-.reader-wordmark {
-  font-size: 1.1rem;
-  font-style: italic;
-  white-space: nowrap;
-  color: var(--fg-primary);
-}
-
 .reader-name {
+  grid-column: 2;
   justify-self: center;
+  /* The recipient is free text. Capped, so a long one truncates instead of
+     taking the whole bar and pushing the legend off the edge. */
+  max-width: min(34rem, 44vw);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--fg-secondary);
+}
+
+.reader-name em {
+  font-style: italic;
+  color: var(--fg-brand);
 }
 
 .reader-controls {
+  grid-column: 3;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1026,23 +1038,35 @@ body::before {
 /* ---- the opening -----------------------------------------------------
 
    The photograph is the argument, so it is the first thing on screen at a
-   size worth looking at: off-centre, tilted, running off the right edge the
-   way a sheet does when it is put down on a desk rather than filed.
+   size worth looking at: tilted the way a sheet sits when it is put down on
+   a desk rather than filed, and whole, because the bottom of a letter is
+   where it is signed.
    -------------------------------------------------------------------- */
 
 .hero {
+  /* `HERO_DRIFT` in `letter-view.tsx`. */
+  --hero-drift: 48px;
   display: grid;
-  min-height: min(100vh, 58rem);
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(2rem, 6vw, 5rem);
   max-width: var(--reading-width);
   margin: 0 auto;
-  padding: clamp(6rem, 13vh, 10rem) clamp(1.25rem, 5vw, 4rem)
-    clamp(3rem, 9vh, 6rem);
-  /* `clip`, not `hidden`: hidden would make this a scroll container, and a
-     scroll container anywhere above a sticky element kills the sticking. */
-  overflow-x: clip;
+  /* The bottom padding has room for the parallax drift (`--hero-drift`,
+     capped in `letter-view.tsx`) on top of the usual gap, so the photograph
+     can move without reaching the letter below. */
+  padding: calc(var(--bar-h) + clamp(2rem, 6vh, 4rem)) clamp(1.25rem, 5vw, 4rem)
+    calc(clamp(3rem, 8vh, 5rem) + var(--hero-drift));
+  /*
+     Both axes. The photograph drifts down as the page scrolls, and with the
+     two sheets fanned behind it, it used to paint over the first line of the
+     transcription: the words that are the point of the page, under a
+     decoration. Clipped here, the opening can never reach the letter.
+
+     `clip`, not `hidden`: hidden would make this a scroll container, and a
+     scroll container anywhere above a sticky element kills the sticking.
+  */
+  overflow: clip;
   scroll-margin-top: var(--bar-h);
 }
 
@@ -1146,13 +1170,11 @@ body::before {
 
 .hero-photo {
   position: relative;
-  justify-self: end;
+  justify-self: center;
   /* The tilt is on the wrapper, so the sheets behind it turn with it. */
   rotate: -1.6deg;
   width: 100%;
-  max-width: 34rem;
-  /* Runs to the edge of the viewport rather than stopping at the gutter. */
-  margin-right: calc(clamp(1.25rem, 5vw, 4rem) * -1);
+  max-width: 32rem;
   /*
      Parallax. The photograph drifts slower than the words beside it, which is
      the difference between a picture on a page and an object on a desk. A
@@ -1168,12 +1190,13 @@ body::before {
    than loaded: they are the same paper as everything else and they cost
    nothing.
 
-   They fan out to the *left* because the photograph runs off the right edge
-   of the viewport, and a sheet peeking into a clipped margin is a sheet
-   nobody sees.
+   They fan out to the *left*, which is also where the caption hangs.
 */
 .hero-sheet {
   position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .hero-sheet::before,
@@ -1227,9 +1250,15 @@ body::before {
 .hero-photo .scanned-photo {
   position: relative;
   z-index: 1;
-  max-height: 78vh;
-  object-fit: cover;
-  object-position: top;
+  /*
+     Scaled, never cropped. `object-fit: cover` under a max-height cut the
+     bottom of the sheet off, and the bottom of a letter is where it is
+     signed. Width follows the height here, so the box is the photograph.
+  */
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 72vh;
   border-radius: 3px;
   background: var(--bg-surface);
   box-shadow: var(--shadow-lift);
@@ -1254,10 +1283,11 @@ body::before {
 */
 .hero-caption {
   position: absolute;
-  /* Far enough left to sit on the blank sheets rather than on the dark edge
-     of the photograph, where a muted grey is unreadable. */
-  left: -3.2rem;
-  bottom: -1.4rem;
+  z-index: 1;
+  /* On the blank sheets fanned out to the left, not on the photograph,
+     where a muted grey against a dark desk is unreadable. */
+  left: -2rem;
+  bottom: 0.5rem;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.16em;
@@ -1323,7 +1353,9 @@ body::before {
 .sheet-frame .scanned-photo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* `contain`: if the stored ratio and the real one ever disagree, the
+     photograph shrinks inside the frame rather than losing an edge. */
+  object-fit: contain;
   object-position: center;
 }
 
@@ -1342,35 +1374,12 @@ body::before {
 }
 
 /*
-   Passages are given room to be separate things. Inside one, the paragraphs
-   keep the ordinary rhythm of prose — the gap is between passages, not
-   between sentences.
+   Running text. Passages used to be spaced like separate items, which only
+   made sense while each one carried a number in the margin.
 */
-.sheet-text .letter-prose > * + * {
-  margin-top: clamp(2.5rem, 7vh, 4.5rem);
-}
-
+.sheet-text .letter-prose > * + *,
 .sheet-text .letter-prose > div > * + * {
   margin-top: 1.1em;
-}
-
-.sheet-text .letter-prose > *[data-passage]:first-child {
-  margin-top: 0;
-}
-
-/*
-   The active passage's number in the gutter: a quiet mark of where in the
-   sheet you are. Never the only signal for anything — it says position, not
-   meaning, and the words are all still there without it.
-*/
-.letter-prose > [data-passage] {
-  --passage-number: var(--fg-muted);
-  --passage-number-opacity: 0.55;
-}
-
-.letter-prose > [data-passage][data-active="true"] {
-  --passage-number: var(--fg-brand);
-  --passage-number-opacity: 1;
 }
 
 /* ---- the coda --------------------------------------------------------
@@ -1417,14 +1426,6 @@ body::before {
   justify-content: center;
   gap: 0.75rem;
   margin-top: 2.5rem;
-}
-
-.coda-privacy {
-  margin-top: 3rem;
-  /* Measured against the blush, where muted does not reach AA. */
-  color: var(--fg-secondary);
-  text-transform: none;
-  letter-spacing: 0.1em;
 }
 
 /* ---- controls -------------------------------------------------------- */
@@ -1591,25 +1592,33 @@ body::before {
 
 /* ---- narrow ----------------------------------------------------------
 
-   Not a port. Below the breakpoint the sticky spread and the zoom are
+   Not a port. Below the breakpoint the sticky spread and the parallax are
    switched **off**, not shrunk: they both need two columns to mean anything
    and a phone has one. What is left is what already worked — the photograph
    first, one tap to the transcription — plus sheet navigation, because
    there are no sticky sections here to replace it.
 
-   The bar loses the letter name and the legend. The name reappears in the
-   opening, where it has a line to itself and cannot truncate; filtering by
-   colour is a way of re-reading a letter rather than a way of reading it.
-   What stays is the wordmark and the toggle, which is the only control on a
-   phone that changes what you can see.
+   The bar loses the legend: filtering by colour is a way of re-reading a
+   letter rather than a way of reading it. What stays is the address and the
+   toggle, which is the only control on a phone that changes what you can
+   see.
    -------------------------------------------------------------------- */
 
 @media (max-width: 899px) {
   .reader-bar {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .reader-name,
+  .reader-name {
+    grid-column: 1;
+    justify-self: start;
+    max-width: none;
+  }
+
+  .reader-controls {
+    grid-column: 2;
+  }
+
   .legend,
   .hero-caption {
     display: none;
@@ -1629,14 +1638,22 @@ body::before {
     gap: 2.5rem;
   }
 
+  /*
+     No drift in one column. The photograph sits directly above the sheets
+     here, so any distance it travels is travelled into the letter.
+  */
+  .hero {
+    --hero-drift: 0px;
+  }
+
   .hero-photo {
     justify-self: stretch;
     max-width: none;
-    margin-right: 0;
+    transform: none;
   }
 
   .hero-photo .scanned-photo {
-    max-height: 60vh;
+    max-height: 64vh;
   }
 
   .sheet {
@@ -2000,6 +2017,274 @@ body::before {
   text-transform: none;
   letter-spacing: 0;
   opacity: 0.7;
+}
+
+/* ---- publishing, expiry, deletion ------------------------------------ */
+
+.admin-controls {
+  display: grid;
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+  padding: 1.3rem 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+}
+
+.admin-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.admin-controls-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.admin-controls-date {
+  width: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.admin-controls-danger {
+  margin-left: auto;
+}
+
+/* The status line is for announcements; an empty one is not a gap. */
+.admin-controls .editor-status:empty {
+  display: none;
+}
+
+.admin-confirm {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 26rem;
+}
+
+.admin-confirm .editor-hint {
+  margin: 0;
+}
+
+/*
+   Deletion is the one control in the project that throws something away,
+   so it is the one control coloured like it. Measured: the text on the
+   solid button clears AA against the fill.
+*/
+.pill--danger {
+  color: #9f1d1d;
+  border-color: color-mix(in srgb, #9f1d1d 35%, var(--border-subtle));
+}
+
+.pill--danger:hover:not(:disabled) {
+  color: #7a1414;
+  border-color: #9f1d1d;
+}
+
+.pill--danger-solid {
+  color: var(--bg-surface);
+  background: #9f1d1d;
+  border-color: #9f1d1d;
+}
+
+.pill--danger-solid:hover:not(:disabled) {
+  color: var(--bg-surface);
+  background: #7a1414;
+  border-color: #7a1414;
+}
+
+/* ---- the page in sections ------------------------------------------- */
+
+.admin-block {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.admin-block-title {
+  margin: 0;
+}
+
+/* ---- the link, when starting a letter ------------------------------- */
+
+.admin-new-slug {
+  margin-bottom: 1rem;
+}
+
+.admin-new-slug-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.admin-new-slug-field:focus-within {
+  border-color: var(--fg-brand);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.admin-new-slug-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.1rem 0 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.admin-new-slug-field .field {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding-left: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+@media (max-width: 599px) {
+  .admin-new-slug-prefix {
+    display: none;
+  }
+
+  .admin-new-slug-field .field {
+    padding-left: 0.7rem;
+  }
+}
+
+/* ---- adding photographs ---------------------------------------------- */
+
+.upload {
+  display: grid;
+  gap: 1rem;
+}
+
+.upload-drop {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1.25rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.upload-drop:hover,
+.upload-drop[data-dragging="true"] {
+  border-color: var(--fg-brand);
+  background: var(--bg-surface-brand);
+}
+
+/* The input inside is visually hidden but focusable: show where focus is. */
+.upload-drop:focus-within {
+  border-color: var(--fg-brand);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.upload-drop-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--fg-primary);
+}
+
+.upload-drop-title u {
+  text-decoration-color: var(--fg-brand);
+  text-underline-offset: 0.2em;
+}
+
+.upload-drop-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-card {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 0.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+.upload-card[data-status="failed"] {
+  border-color: color-mix(in srgb, #9f1d1d 40%, var(--border-subtle));
+}
+
+.upload-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.upload-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.upload-card-state {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.upload-card[data-status="ready"] .upload-card-state {
+  color: var(--fg-brand);
+}
+
+.upload-card[data-status="failed"] .upload-card-state {
+  color: #9f1d1d;
+}
+
+.upload-card-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: var(--shadow-page);
+}
+
+.upload-card-skeleton {
+  aspect-ratio: 0.75;
+  border-radius: 4px;
+}
+
+.upload-card-error {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #7a1414;
 }
 
 /* ---- the letter workbench -------------------------------------------- */
@@ -2647,22 +2932,8 @@ body::before {
   line-height: 1.7;
 }
 
-/*
-   No gutter in a 27rem sheet: the numbers would take a quarter of it. The
-   themed block keeps its own padding, because the bracket is drawn at the
-   element's left edge and would otherwise be drawn through the words.
-*/
-.home-stack .scanned-transcription > *:not(aside) {
-  padding-left: 0;
-}
-
 .home-stack .scanned-transcription > aside[data-theme-label] {
   padding-left: 1.1rem;
-}
-
-.home-stack .scanned-transcription > p::before,
-.home-stack .scanned-transcription > div::before {
-  content: none;
 }
 
 @media (max-width: 899px) {

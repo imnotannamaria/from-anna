@@ -1,5 +1,4 @@
 type Props = {
-  name: string[]
   sentOn: string | null
   photo: React.ReactNode
   sheetCount: number
@@ -9,26 +8,21 @@ type Props = {
  * The opening.
  *
  * The photograph is the argument, so it is the first thing on screen at a
- * size worth looking at: off-centre, tilted a degree and a half, running off
- * the right edge the way a sheet does when it is put down on a desk rather
- * than filed.
+ * size worth looking at: tilted a degree and a half, the way a sheet sits
+ * when it is put down on a desk rather than filed, and whole, because the
+ * bottom of a letter is where it is signed.
  *
  * It is the same sheet that appears again below, with the real `alt` and the
  * transcription attached to it, so this copy is decorative and says so.
  * Announcing the same photograph twice would make a screen reader's version
  * of the page longer than the letter.
  *
- * Nothing here is the letter's text. The heading describes the object, and
- * the name is the slug the reader arrived on.
+ * Nothing here is the letter's text. The heading describes the object.
  */
-export function LetterHero({ name, sentOn, photo, sheetCount }: Props) {
+export function LetterHero({ sentOn, photo, sheetCount }: Props) {
   return (
     <section className="hero" aria-label="Opening">
       <div className="hero-copy">
-        <p className="meta hero-name" style={{ animationDelay: '80ms' }}>
-          {name.join(' · ')}
-        </p>
-
         <h1 className="display hero-title" style={{ animationDelay: '160ms' }}>
           A letter,
           <br />
@@ -42,10 +36,9 @@ export function LetterHero({ name, sentOn, photo, sheetCount }: Props) {
         />
 
         <p className="hero-lede" style={{ animationDelay: '360ms' }}>
-          The photograph is what you see. The transcription beside it is what
-          you can <mark data-c="important">actually read</mark> — because a
-          picture of handwriting is invisible to a screen reader, and a letter
-          nobody can read is not a letter.
+          The photo is what you see. The transcription next to it is what you
+          can <mark data-c="important">actually read</mark>, because a picture
+          of handwriting is invisible to a screen reader.
         </p>
 
         <p className="meta hero-meta" style={{ animationDelay: '460ms' }}>
@@ -75,10 +68,10 @@ export function LetterHero({ name, sentOn, photo, sheetCount }: Props) {
         */}
         <div className="hero-sheet" aria-hidden="true">
           {photo}
+          {/* Inside the sheet, so it hangs off the photograph's own edge
+              rather than the column's. */}
+          <span className="hero-caption">sheet 01 · as photographed</span>
         </div>
-        <span className="hero-caption" aria-hidden="true">
-          sheet 01 · as photographed
-        </span>
       </div>
     </section>
   )

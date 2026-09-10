@@ -85,6 +85,26 @@ export function splitTranscription(
 }
 
 /**
+ * The letter's markdown as one block per photographed sheet, for rendering.
+ *
+ * A `---` the letter uses as a rule of its own over-splits, and the reading
+ * view renders one block per sheet, so the blocks past the last sheet were
+ * silently never shown: the end of a letter, gone from the published page.
+ * They fold into the last sheet instead, with the rule they were written
+ * with. Fewer blocks than sheets is left alone; those sheets show only their
+ * photograph.
+ */
+export function blocksForSheets(markdown: string, sheetCount: number): string[] {
+  const blocks = splitBlocks(markdown)
+  if (sheetCount < 1 || blocks.length <= sheetCount) return blocks
+
+  return [
+    ...blocks.slice(0, sheetCount - 1),
+    blocks.slice(sheetCount - 1).join(`\n\n${PAGE_SEPARATOR}\n\n`),
+  ]
+}
+
+/**
  * Join per-page transcriptions into the single markdown body stored on the
  * letter. Used once, to seed the editor from the raws.
  */

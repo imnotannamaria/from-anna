@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
 
 import { ScannedPhoto, ScannedTranscription } from 'remark-scanned-page'
 
@@ -15,10 +16,9 @@ import {
   normaliseSource,
 } from '@/lib/analytics/visit'
 import { isPubliclyReadable } from '@/lib/letters/access'
-import { letterName } from '@/lib/letters/name'
 import { getLetterBySlug, recordView } from '@/lib/letters/queries'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
-import { splitBlocks } from '@/lib/transcription/split'
+import { blocksForSheets } from '@/lib/transcription/split'
 
 /** Reads the database and records an opening. Never cached. */
 export const dynamic = 'force-dynamic'
@@ -92,19 +92,24 @@ export default async function LetterPage({
     // reader — the exact thing the deduplication exists to prevent.
     const sessionId = jar.get(SESSION_COOKIE)?.value ?? newSessionId()
 
-    await recordView({
+    // Read now, written after the response. A slow insert must never be the
+    // thing that holds a letter up, and `after` cannot read headers or
+    // cookies itself from a page.
+    const view = {
       letterId: letter.id,
       sessionId,
       source: normaliseSource(from),
       referrer: normaliseReferrer(headerList.get('referer')),
       country: headerList.get('x-vercel-ip-country'),
       device: deviceFrom(userAgent),
-    })
+    }
+    after(() => recordView(view))
   }
 
-  // One markdown document, split on `---`, so a sheet whose block is missing
-  // still shows its photo rather than vanishing.
-  const blocks = splitBlocks(letter.mdContent)
+  // One markdown document, split on `---` into a block per sheet. A sheet
+  // whose block is missing still shows its photo, and a `---` the letter
+  // uses for itself folds into the last sheet rather than vanishing.
+  const blocks = blocksForSheets(letter.mdContent, pages.length)
 
   const photoSrc = (index: number) =>
     `/api/letters/${letter.id}/pages/${index}`
@@ -142,7 +147,7 @@ export default async function LetterPage({
     <LetterView
       letterId={letter.id}
       isPreview={!readable}
-      name={letterName(letter.slug)}
+      recipient={letter.recipient}
       sentOn={sentOn(letter.publishedAt)}
       // From the environment, never the repository. Absent hides the button
       // rather than shipping a broken `mailto:`.

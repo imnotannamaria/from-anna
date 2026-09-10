@@ -6,7 +6,9 @@ Decision log. X because Y. Closed on 2026-09-09.
 
 **Route is `/[slug]` at the root** — because a short link is nicer to send, and static routes win over dynamic ones, so `/admin` keeps working.
 
-**The slug is three readable words plus a 6-character random token, like `autumn-bureau-cove-37a69x`** — because it has to be readable out loud *and* unguessable, and words alone only deliver the first.
+~~**The slug is three readable words plus a 6-character random token, like `autumn-bureau-cove-37a69x`.**~~ **Replaced after the first deploy** — see the end of this file. The reasoning below is kept because it is the cost of the replacement.
+
+~~because it has to be readable out loud *and* unguessable, and words alone only deliver the first.~~
 
 Three words from hand-written lists give about 330,000 combinations — roughly 2^18, which a script enumerates in an afternoon. That is not a thin margin, it is no margin. The words carry the readability and the token carries the entropy, which together is about 2^48. The token's alphabet drops `0`/`o` and `1`/`l` so the slug survives being dictated.
 
@@ -73,3 +75,29 @@ This does not make the matcher the gate. `requireAdmin()` in the page and the ha
 **A letter is started from `/admin`, through `POST /api/letters`** — because `createLetter()` had existed since the first commit with nothing calling it, and the only letter in the database had been inserted by hand through Drizzle Studio. That works exactly once.
 
 It creates a **draft with no pages and no text**, which is the honest order: a letter exists so photographs have somewhere to go. The form asks for a title and an optional recipient, neither of which is ever rendered on the published page — one is how I find it in a list, the other is who I wrote it for, and the reader gets the three words of the slug instead.
+
+---
+
+## After the first deploy
+
+**The slug is made from the title and the day the letter was started — `carta-pro-joao-2026-09-10` — or typed by hand when the letter is started** — because a random slug meant nothing to the person sending it or the person opening it, and a link is something you say out loud.
+
+**This gives up unguessability, on purpose.** A published letter can now be found by someone who knows roughly what it is called and when it was written. What still holds: a draft, an unpublished letter and an expired one are a 404 to everyone but me, whatever their slug, because that check lives in the route and not in the address.
+
+**The date is UTC**, computed on the server so it agrees with itself. A letter started late at night in Brazil carries the next day's date.
+
+**A generated slug that collides gets `-2`, `-3`; a slug I typed that collides is refused** — silently renaming what I chose is worse than saying it is taken.
+
+**`recipient` is shown on the published page**, in the reading bar, as *from anna to <recipient>*. Reversed from "internal, never rendered": see `design/DECISIONS.md`. `title` is never shown, but the default slug is made from it, and the form says so.
+
+**A letter can be published, unpublished, given an expiry and deleted from `/admin`** — the route took status and expiry from the first version and nothing called it. Deleting goes through `DELETE /api/letters/[id]`, and it deletes the photographs from the Blob store too: the database cascade cannot reach them, and a delete that keeps the photographs is not one.
+
+**Clerk sends every sign-in back to `/admin/sign-in`, which decides** — sending it straight to `/admin` meant an account that was not allowed in landed on a 404 with no explanation. That page no longer shows a Clerk user id or the name of the allowlist variable; an account that is not allowed in gets a way to sign out and try another email, and nothing else.
+
+**A view is recorded with `after()`, once the letter has been sent** — awaiting the insert made the database the thing a reader waited on, for a number the reader never sees.
+
+**The reading-session cookie is issued on letter routes only** — not on the front page and not on `/admin`. Someone who only read about the project has no reason to leave with a six-month identifier.
+
+**Nothing on the site can be framed, and only the origin leaves as a referrer** — the desk has a delete button a decoy iframe could aim at, and a letter's address now carries its title.
+
+**The letter's markdown is split into exactly one block per sheet** — a `---` the letter uses as a rule of its own over-split it, and the blocks past the last sheet were silently never rendered. They fold into the last sheet instead.

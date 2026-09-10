@@ -125,13 +125,13 @@ So each tag also carries its own underline style — solid, dotted, wavy — and
 
 ## Passages
 
-A `:::passage` groups a run of paragraphs into one block of the transcription — one entry in the reveal, one number in the gutter, one thing a reader arrives at. It emits a bare `<div>`; the stylesheet does the rest.
+A `:::passage` groups a run of paragraphs into one block of the transcription — one entry in the reveal, one thing a reader arrives at. It emits a bare `<div>`.
 
 ```md
 :::passage
 Two paragraphs that belong together.
 
-They get one number and arrive as one thing.
+They arrive as one thing.
 :::
 ```
 
@@ -169,7 +169,7 @@ If your transcription comes from an OCR or vision model, it is untrusted input. 
 
 ## Notes
 
-Passage structure ships in `styles/scanned-page.css`: a gutter, a CSS counter for the numbers, and a `translateY` reveal driven by `data-seen` on each block. The reveal deliberately does not touch opacity — a passage faded in from something readable is not much of an entrance, and one faded in from something unreadable spends the whole transition below AA on the half of the page that exists to be read. With no `data-seen` attribute at all, which is the no-JavaScript state, nothing moves and everything is legible.
+Passage structure ships in `styles/scanned-page.css`: a `translateY` reveal driven by `data-seen` on each block, and nothing else. 0.1.0 also numbered passages in a gutter; 0.2.0 removed that, because a transcription reads better as running text. The reveal deliberately does not touch opacity — a passage faded in from something readable is not much of an entrance, and one faded in from something unreadable spends the whole transition below AA on the half of the page that exists to be read. With no `data-seen` attribute at all, which is the no-JavaScript state, nothing moves and everything is legible.
 
 `:mark` nests inside `:::theme`. `:::theme` does not nest inside itself: a bracket inside a bracket cannot be drawn cleanly, so the inner one is unwrapped and its words are kept.
 

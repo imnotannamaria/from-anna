@@ -3,7 +3,6 @@
 type Props = {
   ref: React.Ref<HTMLElement>
   writeBackEmail: string | null
-  name: string[]
   onReadAgain: () => void
   enhanced: boolean
 }
@@ -11,14 +10,8 @@ type Props = {
 /**
  * The end of the letter.
  *
- * Two things happen here and they are related. It is where "reached the end"
- * is recorded — the second of the two marks that tell *never opened* apart
- * from *opened and abandoned* — and it is where that measurement is written
- * down in plain words for the person it was taken from.
- *
- * **The privacy line is literal, and has to stay true.** One row per open,
- * deduplicated per session with a cookie, no IP in a column or a log. If the
- * measurement ever changes, that sentence changes in the same commit.
+ * It is where "reached the end" is recorded — the second of the two marks
+ * that tell *never opened* apart from *opened and abandoned*.
  *
  * The reply address comes from an env var rather than the repository. An
  * address on a public page gets harvested eventually; when that becomes a
@@ -27,11 +20,10 @@ type Props = {
 export function LetterCoda({
   ref,
   writeBackEmail,
-  name,
   onReadAgain,
   enhanced,
 }: Props) {
-  const subject = encodeURIComponent(`Re: ${name.join(' · ')}`)
+  const subject = encodeURIComponent('Re: your letter')
 
   return (
     <section ref={ref} className="coda" aria-label="The end of the letter">
@@ -60,9 +52,6 @@ export function LetterCoda({
           )}
         </div>
 
-        <p className="meta coda-privacy">
-          read to the end · counted once · nothing else is stored
-        </p>
       </div>
     </section>
   )

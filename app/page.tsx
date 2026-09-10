@@ -12,9 +12,9 @@ const PACKAGE_SOURCE = `${REPO}/tree/main/packages/remark-scanned-page`
 const PORTFOLIO = 'https://annamaria.app'
 
 export const metadata: Metadata = {
-  title: 'from anna — handwritten letters, published',
+  title: 'from anna · handwritten letters, published',
   description:
-    'Write a letter by hand, photograph the pages, and publish them at an unguessable link with a transcription anyone can read. Open source; the highlighting layer is a package.',
+    'I write letters by hand, take a photo of the pages and publish them with a transcription anyone can read. Open source, and the highlighting part is a package.',
   openGraph: {
     title: 'from anna',
     description:
@@ -23,21 +23,13 @@ export const metadata: Metadata = {
 }
 
 /**
- * The demonstration is the real thing.
- *
- * This markdown goes through the same package, the same sanitize schema and
- * the same stylesheet a published letter does. A screenshot would drift from
- * the code the first time either changed; this cannot.
- */
-/**
  * The note on the front door.
  *
- * It is a letter about the site, rendered by the same package as a real one —
- * which is a better demonstration than a specimen would be, and it answers
- * the question anyone landing here actually has.
+ * A letter about the site, rendered by the same package as a real one, which
+ * is a better demonstration than a specimen would be and answers the question
+ * anyone landing here actually has.
  *
- * Not `aria-hidden`, unlike the opening photograph on a letter page: this is
- * the only place these words appear, so hiding them would hide content.
+ * Not `aria-hidden`: this is the only place these words appear.
  */
 const OPENING = `Hi, whoever is testing this site. I'm Anna,
 and I built it because:
@@ -52,28 +44,34 @@ made, I think a handwritten letter
 :mark[means even more]{c=note} than it used to.
 :::`
 
+/**
+ * The demonstration is the real thing: the same package, the same sanitize
+ * schema and the same stylesheet a published letter goes through.
+ *
+ * Every line is short enough not to wrap at 390px. A directive broken across
+ * two lines on a phone, with `{c=important}` alone on the second, is what the
+ * first version did.
+ */
 const DEMO = `:::passage
-It has :mark[one of the better weeks]{c=important}
-in a while, and most of it was small.
+It has been
+:mark[a good week]{c=important}.
+Most of it was small.
 :::
 
-:::theme{label="what I actually built"}
-A page that photographs itself and,
-with :mark[one thing worth noting]{c=note}
-in the middle, transcribes it.
+:::theme{label="what I built"}
+A page that reads
+my handwriting, and
+:mark[one thing]{c=note} to note.
 :::`
 
 /**
  * The front door.
  *
- * It has two jobs: say plainly what this is, and hand over everything someone
- * would need to run their own. There is no list of letters and there never
- * will be — every link is unguessable and meant for one person, so an index
- * would undo the whole point of the slug.
+ * Two jobs: say plainly what this is, and hand over what someone would need
+ * to run their own. There is no list of letters and there never will be.
  *
- * All CSS, no JavaScript. The entrance is one orchestrated reveal staggered
- * by `animation-delay`, which is more felt than a dozen scattered
- * micro-interactions would be.
+ * Written the way the README and GOAL are: first person, short sentences,
+ * no em dashes.
  */
 export default function Home() {
   return (
@@ -81,7 +79,7 @@ export default function Home() {
       <section className="home-hero">
         <div className="home-inner">
           <p className="meta home-line" style={{ animationDelay: '80ms' }}>
-            Ink, paper, a scanner
+            Ink, paper, a phone camera
           </p>
 
           <h1 className="display home-title" style={{ animationDelay: '160ms' }}>
@@ -95,12 +93,12 @@ export default function Home() {
           />
 
           <p className="home-lede" style={{ animationDelay: '360ms' }}>
-            I write letters by hand, photograph the pages, and publish them at a
-            link meant for one person. The photograph is what you see. The
-            transcription underneath it is what you can{' '}
-            <mark data-c="important">actually read</mark> — because a picture of
-            handwriting is invisible to a screen reader, and a letter nobody can
-            read is not a letter.
+            I write letters by hand, take a photo of the pages, and publish them
+            at a link meant for one person. The photo is what you see. The
+            transcription is what you can{' '}
+            <mark data-c="important">actually read</mark>, because a picture of
+            handwriting is invisible to a screen reader. And a letter nobody can
+            read isn&rsquo;t much of a letter.
           </p>
 
           <p className="home-actions" style={{ animationDelay: '480ms' }}>
@@ -117,14 +115,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/*
-          A stack of sheets with a note on top of it — laid out as a letter,
-          rendered by the same package a real one goes through, and saying the
-          thing anyone landing here actually wants to know.
-
-          Read by everyone, unlike the opening photograph on a letter page:
-          this is the only place these words appear.
-        */}
         <div className="home-stack">
           <div className="home-stack-sheet" data-revealed="true">
             <p className="home-stack-mark">
@@ -136,7 +126,7 @@ export default function Home() {
               knownTags={HIGHLIGHT_TAGS}
             />
             <p className="home-sign">
-              — Anna,{' '}
+              Anna ·{' '}
               <ExternalLink href={PORTFOLIO} className="home-link">
                 annamaria.app
               </ExternalLink>
@@ -148,7 +138,7 @@ export default function Home() {
       <section className="home-section" aria-labelledby="how">
         <p className="meta">How it works</p>
         <h2 className="display home-h2" id="how">
-          Four steps, and the second one is the only clever part.
+          Four steps. Only the second one is clever.
         </h2>
 
         <ol className="home-steps">
@@ -158,9 +148,10 @@ export default function Home() {
             </span>
             <h3 className="home-step-h">Write it by hand</h3>
             <p>
-              In a notebook, with a pen. Photograph each sheet and upload the
-              photos; they are resized and re-encoded in the browser before
-              they leave it, so nothing full-resolution ever travels.
+              In a notebook, with a pen. Then I take a photo of each page and
+              upload them. They get resized right here in the browser, so
+              nothing huge ever gets sent. Photos straight off an iPhone work
+              too.
             </p>
           </li>
           <li>
@@ -169,11 +160,10 @@ export default function Home() {
             </span>
             <h3 className="home-step-h">A vision model reads it</h3>
             <p>
-              One call with every sheet in it returns plain markdown, split on{' '}
-              <code>---</code>. Recognising cursive is the expensive part of
-              the pipeline, and the dangerous failure is a model inventing a
-              plausible word — so checking the transcription against the photo
-              is a required step, not an optional one.
+              All the pages go to the model in one call, and it sends back plain
+              markdown, one block per page. Reading handwriting is the expensive
+              part. The scary part is a model inventing a word that looks right,
+              so I always check the transcription against the photo.
             </p>
           </li>
           <li>
@@ -182,9 +172,9 @@ export default function Home() {
             </span>
             <h3 className="home-step-h">Mark what to read first</h3>
             <p>
-              Highlights are written into the markdown itself, as directives.
-              No table of offsets, no join — the <code>.md</code> file carries
-              everything, so fixing a comma cannot break the highlighting.
+              The highlights live inside the markdown itself. No table of
+              positions, nothing to keep in sync, so fixing a comma can&rsquo;t
+              break them.
             </p>
           </li>
           <li>
@@ -193,9 +183,9 @@ export default function Home() {
             </span>
             <h3 className="home-step-h">Publish, and find out</h3>
             <p>
-              The link is three readable words plus a random token: sayable out
-              loud, and not something anyone can stumble onto. One row per
-              opening, one mark when the last block is reached. No IP, ever.
+              Each letter gets its own link. I get one number when someone opens
+              it and another when they reach the end. That&rsquo;s all that gets
+              counted. No IP, ever.
             </p>
           </li>
         </ol>
@@ -207,9 +197,9 @@ export default function Home() {
           The highlighting lives inside the markdown.
         </h2>
         <p className="home-body">
-          The obvious alternative is plain text in a database with the
-          annotations stored as offsets. It breaks the first time you fix a
-          comma, and a transcription of handwriting exists to be corrected.
+          The obvious way is plain text in a database with the highlights saved
+          as positions. That breaks the first time you fix a comma, and a
+          handwritten transcription is going to get fixed a lot.
         </p>
 
         <div className="home-demo">
@@ -217,12 +207,6 @@ export default function Home() {
             <code>{DEMO}</code>
           </pre>
 
-          {/*
-            Rendered here by the same package, through the same sanitize
-            schema, with the same stylesheet a published letter uses.
-            `data-revealed` because there is no scroll observer on this page:
-            the highlights are simply painted.
-          */}
           <div className="home-render" data-revealed="true">
             <ScannedTranscription
               markdown={DEMO}
@@ -233,10 +217,10 @@ export default function Home() {
         </div>
 
         <p className="home-body home-body--quiet">
-          Every tag carries a colour <em>and</em> its own underline — solid,
-          dotted, wavy — so the distinction survives in greyscale. Contrast is
-          measured against the highlight fill rather than the page, in both
-          themes, by a test that parses the stylesheet.
+          Every tag has a colour and its own underline (solid, dotted or wavy),
+          so you can still tell them apart in black and white. The contrast is
+          checked against the highlight itself, not the page, by a test that
+          reads the stylesheet.
         </p>
       </section>
 
@@ -246,17 +230,16 @@ export default function Home() {
           <em>remark-scanned-page</em>
         </h2>
         <p className="home-body">
-          Photographing a page and calling a vision model does not generalise
-          into a library. A highlight layer with an accessible fallback does —
-          anyone publishing a journal, a sketchbook, class notes or a zine has
-          the same problem. So that half is a package: the remark plugin, the
-          sanitize schema, the stylesheet and the React component, with no
-          opinion at all about what your tags are called.
+          Taking a photo and calling a model isn&rsquo;t really a library. A
+          highlight layer with an accessible fallback is. Anyone publishing a
+          journal, a sketchbook, class notes or a zine has the same problem, so
+          that half became a package: the remark plugin, the sanitize schema,
+          the stylesheet and the React component. It doesn&rsquo;t care what
+          your tags are called.
         </p>
         <p className="home-body">
-          It lives in this repository as a workspace, which is what makes a
-          second copy of the pipeline impossible rather than merely
-          discouraged — and it publishes from here.
+          It lives in this same repo, so there&rsquo;s only ever one copy of it,
+          and it publishes from here too.
         </p>
 
         <pre className="home-code home-code--wide">
@@ -276,35 +259,32 @@ export default function Home() {
       <section className="home-section" aria-labelledby="run">
         <p className="meta">Run your own</p>
         <h2 className="display home-h2" id="run">
-          It is a Next app. Clone it.
+          It&rsquo;s a Next app. Clone it.
         </h2>
 
         <pre className="home-code home-code--wide">
           <code>{`git clone ${REPO}
 cd from-anna
 npm install
-cp .env.example .env.local   # fill it in
+cp .env.example .env.local
 npm run db:migrate
 npm run dev`}</code>
         </pre>
 
         <p className="home-body">
-          You will need a Postgres database, a <strong>private</strong> Vercel
-          Blob store, an OpenRouter key and a Clerk application. The photograph
-          is the letter&rsquo;s content, which is why the blob store has to be
-          private: a public URL would outlive both unpublishing and expiry, and
-          the letter page would 404 while the photograph stayed reachable
-          forever.
+          You&rsquo;ll need a Postgres database, a <strong>private</strong>{' '}
+          Vercel Blob store, an OpenRouter key and a Clerk app. The blob store
+          has to be private because the photo is the letter. A public URL would
+          keep working after the letter is unpublished or expired.
         </p>
 
         <p className="home-body">
-          One setting comes before your first model call:{' '}
+          One setting before your first model call:{' '}
           <strong>
-            restrict routing to providers that do not train on your input and
-            output
+            restrict routing to providers that don&rsquo;t train on your data
           </strong>
-          . Several free models say in their own description that prompts may
-          be used for training, and what you are sending is a photograph of a
+          . Some free models say right in their description that prompts can be
+          used for training, and what you&rsquo;re sending is a photo of a
           personal letter.
         </p>
       </section>
@@ -316,22 +296,22 @@ npm run dev`}</code>
             This one is mine. <em>Yours is a clone away.</em>
           </p>
           <p className="home-body">
-            There is no sign-up here and there is not going to be one. Every
-            letter costs a model call and a little storage, and running that
-            for other people is a bill and a support inbox rather than a
-            notebook — so this instance stays personal.
+            There&rsquo;s no sign up here, and there won&rsquo;t be. Every letter
+            costs a model call and a bit of storage, and doing that for other
+            people turns a notebook into a bill and a support inbox. So this one
+            stays personal.
           </p>
           <p className="home-body">
-            The code is another matter. All of it is open source under MIT: the
-            app, the pipeline, the package. If you want this, take it and run
-            it, and it is yours rather than an account on something of mine.
+            The code is a different story. All of it is open source under MIT:
+            the app, the pipeline, the package. If you want this, take it and run
+            it. Then it&rsquo;s yours, not an account on something of mine. :)
           </p>
           <p className="home-actions">
             <ExternalLink href={REPO} className="pill pill--solid">
               Read the source <span aria-hidden="true">→</span>
             </ExternalLink>
             <ExternalLink href={`${REPO}/tree/main/docs`} className="pill">
-              Why it is the way it is
+              Why it&rsquo;s built this way
             </ExternalLink>
           </p>
         </div>

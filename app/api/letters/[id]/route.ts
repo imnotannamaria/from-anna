@@ -1,7 +1,12 @@
+import { del } from '@vercel/blob'
 import type { NextRequest } from 'next/server'
 
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
-import { saveMdContent, setLetterStatus } from '@/lib/letters/mutations'
+import {
+  deleteLetter,
+  saveMdContent,
+  setLetterStatus,
+} from '@/lib/letters/mutations'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,4 +101,43 @@ export async function PATCH(
     expiresAt: row.expiresAt,
     publishedAt: row.publishedAt,
   })
+}
+
+/**
+ * Delete a letter, its pages, its numbers and its photographs.
+ *
+ * The photographs are the letter's content and live in the Blob store, which
+ * the database cascade cannot reach. Deleting only the row would leave them
+ * stored for good — private, so unreachable, but kept, and a delete that
+ * keeps the thing it deleted is not one.
+ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await requireAdmin()
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return new Response('Not found', { status: 404 })
+    }
+    throw error
+  }
+
+  const { id } = await params
+  const result = await deleteLetter(id)
+  if (!result.deleted) return new Response('Not found', { status: 404 })
+
+  if (result.blobUrls.length > 0) {
+    try {
+      await del(result.blobUrls)
+    } catch (error) {
+      // The letter is already gone, and the photographs are private. Log it
+      // for cleanup rather than tell me the delete failed when it did not.
+      console.error('letter deleted, blob cleanup failed', error)
+      return Response.json({ deleted: true, photographs: 'left behind' })
+    }
+  }
+
+  return Response.json({ deleted: true })
 }

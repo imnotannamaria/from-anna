@@ -102,12 +102,11 @@ aside[data-theme-label]::before {
    above the block. It is the same information either way, which is the point
    of writing the theme out rather than relying on the colour.
 
-   Where there is room, the bracket lines up with the passage numbers in the
-   same gutter — a themed block is a passage that happens to carry a name.
+   Where there is room, the bracket gets a little more of it.
 */
 @media (min-width: 700px) {
   aside[data-theme-label] {
-    padding-left: 2.25rem;
+    padding-left: 1.5rem;
   }
 }
 
@@ -150,57 +149,22 @@ aside[data-theme-label]::before {
    PASSAGES
    ============================================================
 
-   A passage is one top-level block of the transcription. Numbering runs off
-   a CSS counter rather than anything in the markup, so the numbers are
-   correct before a single line of JavaScript has run — and they are
-   decorative, which is why they live in a pseudo-element and never in the
-   accessibility tree.
+   A passage is one top-level block of the transcription. The text runs the
+   full width of its column: no gutter, no numbers.
 
-   `data-passage` and `data-seen` are added by whatever is driving the
-   reading view. Their absence is the no-JavaScript state, and it is the
-   finished state: nothing here is translated, hidden or faded until
-   something explicitly says it is being animated. A transcription that only
-   becomes legible once a script arrives is a transcription that sometimes
-   never does.
+   Numbered passages shipped in 0.1.0 and came out in 0.2.0. They were one
+   app's design decision leaking into a package default, and a letter read as
+   running text reads better than a letter read as a numbered list.
+
+   `data-seen` is added by whatever is driving the reading view. Its absence
+   is the no-JavaScript state, and it is the finished state: nothing here is
+   translated, hidden or faded until something explicitly says it is being
+   animated. A transcription that only becomes legible once a script arrives
+   is a transcription that sometimes never does.
    ============================================================ */
 
-.scanned-transcription {
-  counter-reset: passage;
-}
-
-.scanned-transcription > * {
-  counter-increment: passage;
-  position: relative;
-}
-
-.scanned-transcription > p::before,
-.scanned-transcription > div::before {
-  content: counter(passage, decimal-leading-zero);
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  font-family: var(--hl-label-font, ui-monospace, monospace);
-  font-size: 0.625rem;
-  letter-spacing: 0.1em;
-  /* Decorative: the number is a position, not a word anyone needs read out. */
-  color: var(--passage-number, currentColor);
-  opacity: var(--passage-number-opacity, 0.45);
-  transition: color 400ms ease, opacity 400ms ease;
-}
-
-/*
-   The gutter the numbers and the theme bracket hang in. Only opened where
-   there is room for it — at narrow widths the text takes the full column and
-   the markers sit above rather than beside.
-*/
-@media (min-width: 700px) {
-  .scanned-transcription > * {
-    padding-left: 2.25rem;
-  }
-
-  .scanned-transcription > div > *:first-child {
-    margin-top: 0;
-  }
+.scanned-transcription > div > *:first-child {
+  margin-top: 0;
 }
 
 /*

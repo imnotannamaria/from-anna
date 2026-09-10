@@ -1,109 +1,94 @@
 /**
- * Letter slugs: three readable words plus a random token.
+ * Letter slugs: the title, and the day the letter was started.
  *
- * They have to be two things at once: readable enough to dictate, and
- * unguessable, so a letter written for one person cannot be stumbled onto by
- * another.
+ * `carta-pro-joao-2026-09-10`. Readable, it says what it is, and two letters
+ * with the same title on different days do not collide.
  *
- * Words alone do not achieve the second part. Three words from lists this
- * size give about 330,000 combinations — roughly 2^18, which a script walks
- * through in an afternoon. That is not a small margin, it is no margin, so
- * the words carry the readability and a 6-character token carries the
- * entropy. Together it is about 2^48.
+ * This replaced three random words plus a six-character token, which gave
+ * about 2^48 combinations and nobody a way to guess one. That property is
+ * gone on purpose: a published letter can now be found by someone who knows
+ * roughly what it is called and when it was written. A **draft** is still a
+ * 404 to everyone but me, whatever its slug, because that check lives in the
+ * route and not in the address.
  *
- * If the word lists are ever trimmed, the token is what keeps this safe.
- * Don't remove it to make the URL prettier.
- *
- * Uniqueness is still enforced by a unique index on `letters.slug`. A
- * generator that "won't collide" is an assumption; the index is a guarantee.
+ * Uniqueness is enforced by the unique index on `letters.slug`. What happens
+ * on a collision is up to the caller: a generated slug gets `-2`, `-3`; a slug
+ * I typed myself is refused, because silently changing it is worse.
  */
 
-const ADJECTIVES = [
-  'amber', 'ancient', 'autumn', 'bitter', 'blue', 'bold', 'brave', 'bright',
-  'calm', 'clever', 'copper', 'crimson', 'curious', 'damp', 'dawn', 'deep',
-  'distant', 'dusty', 'eager', 'early', 'empty', 'faint', 'first', 'foggy',
-  'frozen', 'gentle', 'golden', 'grand', 'green', 'hidden', 'hollow', 'humble',
-  'idle', 'ivory', 'jolly', 'keen', 'late', 'lilac', 'little', 'lonely',
-  'loud', 'lucky', 'mellow', 'merry', 'misty', 'muted', 'narrow', 'noble',
-  'northern', 'olive', 'patient', 'plain', 'polite', 'proud', 'quiet', 'rapid',
-  'restless', 'rough', 'round', 'royal', 'rusty', 'salty', 'scarlet', 'shy',
-  'silent', 'silver', 'slender', 'small', 'smooth', 'snowy', 'soft', 'solemn',
-  'sour', 'spare', 'spring', 'steady', 'still', 'stormy', 'sunny', 'sweet',
-  'tender', 'thirsty', 'tidy', 'timid', 'tiny', 'twin', 'velvet', 'wandering',
-  'warm', 'weathered', 'wild', 'winter', 'wise', 'wooden', 'young',
-]
+/** Paths that belong to the app. A letter at `/admin` would be unreachable. */
+export const RESERVED_SLUGS = new Set(['admin', 'api'])
 
-const NOUNS = [
-  'anchor', 'apple', 'arbour', 'attic', 'basket', 'beacon', 'bell', 'bird',
-  'blanket', 'bloom', 'brook', 'bureau', 'candle', 'canvas', 'cedar', 'cellar',
-  'chapel', 'clover', 'comet', 'compass', 'cottage', 'creek', 'daisy', 'dawn',
-  'desk', 'ember', 'fable', 'feather', 'fern', 'ferry', 'fig', 'forest',
-  'garden', 'gate', 'glass', 'grove', 'harbour', 'harvest', 'hazel', 'heron',
-  'hollow', 'ink', 'island', 'ivy', 'jasmine', 'kettle', 'ladder', 'lamp',
-  'lantern', 'ledger', 'letter', 'lilac', 'linen', 'maple', 'marble', 'meadow',
-  'mirror', 'moss', 'mountain', 'needle', 'nest', 'orchard', 'otter', 'owl',
-  'paper', 'parlour', 'pebble', 'pigeon', 'pine', 'pocket', 'pond', 'poppy',
-  'quill', 'rabbit', 'ribbon', 'river', 'robin', 'sage', 'sailor', 'shelf',
-  'shore', 'sparrow', 'spruce', 'stairs', 'stone', 'stove', 'swallow', 'table',
-  'thistle', 'thread', 'tide', 'trellis', 'valley', 'violet', 'walnut',
-  'willow', 'window', 'wren',
-]
-
-const SUFFIXES = [
-  'april', 'ash', 'bay', 'birch', 'cove', 'dune', 'east', 'elm', 'fern',
-  'field', 'ford', 'glen', 'hill', 'june', 'lane', 'march', 'may', 'mill',
-  'moor', 'north', 'oak', 'path', 'pier', 'reed', 'ridge', 'row', 'sky',
-  'south', 'stead', 'street', 'thorn', 'vale', 'view', 'west', 'wood', 'yard',
-]
+export const MAX_SLUG_LENGTH = 80
 
 /**
- * Token alphabet. No `0`/`o`, no `1`/`l`: the slug is meant to survive being
- * read out loud or copied by hand.
+ * Lowercase, accents off, anything that is not a letter or digit becomes a
+ * hyphen. `Carta pro João!` → `carta-pro-joao`.
+ *
+ * Truncated at a word boundary rather than mid-word, so a long title does not
+ * end the URL in half a word.
  */
-const TOKEN_ALPHABET = '23456789abcdefghjkmnpqrstuvwxyz'
+export function slugify(input: string, maxLength = 60): string {
+  const base = input
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 
-const TOKEN_LENGTH = 6
+  if (base.length <= maxLength) return base
 
-export const SLUG_COMBINATIONS =
-  ADJECTIVES.length *
-  NOUNS.length *
-  SUFFIXES.length *
-  TOKEN_ALPHABET.length ** TOKEN_LENGTH
-
-/** Matches a slug this generator could have produced. */
-export const SLUG_PATTERN = new RegExp(
-  `^[a-z]+-[a-z]+-[a-z]+-[${TOKEN_ALPHABET}]{${TOKEN_LENGTH}}$`,
-)
-
-function pick<T>(list: readonly T[], random: () => number): T {
-  // Math.min guards the 0.999… case, which would otherwise index past the end.
-  return list[Math.min(list.length - 1, Math.floor(random() * list.length))]
+  const cut = base.slice(0, maxLength)
+  const lastHyphen = cut.lastIndexOf('-')
+  return (lastHyphen > maxLength / 2 ? cut.slice(0, lastHyphen) : cut).replace(
+    /-+$/,
+    '',
+  )
 }
 
 /**
- * Cryptographically random by default. `Math.random` is predictable enough
- * that a determined reader could enumerate slugs, which is exactly the
- * property these are supposed to have.
+ * The day, as `YYYY-MM-DD`, in UTC.
+ *
+ * UTC because it is computed on the server and has to agree with itself: a
+ * letter started late at night in Brazil carries the next day's date. That
+ * is a smaller surprise than a slug that depends on which region the function
+ * happened to run in.
  */
-function secureRandom(): number {
-  const buffer = new Uint32Array(1)
-  crypto.getRandomValues(buffer)
-  return buffer[0] / 2 ** 32
+export function slugDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
 }
 
-function token(random: () => number): string {
-  let out = ''
-  for (let i = 0; i < TOKEN_LENGTH; i++) {
-    out += pick(TOKEN_ALPHABET.split(''), random)
+/** The slug a letter gets when I do not give it one. */
+export function slugFromTitle(title: string, createdAt: Date): string {
+  const words = slugify(title) || 'letter'
+  return `${words}-${slugDate(createdAt)}`
+}
+
+/** `-2`, `-3`… for a generated slug that is already taken. */
+export function withSuffix(slug: string, attempt: number): string {
+  return attempt <= 1 ? slug : `${slug}-${attempt}`
+}
+
+export type SlugCheck = { ok: true; slug: string } | { ok: false; message: string }
+
+/**
+ * Check a slug I typed myself.
+ *
+ * It is slugified rather than rejected for having spaces or capitals — typing
+ * `Carta pro João` should just work — and then refused only for the things
+ * that would actually break.
+ */
+export function checkCustomSlug(input: string): SlugCheck {
+  const slug = slugify(input, MAX_SLUG_LENGTH)
+
+  if (slug === '') {
+    return { ok: false, message: 'Use at least a few letters or numbers.' }
   }
-  return out
-}
-
-export function generateSlug(random: () => number = secureRandom): string {
-  return [
-    pick(ADJECTIVES, random),
-    pick(NOUNS, random),
-    pick(SUFFIXES, random),
-    token(random),
-  ].join('-')
+  if (slug.length < 3) {
+    return { ok: false, message: 'That is too short to be a link.' }
+  }
+  if (RESERVED_SLUGS.has(slug)) {
+    return { ok: false, message: `/${slug} is part of the site itself.` }
+  }
+  return { ok: true, slug }
 }

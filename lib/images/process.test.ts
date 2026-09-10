@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { MAX_DIMENSION, SCREEN_DIMENSION, fitWithin } from './process'
+import { MAX_DIMENSION, SCREEN_DIMENSION, fitWithin, looksLikeHeic } from './process'
 
 describe('fitWithin', () => {
   it('leaves an image already within the limit untouched', () => {
@@ -62,5 +62,23 @@ describe('fitWithin', () => {
     expect(() => fitWithin(0, 100)).toThrow(RangeError)
     expect(() => fitWithin(-10, 100)).toThrow(RangeError)
     expect(() => fitWithin(Number.NaN, 100)).toThrow(RangeError)
+  })
+})
+
+describe('looksLikeHeic', () => {
+  it('recognises the type Safari reports', () => {
+    expect(looksLikeHeic({ name: 'IMG_6110.HEIC', type: 'image/heic' })).toBe(true)
+    expect(looksLikeHeic({ name: 'x', type: 'image/heif' })).toBe(true)
+  })
+
+  it('recognises the extension when the browser reports no type at all', () => {
+    // Desktop Chrome hands over an iPhone HEIC with `type: ''`.
+    expect(looksLikeHeic({ name: 'IMG_6110.HEIC', type: '' })).toBe(true)
+    expect(looksLikeHeic({ name: 'page.heif', type: '' })).toBe(true)
+  })
+
+  it('leaves everything else alone, so a JPEG never loads the converter', () => {
+    expect(looksLikeHeic({ name: 'page.jpg', type: 'image/jpeg' })).toBe(false)
+    expect(looksLikeHeic({ name: 'heic-notes.png', type: 'image/png' })).toBe(false)
   })
 })

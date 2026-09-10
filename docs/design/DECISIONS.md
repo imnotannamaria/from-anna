@@ -22,11 +22,11 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 **The passage reveal degrades to fully visible with no JavaScript and under `prefers-reduced-motion`** — because the comp starts unread passages at 12% opacity, which is unreadable by any measure, and a reader whose observer never fires would be left with a letter that looks blank. The highlight sweep already solves this shape of problem: the finished state is the default and JavaScript adds the animation.
 
-**The letter is named by the three words of its slug, with no number** — `AUTUMN · BUREAU · COVE`. Numbering tells a reader how many letters exist and where theirs sits in the sequence. The slug words are already the letter's identity, they are not sequential, and they tie the URL to the page for free.
+~~**The letter is named by the three words of its slug.**~~ **Replaced after the first deploy.** Read on a real letter, `thirsty · gate · pier` meant nothing to anyone, including me. See *After the first deploy*.
 
-**The reader is shown their own reading progress** — because the coda says *counted once, nothing else is stored* out loud, and showing the progress makes that disclosure concrete rather than a claim. It turns the measurement from something hidden into something admitted.
+**The reader is shown their own reading progress**, as a thin bar at the top — it says how far down the letter you are, which is useful on its own.
 
-**The privacy line is literal and has to stay true** — one row per open, deduplicated per session, no IP. If the measurement ever changes, that sentence changes with it.
+~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described has not changed: one row per open, deduplicated per session, no IP.
 
 **`WRITE BACK` is a `mailto:` for now, with the address in an env var** — because a form is more work than the first version needs. The address is not in the repository, and an address on a public page gets harvested; if that becomes a problem the swap is to a form.
 
@@ -42,7 +42,7 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 **A passage is a top-level block of the transcription, found in the DOM rather than constructed** — because the markdown decides a letter's shape, and enumerating passages in React would mean a second opinion about it. `data-passage` is added to text that is already painted.
 
-**Passage numbers come from a CSS counter, not from JavaScript** — because they are then correct before any script runs, and they stay decorative: a pseudo-element is never in the accessibility tree, and "04" read aloud in the middle of a sentence is noise.
+~~**Passage numbers in the margin, from a CSS counter.**~~ **Removed after the first deploy**, from the package as well as the app. See *After the first deploy*.
 
 **The legend filter is three `:not()` rules, one per tag, rather than "dim everything then put one back"** — because the two-rule version gives both rules identical specificity and leaves source order to decide. It was wrong the first time: filtering to `important` dimmed `important` too. Rules that cannot overlap have nothing to settle.
 
@@ -135,3 +135,23 @@ It is **not** `aria-hidden`, unlike the opening photograph on a letter page: tho
 **A button that started something says so twice: a spinner and the word** — `Save` becomes `Saving…`, with `aria-busy` carrying it to assistive tech. A spinner alone says *something* is happening and the word says *what*, and only one of those survives being read out. Under `prefers-reduced-motion` the ring stops turning and stays: still an indicator, just not a moving one.
 
 **A disabled solid button drops back to the outline treatment rather than fading** — the brand colour at 35% reads as a broken button, not an unavailable one.
+
+---
+
+## After the first deploy
+
+Read on a real letter, on a real phone, at `from-anna.vercel.app`.
+
+**The bar says *from anna to you*, or *to* whoever the letter is for** — because a letter is addressed, and the three words of a generated slug were not an address, they were noise. That line is the whole centre of the bar and nothing else goes there. It reverses the rule that `recipient` never reaches the published page: the reader is the recipient, so their own name at the top tells them nothing they did not know, and it is the one detail that makes the page read as written *to* someone.
+
+**No privacy line in the coda** — it described the analytics accurately, and on the page it read as a disclaimer at the end of a letter. The measurement is unchanged and still documented in `share/DECISIONS.md`.
+
+**No passage numbers** — a letter read as running text reads better than a letter read as a numbered list, and a number beside every paragraph made it look like the second. They came out of `remark-scanned-page` too, in 0.2.0: they were this app's choice leaking into a package default.
+
+**The photograph is scaled, never cropped** — `object-fit: cover` under a max-height cut the bottom off the sheet, and the bottom of a letter is where it is signed.
+
+**The opening sits higher and centred** — it filled the whole first screen with the photo pushed to the right edge and past it, so the letter started below the fold and off to one side.
+
+**A refused `/admin` renders the real 404 page** — the proxy answered with the right status and an empty body, which a browser paints as a blank white page. It now rewrites to a path that does not exist, so Next renders `not-found.tsx` with the 404 it already carries.
+
+**The opening photograph drifts 48px at most, and the opening clips on both axes** — at 96px, with the two drawn sheets fanned behind it, it slid over the first line of the transcription. The words are the point of the page; a decoration never gets to cover them. Below 900px it does not drift at all, because in one column the photograph sits directly on top of the letter.

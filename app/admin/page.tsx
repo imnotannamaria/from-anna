@@ -17,6 +17,9 @@ function formatDate(date: Date) {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    // An expiry is the end of a UTC day, so it is shown as one. In the
+    // server's own zone it could read as the day before or after.
+    timeZone: 'UTC',
   })
 }
 
