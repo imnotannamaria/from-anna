@@ -1970,6 +1970,38 @@ body::before {
   }
 }
 
+/* ---- starting one ---------------------------------------------------- */
+
+.admin-new {
+  margin-bottom: 2rem;
+}
+
+.admin-new--open {
+  padding: 1.4rem 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+}
+
+.admin-new-fields {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 700px) {
+  .admin-new-fields {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.admin-new-optional {
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
 /* ---- the letter workbench -------------------------------------------- */
 
 .admin-shell--wide {
@@ -2449,6 +2481,22 @@ body::before {
 
 .state--admin .state-title {
   font-size: clamp(2rem, 4.5vw, 3rem);
+}
+
+/* Clerk owns the card's markup; this only gives it room and a ground. */
+.sign-in-frame {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.state-inner code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
 }
 
 .transcribing {

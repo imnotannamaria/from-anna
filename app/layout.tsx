@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 
 import 'remark-scanned-page/styles/scanned-page.css'
@@ -23,11 +24,20 @@ export const metadata: Metadata = {
  * The package stylesheet is imported before `globals.css` so this project's
  * palette is declared after the structure it fills in. Custom properties
  * resolve at use time, so the order is for readers, not the cascade.
+ *
+ * `ClerkProvider` sits inside `<body>` rather than around `<html>`, and it
+ * wraps every route rather than only the admin ones. It has to: `auth()` is
+ * read on the letter route too, by `requireAdmin()` deciding whether a draft
+ * is a preview or a 404. It renders nothing and adds no visible chrome —
+ * there is no sign-in button anywhere on the public site, because there are
+ * no public accounts.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" data-mode="light" className="h-full">
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <ClerkProvider>{children}</ClerkProvider>
+      </body>
     </html>
   )
 }

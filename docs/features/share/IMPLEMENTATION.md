@@ -145,11 +145,13 @@ Clerk. Every admin surface checks authorization in the route and the page, not o
 
 **Done when**
 
-- [x] An unauthorised request to any admin route gets 404, never 403
+- [x] A letter can be started from `/admin` — `POST /api/letters`, validated on the server as well as in the form
+- [x] An unauthorised request to any admin route gets 404, never 403 — verified against a **production build with `DEV_ADMIN_BYPASS=1` still set**, which is the case that matters: the flag is never read on that branch
 - [x] The check lives in the page and in every route handler, never only in a matcher
 - [x] Mutations validate on the server: status is an enum, expiry is parsed as a date, markdown is length-capped
 - [x] `/admin` is `noindex`, with loading and error states
-- [ ] **Clerk is not wired up.** The keys in `.env.local` are empty, so `requireAdmin()` still fails closed and the dev bypass is the only way in. Swapping it is a few lines at the `TODO` in `lib/auth/admin.ts`.
+- [x] **Clerk is wired up.** `clerkMiddleware()` is composed into `proxy.ts` alongside the reading-session cookie, `requireAdmin()` reads `auth()`, and the only sign-in surface is `/admin/sign-in`, linked from nowhere.
+- [ ] **`ADMIN_USER_IDS` is empty.** Nothing is allowed in a production build until it holds a Clerk user id — sign in once at `/admin/sign-in` and the page shows you yours. A development instance and a production one issue different ids, so it has to be set twice.
 
 **Checks**
 

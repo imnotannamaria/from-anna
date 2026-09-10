@@ -1,10 +1,11 @@
+import { auth } from '@clerk/nextjs/server'
+
 /**
  * The admin gate.
  *
- * Clerk is wired up in the `share` feature (phase 5). Until then this fails
- * closed: an unauthenticated transcription endpoint spends my OpenRouter
- * credit for whoever finds it, so "not built yet" has to mean "denied", never
- * "allowed".
+ * It fails closed, and that is the whole design: an unauthenticated
+ * transcription endpoint spends my OpenRouter credit for whoever finds it, so
+ * anything unresolved has to mean "denied", never "allowed".
  *
  * The local escape hatch is deliberately awkward. It cannot be switched on in
  * a production build at all, no matter what the environment says.
@@ -15,7 +16,7 @@ export type AdminContext = {
   isProduction: boolean
   /** `DEV_ADMIN_BYPASS=1`, honoured only outside production. */
   bypassEnabled: boolean
-  /** The signed-in user id, once Clerk is wired up. `null` when signed out. */
+  /** The signed-in Clerk user id. `null` when signed out. */
   userId: string | null
   /** Emails or ids allowed in. Empty means nobody is allowed yet. */
   allowlist: string[]
@@ -63,9 +64,26 @@ export class NotAuthorizedError extends Error {
  *
  * Callers turn this into a **404**, never a 403 — a 403 confirms the thing
  * exists.
+ *
+ * `auth()` only has something to read because `proxy.ts` runs Clerk's
+ * middleware first. That middleware is not the gate, though: this call is,
+ * and it happens in every admin page and every admin route handler. A matcher
+ * that quietly stopped matching would make `userId` null, which denies.
  */
 export async function requireAdmin(): Promise<void> {
-  // TODO(share/phase-5): read the Clerk session here and pass the user id in.
-  const context = readAdminContext(null)
+  const { userId } = await auth()
+  const context = readAdminContext(userId)
   if (!isAdminAllowed(context)) throw new NotAuthorizedError()
+}
+
+/**
+ * The signed-in user id, whether or not they are allowed in.
+ *
+ * Only the sign-in page uses this, to solve the bootstrap problem: the
+ * allowlist is a list of Clerk user ids, and you cannot know your own until
+ * you have signed in once.
+ */
+export async function currentUserId(): Promise<string | null> {
+  const { userId } = await auth()
+  return userId
 }

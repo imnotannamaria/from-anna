@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { NewLetter } from '@/components/admin/new-letter'
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
 import { isPubliclyReadable } from '@/lib/letters/access'
 import { getLetterStats, listLetters } from '@/lib/letters/queries'
@@ -54,9 +55,12 @@ export default async function AdminPage() {
         <span className="rule" aria-hidden="true" />
       </header>
 
+      <NewLetter />
+
       {letters.length === 0 ? (
         <p className="admin-empty">
-          Nothing written yet. Photograph a page and it will appear here.
+          Nothing written yet. Start one, photograph a page, and it will
+          appear here.
         </p>
       ) : (
         <ul className="admin-list">
