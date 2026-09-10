@@ -144,9 +144,9 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
   }
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="admin-section">
       <div className="flex flex-col gap-2">
-        <label htmlFor="pages" className="font-medium">
+        <label htmlFor="pages" className="meta field-label">
           Photographed pages
         </label>
         <input
@@ -158,9 +158,9 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
           accept="image/*"
           disabled={uploading || remaining <= 0}
           onChange={(event) => onSelect(event.target.files)}
-          className="max-w-full"
+          className="file-field"
         />
-        <p className="text-sm opacity-80">
+        <p className="editor-hint">
           Up to {remaining} more page{remaining === 1 ? '' : 's'}. They are
           resized and compressed here, before anything is uploaded. Pages keep
           the order you picked them in.
@@ -168,7 +168,7 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
       </div>
 
       {/* Progress is announced, not just drawn. */}
-      <p role="status" aria-live="polite" className="text-sm">
+      <p role="status" aria-live="polite" className="editor-status">
         {message}
       </p>
 
@@ -211,7 +211,7 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
                 <div className="flex flex-col gap-1">
                   <label
                     htmlFor={`alt-${item.key}`}
-                    className="text-xs font-medium"
+                    className="meta field-label"
                   >
                     Alt text (required)
                   </label>
@@ -229,7 +229,7 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
                         ),
                       )
                     }
-                    className="w-full rounded border px-2 py-1 text-sm"
+                    className="field"
                   />
                 </div>
               )}
@@ -244,12 +244,14 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
             type="button"
             onClick={onUpload}
             disabled={!canUpload}
-            className="self-start rounded border px-4 py-2 disabled:opacity-50"
+            data-busy={uploading ? 'true' : 'false'}
+            aria-busy={uploading}
+            className="pill pill--solid self-start"
           >
             {uploading ? 'Uploading…' : 'Upload pages'}
           </button>
           {!everyAltFilled && (
-            <p className="text-sm opacity-80">
+            <p className="editor-hint">
               Every page needs alt text before it can be uploaded. The
               transcription is the content of the letter, and the alt text is
               what describes the photo itself.

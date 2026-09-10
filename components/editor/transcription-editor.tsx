@@ -231,7 +231,9 @@ export function TranscriptionEditor({ letterId, initialMdContent }: Props) {
           type="button"
           onClick={save}
           disabled={saving || !dirty}
-          className="pill"
+          data-busy={saving ? 'true' : 'false'}
+          aria-busy={saving}
+          className="pill pill--solid"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>

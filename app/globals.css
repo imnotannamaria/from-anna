@@ -1465,10 +1465,117 @@ body::before {
   cursor: default;
 }
 
+/*
+   A button that started something shows it. The label changes too — "Save"
+   becomes "Saving…" — because a spinner alone says *something* is happening
+   and the word says *what*, and only one of those survives being read out.
+
+   `aria-busy` is what carries it to assistive tech; this is the visible half.
+*/
+.pill[data-busy="true"]::before {
+  content: "";
+  width: 0.7em;
+  height: 0.7em;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 720ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill[data-busy="true"]::before {
+    /* Still an indicator, just not a moving one. The label does the rest. */
+    animation: none;
+    border-top-color: currentColor;
+    opacity: 0.5;
+  }
+}
+
+/* ---- fields ----------------------------------------------------------
+
+   The admin is a tool and earns density, but not a second visual language.
+   -------------------------------------------------------------------- */
+
+.field {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--fg-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--fg-brand);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/*
+   The file input keeps its native button — a custom one would have to
+   reimplement keyboard access and the file dialog, and this only needs to
+   stop looking like it belongs to a different page.
+*/
+.file-field::file-selector-button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  margin-right: 0.9rem;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.file-field::file-selector-button:hover {
+  color: var(--fg-primary);
+  border-color: var(--border-strong);
+}
+
+.file-field {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
 .pill--solid {
   color: var(--bg-surface);
   background: var(--fg-brand);
   border-color: var(--fg-brand);
+}
+
+/*
+   A disabled solid button faded to 35% reads as a broken brand colour rather
+   than as unavailable. It drops back to the outline treatment instead.
+*/
+.pill--solid:disabled {
+  color: var(--fg-muted);
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  opacity: 1;
 }
 
 .pill--solid:hover {
@@ -2378,20 +2485,139 @@ body::before {
 
 /* ============================================================
    THE FRONT DOOR
+   ============================================================
+
+   The home page has two jobs and they pull in different directions: say what
+   this is in one screen, and hand over everything someone would need to run
+   their own. So it opens like a letter and then becomes documentation, which
+   is the honest shape for a personal instance of an open-source thing.
+
+   All CSS, no JavaScript. The entrance is one orchestrated reveal staggered
+   by `animation-delay` rather than a dozen scattered micro-interactions.
    ============================================================ */
 
 .home {
   position: relative;
   z-index: 2;
+}
+
+.home-hero {
   min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: clamp(2rem, 8vw, 6rem) clamp(1.25rem, 6vw, 4rem);
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  max-width: 84rem;
+  margin: 0 auto;
+  padding: clamp(3rem, 9vw, 6rem) clamp(1.25rem, 6vw, 4rem);
+  /* `clip`, not `hidden`: hidden makes this a scroll container. */
+  overflow-x: clip;
 }
 
 .home-inner {
   width: 100%;
-  max-width: 40rem;
+  max-width: 34rem;
+}
+
+/* ---- the stack -------------------------------------------------------
+
+   A letter sitting on a pile of blank paper. The sheets are drawn — same
+   paper as the page, no request — and the one on top is a real render, so
+   the front door is showing the thing rather than a picture of it.
+   -------------------------------------------------------------------- */
+
+.home-stack {
+  position: relative;
+  justify-self: center;
+  width: 100%;
+  max-width: 27rem;
+  rotate: -2deg;
+}
+
+.home-stack-sheet {
+  position: relative;
+  z-index: 1;
+  min-height: 21rem;
+  padding: clamp(1.6rem, 3vw, 2.4rem) clamp(1.4rem, 3vw, 2.2rem);
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lift);
+  opacity: 0;
+  animation: lay-down 1000ms var(--ease-out-quint) 620ms both;
+}
+
+.home-stack::before,
+.home-stack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-page);
+  opacity: 0;
+  animation: fade-in 900ms var(--ease-out-quint) both;
+}
+
+.home-stack::before {
+  transform: rotate(3.4deg) translate(2.2%, 1.8%);
+  animation-delay: 500ms;
+  --fade-to: 0.9;
+}
+
+.home-stack::after {
+  transform: rotate(6.8deg) translate(4.6%, 3.6%);
+  animation-delay: 400ms;
+  --fade-to: 0.6;
+}
+
+.home-stack-mark {
+  margin: 0 0 1.1rem;
+}
+
+.home-stack .letter-prose {
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+/*
+   No gutter in a 27rem sheet: the numbers would take a quarter of it. The
+   themed block keeps its own padding, because the bracket is drawn at the
+   element's left edge and would otherwise be drawn through the words.
+*/
+.home-stack .scanned-transcription > *:not(aside) {
+  padding-left: 0;
+}
+
+.home-stack .scanned-transcription > aside[data-theme-label] {
+  padding-left: 1.1rem;
+}
+
+.home-stack .scanned-transcription > p::before,
+.home-stack .scanned-transcription > div::before {
+  content: none;
+}
+
+@media (max-width: 899px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 3.5rem;
+    padding-top: clamp(3rem, 12vh, 5rem);
+  }
+
+  .home-stack {
+    max-width: 24rem;
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-stack-sheet,
+  .home-stack::before,
+  .home-stack::after {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /*
@@ -2414,7 +2640,8 @@ body::before {
 .home-title,
 .home-rule,
 .home-lede,
-.home-foot {
+.home-actions,
+.home-quiet {
   opacity: 0;
   animation: rise 760ms var(--ease-out-quint) forwards;
 }
@@ -2426,7 +2653,9 @@ body::before {
   letter-spacing: -0.035em;
 }
 
-.home-title em {
+.home-title em,
+.home-h2 em,
+.home-note-line em {
   font-style: italic;
   color: var(--fg-brand);
 }
@@ -2449,22 +2678,17 @@ body::before {
 }
 
 .home-lede {
-  margin: 0 0 1.2rem;
+  margin: 0 0 1.6rem;
   font-size: clamp(1.05rem, 2.2vw, 1.2rem);
   line-height: 1.68;
   color: var(--fg-primary);
-  max-width: 36ch;
+  max-width: 38ch;
   text-wrap: pretty;
 }
 
-.home-lede--quiet {
-  color: var(--fg-secondary);
-  font-size: 1rem;
-}
-
 /*
-   The one highlight on the page, and it demonstrates the thing the sentence
-   is describing. It sweeps in after the paragraph has settled.
+   The one highlight in the opening, and it demonstrates the thing the
+   sentence is describing. It sweeps in after the paragraph has settled.
 */
 .home-lede mark[data-c] {
   background: var(--hl-important);
@@ -2485,12 +2709,207 @@ body::before {
   }
 }
 
-.home-foot {
-  margin: 2.5rem 0 0;
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.8rem 0 0;
+}
+
+.home-quiet {
+  margin: 2rem 0 0;
+}
+
+/* ---- the documentation half ------------------------------------------ */
+
+.home-section {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: clamp(3.5rem, 11vh, 7rem) clamp(1.25rem, 6vw, 4rem);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.home-h2 {
+  margin: 0.7rem 0 1.4rem;
+  font-size: clamp(1.9rem, 4.4vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.home-body {
+  margin: 0 0 1.1rem;
+  max-width: 62ch;
+  font-size: 1.0625rem;
+  line-height: 1.72;
+  color: var(--fg-secondary);
+  text-wrap: pretty;
+}
+
+.home-body strong {
+  color: var(--fg-primary);
+  font-weight: 500;
+}
+
+.home-body--quiet {
+  margin-top: 1.6rem;
+  font-size: 1rem;
+}
+
+.home-body code,
+.home-step p code {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
+
+/*
+   The steps are numbered in the same gutter, at the same size, as the
+   passages in a letter. It is the same idea — a block you arrive at — and
+   repeating the shape is cheaper than inventing a second one.
+*/
+.home-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(1.75rem, 4vh, 2.75rem);
+}
+
+.home-steps li {
+  position: relative;
+  padding-left: 2.75rem;
+}
+
+.home-step-n {
+  position: absolute;
+  left: 0;
+  top: 0.3em;
+  color: var(--fg-brand);
+}
+
+.home-step-h {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--fg-primary);
+}
+
+.home-steps p {
+  margin: 0;
+  max-width: 60ch;
+  line-height: 1.7;
+  color: var(--fg-secondary);
+}
+
+@media (max-width: 599px) {
+  .home-steps li {
+    padding-left: 0;
+  }
+
+  .home-step-n {
+    position: static;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* ---- the live demonstration ------------------------------------------
+
+   Rendered by the package itself rather than screenshotted, so it cannot
+   drift from the code the moment either one changes.
+   -------------------------------------------------------------------- */
+
+.home-demo {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1.75rem 0 0;
+  align-items: start;
+}
+
+@media (min-width: 800px) {
+  .home-demo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.home-code {
+  margin: 0;
+  padding: 1.1rem 1.2rem;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--fg-secondary);
+  /*
+     Wrapped rather than scrolled. A horizontal scrollbar inside a code block
+     hides the end of every line behind a gesture nobody makes, and this is
+     markdown — it reads as prose and wraps like prose.
+  */
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.home-code--wide {
+  margin-bottom: 1.75rem;
+  font-size: 13px;
+}
+
+.home-render {
+  padding: 1.4rem 1.5rem;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-page);
+}
+
+.home-render .letter-prose {
+  font-size: 1rem;
+}
+
+/* ---- the note --------------------------------------------------------
+
+   The blush band, same as a letter's coda: a different ground, so a
+   different contrast pair, measured against the blush rather than the paper.
+   -------------------------------------------------------------------- */
+
+.home-note {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface-brand);
+  padding: clamp(4rem, 12vh, 7rem) clamp(1.25rem, 6vw, 4rem);
+}
+
+.home-note-inner {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.home-note-line {
+  margin: 0.9rem 0 1.6rem;
+  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+
+.home-note .home-body {
+  color: var(--fg-secondary);
+}
+
+.home-foot {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 2.5rem clamp(1.25rem, 6vw, 4rem) 4rem;
 }
 
 .home-link {
@@ -2510,7 +2929,8 @@ body::before {
   .home-title,
   .home-rule,
   .home-lede,
-  .home-foot,
+  .home-actions,
+  .home-quiet,
   .home-lede mark[data-c] {
     animation: none;
     opacity: 1;

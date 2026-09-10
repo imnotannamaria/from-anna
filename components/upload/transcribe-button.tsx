@@ -75,22 +75,26 @@ export function TranscribeButton({
   if (pageCount === 0) return null
 
   return (
-    <section className="flex flex-col items-start gap-2">
-      <button
-        type="button"
-        onClick={onTranscribe}
-        disabled={running}
-        className="rounded border px-4 py-2 disabled:opacity-50"
-      >
-        {running
-          ? 'Transcribing…'
-          : alreadyTranscribed
-            ? 'Transcribe again'
-            : 'Transcribe'}
-      </button>
+    <section className="admin-section">
+      <div className="editor-bar">
+        <button
+          type="button"
+          onClick={onTranscribe}
+          disabled={running}
+          data-busy={running ? 'true' : 'false'}
+          aria-busy={running}
+          className="pill pill--solid"
+        >
+          {running
+            ? 'Transcribing…'
+            : alreadyTranscribed
+              ? 'Transcribe again'
+              : 'Transcribe'}
+        </button>
+      </div>
 
       {alreadyTranscribed && !running && (
-        <p className="text-sm opacity-80">
+        <p className="editor-hint">
           Running again replaces the raw transcription of every page.
         </p>
       )}
@@ -110,7 +114,8 @@ export function TranscribeButton({
       <p
         role="status"
         aria-live="polite"
-        className={`text-sm ${tone === 'error' || tone === 'warning' ? 'font-medium' : 'opacity-80'}`}
+        className="editor-status"
+        data-failed={tone === 'error' ? 'true' : 'false'}
       >
         {tone === 'error' && 'Failed: '}
         {tone === 'warning' && 'Check this: '}

@@ -107,3 +107,27 @@ They fan to the left because the photograph runs off the right edge of the viewp
 **The opening photograph drifts slower than the words beside it on scroll** — the difference between a picture on a page and an object on a desk. Capped, and only ever a transform.
 
 **"by hand" is underlined by a `text-decoration` that inks in after the words** — not a positioned pseudo-element, because the phrase wraps at narrow widths and only a decoration wraps with it.
+
+---
+
+## The front door
+
+**The home page is the documentation** — because a personal instance of an open-source thing has to answer two questions at once, and the second one is the useful one. It says what this is in a screen, and then hands over the syntax, the package, the clone command and the environment it needs.
+
+**The demonstration is rendered by the package, not screenshotted** — the same plugin, the same sanitize schema, the same stylesheet a published letter goes through. A screenshot drifts from the code the first time either changes; this cannot.
+
+**The opening carries a stack of sheets with a real render on top** — the thing the page is describing rather than a picture of it. It is `aria-hidden`: a fragment of a made-up letter with no context, whose accessible version is the same output further down under a heading that explains it. Same call the letter pages make about their opening photograph.
+
+**There is a note about cost, and it is specific** — every letter is a model call and some storage, so this instance stays personal and there is no sign-up. Saying *no accounts* without saying *why* reads like a moat. The code is MIT and the clone command is directly above it.
+
+**`remark-scanned-page` is linked to the repository, not to npm** — because it is not published yet, and a link that 404s is worse than an honest sentence saying so.
+
+---
+
+## Controls
+
+**Every button in the project is the same pill** — because there were three visual languages for a button (the reading view's pill, raw Tailwind borders in the admin, and the state pages) and only one of them was designed.
+
+**A button that started something says so twice: a spinner and the word** — `Save` becomes `Saving…`, with `aria-busy` carrying it to assistive tech. A spinner alone says *something* is happening and the word says *what*, and only one of those survives being read out. Under `prefers-reduced-motion` the ring stops turning and stays: still an indicator, just not a moving one.
+
+**A disabled solid button drops back to the outline treatment rather than fading** — the brand colour at 35% reads as a broken button, not an unavailable one.
