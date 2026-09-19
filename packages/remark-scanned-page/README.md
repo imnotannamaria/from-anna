@@ -88,6 +88,8 @@ Which is also why both halves are always in the DOM. Let CSS decide which is on 
 
 `alt` describes the photograph and is required. It is not the transcription and not decorative.
 
+`sizes` says how wide the photograph will actually be laid out, and it is worth setting. It defaults to `(min-width: 900px) 50vw, 100vw`, which describes a two-column spread — the layout this was first written against. If yours is a single centred column, or a card, say so: too large and a phone downloads the archive copy anyway, which is the thing `srcset` was added to prevent.
+
 ## Choosing your colours
 
 The package ships no palette. Baking one in would drag another project's design into yours, so four variables are yours to define:
@@ -176,6 +178,17 @@ Passage structure ships in `styles/scanned-page.css`: a `translateY` reveal driv
 `:mark` nests inside `:::theme`. `:::theme` does not nest inside itself: a bracket inside a bracket cannot be drawn cleanly, so the inner one is unwrapped and its words are kept.
 
 A `:mark` with no label renders as the literal text `:mark` rather than an empty `<mark>`, which would sit in the DOM invisibly and hide the typo.
+
+## Source-aware editing
+
+`renderEditorMarkdown(markdown, options)` uses the same sanitized renderer and
+adds generated numeric source offsets to representable text spans and marks.
+Use it only in an authoring surface; `renderMarkdown` keeps publication output
+unchanged. Escaped/decoded text and code are deliberately not mapped.
+
+`changeHighlight(markdown, start, end, tag)` changes the tag at an exact
+directive range; pass `null` to remove the wrapper while keeping its content.
+Invalid or stale ranges return `null`. `wrapSelection` rejects nested marks.
 
 ## Licence
 

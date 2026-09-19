@@ -7,7 +7,7 @@ export {
   type RemarkMarkDirectiveOptions,
 } from './remark-mark-directive.js'
 
-export { renderMarkdown, schema } from './render.js'
+export { renderMarkdown, renderEditorMarkdown, schema } from './render.js'
 
 export {
   wrapPassage,
@@ -40,3 +40,5 @@ export {
   relativeLuminance,
   type Rgb,
 } from './contrast.js'
+
+export { changeHighlight } from './edit-highlight.js'

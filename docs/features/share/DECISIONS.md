@@ -20,13 +20,13 @@ An earlier version of this file claimed a word list alone gave billions of combi
 
 **Unpublish and expiry both ship in v1** — an `expiresAt` field, set in the admin and checked in the route. Unpublishing covers most cases on its own, but a link that stays live forever is the kind of thing that only becomes a problem later.
 
-**Desktop shows the photo and the transcription side by side; mobile toggles between them** — because neither fits at 375px without turning into a useless thumbnail.
+~~**Desktop shows the photo and the transcription side by side; mobile toggles between them.**~~ **Replaced: every width toggles**, on the sheet rather than in the bar, because the photograph is now the back of the sheet. The reason this was split by width is gone with the side-by-side layout. See `design/DECISIONS.md`, *The envelope*.
 
-**On mobile the photo opens first** — because the handwriting is the point of the project, and opening on the transcription makes it read like any other block of text. Accepted trade-off: if the photo isn't legible at 375px, this becomes the most expensive bug in the project.
+~~**On mobile the photo opens first.**~~ **Reversed after the first deploy, and again now**: the transcription is the face that shows, at every width. With no JavaScript there is no toggle, so the half that shows has to be the half you can read. The trade-off it named still stands and is still the most expensive assumption in the project: if the handwriting isn't legible at 375px, the back of the sheet is decoration.
 
-**On desktop the sheets stack down the scroll, each photograph pinned while its transcription passes it; on mobile they still turn one at a time** — because the sticky section already says where you are, so previous/next was two controls doing what scrolling does. Reversed the original decision below once there was a layout that replaced it rather than removing it.
+~~**On desktop the sheets stack down the scroll, each photograph pinned while its transcription passes it; on mobile they still turn one at a time.**~~ **Reversed.** It reversed the decision below, and the decision below has now come back. The sticky sections did say where you were, and they said it about a document.
 
-~~**Pages turn one at a time, with a page-turn animation**~~ — the reasoning still holds where it applies: a letter read as one undifferentiated column loses the sense of a notebook. Stacked sticky sections keep the sheets separate without asking anyone to find a button. See `design/DECISIONS.md`.
+**Pages turn one at a time, with a page-turn animation** — because a letter read as one undifferentiated column loses the sense of a notebook. Struck out when the sticky sections replaced it, and **restored by the envelope refactor**, which is the reading view now: a deck of sheets that turn, at every width. The original reasoning was right and outlived the layout that displaced it. See `design/DECISIONS.md`, *The envelope*.
 
 **`mdContent` stays on `Letter` and is split on `---` to paginate** — because the transcription has to turn with the photo, and moving the markdown onto `Page` would scatter the letter across rows and kill the idea of one `.md` file that stands alone. It's the same separator the transcription already produces.
 

@@ -2,7 +2,7 @@
 
 Handwritten letters, published on the web.
 
-You write a letter by hand in a notebook, photograph the pages, and the site turns them into a page with the photo on one side and a real, readable transcription on the other. Passages can be highlighted in colour and grouped under themes, and each letter gets its own link.
+You write a letter by hand in a notebook, photograph the pages, and the site turns them into a letter you can open, with a readable transcription and the original photograph on each sheet. Passages can be highlighted in colour and grouped under themes, and each letter gets its own link.
 
 The photo is the visual layer. The transcription is the content, which means the letter still works for a screen reader, for search, and for anyone whose images didn't load.
 
@@ -53,11 +53,33 @@ Its source is in [packages/remark-scanned-page/](packages/remark-scanned-page/),
 
 ## Reading a letter
 
-On a wide screen the photograph of each sheet pins itself while its transcription scrolls past, and the sheets stack down the page in the order they were written. The bar at the top says who it is for: *from anna to you*, or to whoever I wrote it to.
+A letter arrives in an addressed envelope. Open it to tear the seal and unfold
+the paper; use the arrows or keyboard arrow keys to turn the sheets. **View
+original photo** shows the handwriting, and the close control returns the
+letter to its envelope. The same opening appears on the home page.
 
-On a phone there is one column, so nothing pins and nothing zooms: the photograph opens first and one tap gets you the transcription. Both halves are in the HTML either way — which half is on screen is a CSS decision, never something that depends on JavaScript having run.
+The complete transcription is in the server HTML. Without JavaScript every
+sheet and photograph is visible in order. Reduced motion skips the opening and
+page-turn animation. Highlight chips dim fills, never the words.
 
-Everything the reading view adds is an enhancement over a page that already works: the transcription is rendered on the server, and the highlights are painted with no script.
+### Paper sounds
+
+Opening and turning paper plays short, quiet sounds. The **Sound on/off**
+control mutes them and remembers the reader's choice. Nothing plays before an
+interaction.
+The two MP3 files in `public/sounds/` are static assets; readers never call
+ElevenLabs, and the app does not need its key at runtime.
+
+To regenerate them, set `ELEVENLABS_API_KEY` in `.env.local` and run:
+
+```bash
+npm run generate:sounds                 # skips existing files
+npm run generate:sounds -- tear --force # regenerates only the tear
+```
+
+Prompts live in `scripts/generate-elevenlabs-sounds.mjs`. Generation uses the
+[ElevenLabs Sound Effects API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert)
+and consumes credits only when explicitly run.
 
 ## Stack
 
@@ -163,4 +185,11 @@ Conventions for writing code here are in [CLAUDE.md](CLAUDE.md).
 
 ## Licence
 
-MIT.
+MIT, for the code and the docs.
+
+The two sounds in `public/sounds/` are the exception. They were generated with
+[elevenlabs.io](https://elevenlabs.io) on its free plan, which allows
+non-commercial use with attribution, and this is that attribution. MIT would
+let anyone use them commercially, which is more than the free plan grants, so
+they are not part of it. For anything commercial, generate your own with
+`npm run generate:sounds`.

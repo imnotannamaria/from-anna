@@ -6,8 +6,6 @@ type Props = {
   tags: readonly string[]
   filter: string | null
   onFilter: (tag: string | null) => void
-  showing: 'photo' | 'text'
-  onShowing: (showing: 'photo' | 'text') => void
   enhanced: boolean
   progress: number
 }
@@ -20,17 +18,18 @@ type Props = {
  * goes there.
  *
  * At 390px the chips go — filtering by colour is a way of re-reading a letter
- * rather than a way of reading it. The address and the photo/transcription
- * toggle stay, because the toggle is the only control on a phone that changes
- * what you can see.
+ * rather than a way of reading it. The address stays, and it is the only thing
+ * that is always here.
+ *
+ * The photo/transcription toggle used to live here, below 900px only, because
+ * a wide screen showed both halves at once. The sheet has two faces now and
+ * the control that turns it belongs on the sheet, at every width.
  */
 export function ReaderBar({
   recipient,
   tags,
   filter,
   onFilter,
-  showing,
-  onShowing,
   enhanced,
   progress,
 }: Props) {
@@ -62,17 +61,6 @@ export function ReaderBar({
               </button>
             ))}
           </div>
-        )}
-
-        {enhanced && (
-          <button
-            type="button"
-            className="pill reader-toggle"
-            aria-pressed={showing === 'text'}
-            onClick={() => onShowing(showing === 'text' ? 'photo' : 'text')}
-          >
-            {showing === 'text' ? 'The handwriting' : 'The transcription'}
-          </button>
         )}
       </div>
     </header>

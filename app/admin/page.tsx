@@ -53,8 +53,14 @@ export default async function AdminPage() {
   return (
     <main className="admin-shell">
       <header className="admin-masthead">
-        <p className="meta">Desk</p>
-        <h1 className="display admin-title">Letters</h1>
+        <p className="desk-wordmark">
+          from anna <span>/ the writing desk</span>
+        </p>
+        <h1 className="display admin-title">Your letters</h1>
+        <p className="editor-hint">
+          A place for the words you want to send. Pick up a draft, or start with
+          a fresh sheet.
+        </p>
         <span className="rule" aria-hidden="true" />
       </header>
 
@@ -62,8 +68,8 @@ export default async function AdminPage() {
 
       {letters.length === 0 ? (
         <p className="admin-empty">
-          Nothing written yet. Start one, photograph a page, and it will
-          appear here.
+          Nothing written yet. Start one, photograph a page, and it will appear
+          here.
         </p>
       ) : (
         <ul className="admin-list">
@@ -79,19 +85,28 @@ export default async function AdminPage() {
                 style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
               >
                 <div className="admin-card-head">
-                  <Link href={`/admin/letters/${letter.id}`} className="admin-card-title">
+                  <Link
+                    href={`/admin/letters/${letter.id}`}
+                    className="admin-card-title"
+                  >
                     {letter.title}
                   </Link>
                   <span className="status" data-live={live ? 'true' : 'false'}>
                     <span className="status-dot" aria-hidden="true" />
-                    {live ? 'live' : letter.status}
+                    {live
+                      ? 'Published'
+                      : letter.status === 'published'
+                        ? 'Expired'
+                        : 'Draft'}
                   </span>
                 </div>
 
                 <p className="admin-card-meta">
                   {letter.recipient && (
                     <>
-                      <span className="admin-recipient">{letter.recipient}</span>
+                      <span className="admin-recipient">
+                        {letter.recipient}
+                      </span>
                       <span aria-hidden="true"> · </span>
                     </>
                   )}
@@ -111,48 +126,59 @@ export default async function AdminPage() {
                   Opens without ends means the letter was abandoned partway,
                   which needs a different fix from never being opened at all.
                 */}
-                <dl className="figures">
-                  <div>
-                    <dt>Opened</dt>
-                    <dd>{stats.opens}</dd>
-                  </div>
-                  <div>
-                    <dt>Read to the end</dt>
-                    <dd data-good={stats.reachedEnd > 0 ? 'true' : 'false'}>
-                      {stats.reachedEnd}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Left partway</dt>
-                    <dd>{unread}</dd>
-                  </div>
-                </dl>
+                <div className="editor-bar">
+                  <Link className="pill" href={`/admin/letters/${letter.id}`}>
+                    Edit letter →
+                  </Link>
+                </div>
+                <details className="letter-insights">
+                  <summary>
+                    Reading activity · {stats.opens}{' '}
+                    {stats.opens === 1 ? 'open' : 'opens'}
+                  </summary>
+                  <dl className="figures">
+                    <div>
+                      <dt>Opened</dt>
+                      <dd>{stats.opens}</dd>
+                    </div>
+                    <div>
+                      <dt>Read to the end</dt>
+                      <dd data-good={stats.reachedEnd > 0 ? 'true' : 'false'}>
+                        {stats.reachedEnd}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Left partway</dt>
+                      <dd>{unread}</dd>
+                    </div>
+                  </dl>
 
-                {stats.bySource.length > 0 && (
-                  <div className="source-table-wrap">
-                    <table className="source-table">
-                      <caption className="sr-only">
-                        Opens by source for {letter.title}
-                      </caption>
-                      <thead>
-                        <tr>
-                          <th scope="col">Source</th>
-                          <th scope="col">Opened</th>
-                          <th scope="col">Read</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stats.bySource.map((row) => (
-                          <tr key={row.source ?? 'direct'}>
-                            <td>{row.source ?? 'no ?from='}</td>
-                            <td>{row.opens}</td>
-                            <td>{row.reachedEnd}</td>
+                  {stats.bySource.length > 0 && (
+                    <div className="source-table-wrap">
+                      <table className="source-table">
+                        <caption className="sr-only">
+                          Opens by source for {letter.title}
+                        </caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Source</th>
+                            <th scope="col">Opened</th>
+                            <th scope="col">Read</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                        </thead>
+                        <tbody>
+                          {stats.bySource.map((row) => (
+                            <tr key={row.source ?? 'direct'}>
+                              <td>{row.source ?? 'no ?from='}</td>
+                              <td>{row.opens}</td>
+                              <td>{row.reachedEnd}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </details>
               </li>
             )
           })}

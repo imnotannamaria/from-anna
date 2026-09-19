@@ -125,20 +125,13 @@
   /* ============================================================
      TYPOGRAPHY
      ============================================================ */
+  /* Two families and no more. Newsreader carries everything that is read —
+     the letter, the headings, the address on the envelope in its italic —
+     and JetBrains Mono carries every label and control. A third face was
+     tried twice, a hand and a sans, and each one only added a voice. */
   --font-serif: var(--font-newsreader), "Times New Roman", serif;
-  /*
-     The display face, separate from the reading face on purpose.
-
-     Fraunces is an old-style serif with two axes the others do not have —
-     SOFT rounds the terminals and WONK swaps in the irregular, splayed
-     alternates — which is the warm, slightly hand-cut feel this project is
-     after in a headline. It is the wrong thing for a transcription: those
-     same irregularities are friction across four hundred words, so the
-     letter itself stays in Newsreader, which was drawn for exactly that job.
-  */
-  --font-display: var(--font-fraunces), var(--font-newsreader), Georgia, serif;
+  --font-display: var(--font-serif);
   --font-mono: var(--font-jetbrains-mono), "SF Mono", Menlo, monospace;
-  --font-sans: var(--font-inter), -apple-system, system-ui, sans-serif;
 }
 
 /* ============================================================
@@ -249,13 +242,13 @@
 }
 
 .t-body-lg {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-size: 16px;
   line-height: 1.6;
 }
 
 .t-body-md {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -603,15 +596,9 @@ body::before {
 
 .display {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-optical-sizing: auto;
-  /* The two axes that make it Fraunces rather than another old-style serif.
-     Ignored entirely by the fallback, which is the point of a fallback. */
-  font-variation-settings:
-    "SOFT" 40,
-    "WONK" 1;
-  letter-spacing: -0.022em;
-  line-height: 1.04;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.18;
 }
 
 .meta {
@@ -745,9 +732,9 @@ body::before {
 }
 
 /*
-   A drawn bracket rather than a border: two short arms and a spine, which is
-   what the reference does and what a border cannot do. It grows from the
-   middle out when the block reveals.
+   A drawn bracket rather than a border: two short arms and a spine, the way
+   a passage is bracketed by hand in a margin, which a border cannot do. It
+   grows from the middle out when the block reveals.
 */
 .letter-prose aside[data-theme-label]::after {
   content: "";
@@ -828,18 +815,25 @@ body::before {
    THE READING VIEW
    ============================================================
 
-   A letter is read straight through, so the page scrolls straight through.
-   Each photographed sheet pins itself while its transcription moves past it,
-   which is closer to sitting with a letter than paging through a document —
-   and on a wide screen it is what replaced the previous/next buttons, because
-   the sticky section already says where you are. On a phone there is one
-   column, nothing pins, and the two halves toggle.
+   A letter arrives closed. The page opens on an addressed envelope and the
+   letter is underneath it; past that it is a deck, one sheet at a time, and
+   each sheet has the transcription on the front and the photograph of that
+   same sheet on the back.
 
-   `position: sticky` dies silently if any ancestor has `overflow` other than
-   `visible`. There is no error and no warning: the photograph simply scrolls
-   away. That is why the hero clips with `overflow-x: clip` — which does not
-   create a scroll container — and why `overflow-x: hidden` is nowhere near
-   `html` or `body`.
+   It replaced a spread: every sheet stacked down one scroll, each photograph
+   `position: sticky` beside its transcription. That showed a document well,
+   and a letter is not a document. See `docs/design/DECISIONS.md`.
+
+   Two things every rule in here obeys. **Anything hidden is `display: none`**,
+   never a transform, an opacity or a clip — the page has two
+   `IntersectionObserver`s and both believe what layout tells them, so a
+   hidden-but-laid-out sheet reports itself as read. And **anything that hides
+   the letter is behind `data-enhanced`**, which is set on mount and never on
+   the server, so no script means no cover.
+
+   `overflow` other than `visible` on an ancestor creates a scroll container.
+   `clip` is used where the envelope has to be contained, never `hidden`, and
+   `overflow-x: hidden` is nowhere near `html` or `body`.
    ============================================================ */
 
 .reader {
@@ -905,16 +899,17 @@ body::before {
   max-width: min(34rem, 44vw);
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.15rem;
-  letter-spacing: -0.02em;
+  font-size: 1.25rem;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--fg-secondary);
 }
 
+/* Colour alone. See `.coda-line em`. */
 .reader-name em {
-  font-style: italic;
+  font-style: normal;
   color: var(--fg-brand);
 }
 
@@ -1027,310 +1022,423 @@ body::before {
   color: var(--fg-secondary);
 }
 
-/* ---- the opening -----------------------------------------------------
-
-   The photograph is the argument, so it is the first thing on screen at a
-   size worth looking at: tilted the way a sheet sits when it is put down on
-   a desk rather than filed, and whole, because the bottom of a letter is
-   where it is signed.
-   -------------------------------------------------------------------- */
-
-.hero {
-  /* `HERO_DRIFT` in `letter-view.tsx`. */
-  --hero-drift: 48px;
+/* ---- an envelope made of separate pieces of paper -------------------- */
+.envelope-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(2rem, 6vw, 5rem);
-  max-width: var(--reading-width);
-  margin: 0 auto;
-  /* The bottom padding has room for the parallax drift (`--hero-drift`,
-     capped in `letter-view.tsx`) on top of the usual gap, so the photograph
-     can move without reaching the letter below. */
-  padding: calc(var(--bar-h) + clamp(2rem, 6vh, 4rem)) clamp(1.25rem, 5vw, 4rem)
-    calc(clamp(3rem, 8vh, 5rem) + var(--hero-drift));
-  /*
-     Both axes. The photograph drifts down as the page scrolls, and with the
-     two sheets fanned behind it, it used to paint over the first line of the
-     transcription: the words that are the point of the page, under a
-     decoration. Clipped here, the opening can never reach the letter.
-
-     `clip`, not `hidden`: hidden would make this a scroll container, and a
-     scroll container anywhere above a sticky element kills the sticking.
-  */
+  place-items: center;
+  align-content: center;
+  gap: 2rem;
+  min-height: 100svh;
+  padding: calc(var(--bar-h) + 3rem) 1.5rem 5rem;
   overflow: clip;
-  scroll-margin-top: var(--bar-h);
 }
-
-.hero-copy {
-  max-width: 34rem;
+.envelope-eyebrow {
+  margin: 0 0 1.5rem;
+  text-align: center;
 }
-
-.hero-name,
-.hero-title,
-.hero-rule,
-.hero-lede,
-.hero-meta,
-.hero-cue {
-  opacity: 0;
-  animation: rise 760ms var(--ease-out-quint) forwards;
-  animation-delay: inherit;
+.envelope-invitation {
+  display: grid;
+  justify-items: center;
+  gap: 3rem;
+  width: min(100%, 29rem);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.hero-title {
-  margin: 0.7rem 0 0;
-  font-size: clamp(2.6rem, 7vw, 5.2rem);
-  line-height: 0.94;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+.envelope-invitation:focus-visible {
+  outline: 2px solid var(--fg-brand);
+  outline-offset: 12px;
+  border-radius: 4px;
 }
-
-.hero-title em {
-  font-style: italic;
-  color: var(--fg-brand);
-  /*
-     Underlined the way a pen underlines: after the words, not with them.
-     `text-decoration` rather than a positioned pseudo-element, because the
-     phrase wraps at narrow widths and only a decoration wraps with it.
-  */
-  text-decoration-line: underline;
-  text-decoration-thickness: 0.04em;
-  text-underline-offset: 0.1em;
-  text-decoration-color: transparent;
-  animation: ink 800ms ease 1000ms both;
-}
-
-@keyframes ink {
-  to {
-    text-decoration-color: color-mix(in srgb, var(--fg-brand) 40%, transparent);
-  }
-}
-
-.hero-rule {
-  display: block;
-  margin: 2rem 0;
-  animation:
-    rise 760ms var(--ease-out-quint) forwards,
-    draw 900ms var(--ease-out-quint) forwards;
-  animation-delay: inherit;
-}
-
-.hero-lede {
-  margin: 0 0 1.3rem;
-  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
-  line-height: 1.68;
-  max-width: 40ch;
-  text-wrap: pretty;
-}
-
-.hero-lede mark[data-c] {
-  background-image: linear-gradient(var(--hl), var(--hl));
-  background-repeat: no-repeat;
-  background-size: 0% 100%;
-  animation: sweep 700ms var(--ease-out-quint) 900ms forwards;
-}
-
-.hero-cue {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: clamp(2rem, 6vh, 3.5rem);
-}
-
-.hero-cue-arrow {
-  display: inline-block;
-  font-size: 14px;
-  color: var(--fg-brand);
-  animation: nudge 2.4s ease-in-out infinite;
-}
-
-@keyframes nudge {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(5px);
-    opacity: 1;
-  }
-}
-
-.hero-photo {
-  position: relative;
-  justify-self: center;
-  /* The tilt is on the wrapper, so the sheets behind it turn with it. */
-  rotate: -1.6deg;
+.envelope {
   width: 100%;
-  max-width: 32rem;
-  /*
-     Parallax. The photograph drifts slower than the words beside it, which is
-     the difference between a picture on a page and an object on a desk. A
-     transform and nothing else, so it never triggers layout.
-  */
-  transform: translateY(var(--hero-shift, 0px));
-  will-change: transform;
+  padding: 1.2rem 0.75rem;
+  perspective: 1000px;
 }
-
-/*
-   A letter is two or three sheets, and this is the only place on the site
-   that can say so without writing it down. Two more sheets, drawn rather
-   than loaded: they are the same paper as everything else and they cost
-   nothing.
-
-   They fan out to the *left*, which is also where the caption hangs.
-*/
-.hero-sheet {
+.envelope-body {
   position: relative;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
+  width: 100%;
+  aspect-ratio: 1.62;
+  container-type: inline-size;
+  transform: rotate(-5deg);
+  transition: transform 450ms var(--ease-out-quint);
+  isolation: isolate;
 }
-
-.hero-sheet::before,
-.hero-sheet::after {
-  content: "";
+@media (hover: hover) {
+  .envelope-invitation:hover .envelope-body {
+    transform: translateY(-7px) rotate(-2deg);
+  }
+  .envelope-invitation:hover .envelope-tear {
+    transform: translate(3px, -2px) rotate(1deg);
+  }
+}
+.envelope-pocket {
   position: absolute;
-  z-index: 0;
-  border-radius: 3px;
+  inset: 1% 0 0;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--border-strong) 72%, var(--bg-surface));
+  box-shadow:
+    0 2px 3px color-mix(in srgb, var(--fg-primary) 9%, transparent),
+    0 20px 30px -15px color-mix(in srgb, var(--fg-primary) 32%, transparent),
+    0 45px 70px -30px color-mix(in srgb, var(--fg-primary) 22%, transparent);
+}
+.envelope-front {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.envelope-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.envelope-paper-light {
+  stop-color: var(--bg-surface);
+}
+.envelope-paper-dark {
+  stop-color: color-mix(in srgb, var(--bg-surface) 84%, var(--border-strong));
+}
+.envelope-face {
+  fill: var(--bg-surface);
+}
+.envelope-seam {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 0.65;
+}
+.envelope-stamp {
+  fill: color-mix(in srgb, var(--hl-note) 65%, var(--bg-surface));
+}
+.envelope-stamp-inner {
+  fill: none;
+  stroke: var(--fg-secondary);
+  stroke-width: 0.5;
+  opacity: 0.6;
+}
+.envelope-flower {
+  fill: none;
+  stroke: var(--fg-brand);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+.envelope-stamp-type {
+  font: 5px var(--font-serif);
+  fill: var(--fg-secondary);
+}
+.envelope-postmark {
+  fill: none;
+  stroke: var(--fg-secondary);
+  stroke-width: 0.65;
+  opacity: 0.56;
+}
+.envelope-postmark text {
+  fill: var(--fg-secondary);
+  stroke: none;
+  font: 4px var(--font-mono);
+  letter-spacing: 0.3px;
+}
+.envelope-postmark text:last-child {
+  font: italic 7px var(--font-serif);
+}
+.envelope-address {
+  position: absolute;
+  left: 10%;
+  right: 34%;
+  bottom: 26%;
+  display: grid;
+  gap: 0.45em;
+}
+.envelope-to {
+  margin: 0;
+  font: italic 400 9cqi/1.05 var(--font-serif);
+  overflow-wrap: anywhere;
+  color: var(--fg-primary);
+}
+.envelope-address[data-name-length="medium"] .envelope-to {
+  font-size: 6.4cqi;
+}
+.envelope-address[data-name-length="long"] .envelope-to {
+  font-size: 4.8cqi;
+}
+.envelope-date {
+  margin: 0;
+  font: italic 400 4.4cqi/1.2 var(--font-serif);
+  color: var(--fg-secondary);
+}
+.envelope-sender {
+  position: absolute;
+  bottom: 6%;
+  right: 8%;
+  font: italic 400 4.2cqi/1 var(--font-serif);
+  color: var(--fg-secondary);
+  transform: rotate(-3deg);
+}
+.envelope-tear {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  z-index: 3;
+  overflow: visible;
+  transform-origin: 100% 50%;
+  transition: transform 300ms ease;
+  filter: drop-shadow(
+    0 1px 0.4px color-mix(in srgb, var(--fg-primary) 10%, transparent)
+  );
+}
+.envelope-perforation {
+  stroke: var(--border-strong);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 3;
+}
+.envelope-fold {
+  position: absolute;
+  z-index: 1;
+  inset: 10% 6% 7%;
+  border: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   box-shadow: var(--shadow-page);
-  opacity: 0;
-  /* Opacity only. `rise` would replace the transform that fans them out. */
-  animation: fade-in 900ms var(--ease-out-quint) both;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+}
+.envelope-fold span {
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    175deg,
+    var(--bg-surface-elevated),
+    var(--bg-surface)
+  );
+}
+.envelope-open.pill {
+  text-transform: none;
+  letter-spacing: 0;
+  border: 0;
+  padding: 0.5rem 0.8rem;
+  background: transparent;
+  font: italic 400 1.2rem/1.3 var(--font-serif);
+  gap: 0.75rem;
+  box-shadow: none;
+}
+.envelope-under {
+  margin: 0;
+  text-align: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+.envelope-invitation[aria-busy="true"] {
+  pointer-events: none;
 }
 
-.hero-sheet::before {
-  inset: -1.2% -1.2%;
-  transform: rotate(-5.4deg) translate(-2.5%, 1.4%);
-  animation-delay: 120ms;
+/* Tear, lift, release. The real paper enters while the envelope is leaving. */
+.envelope-stage[data-opening="true"] .envelope-body {
+  animation: envelope-steady 1200ms var(--ease-out-quint) both;
 }
-
-.hero-sheet::after {
-  inset: -2.6% -2.6%;
-  transform: rotate(-9deg) translate(-5.5%, 3%);
-  animation-delay: 40ms;
+.envelope-stage[data-opening="true"] .envelope-tear {
+  animation: paper-tear 420ms cubic-bezier(0.5, 0, 0.8, 0.4) both;
 }
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
+.envelope-stage[data-opening="true"] .envelope-fold {
+  animation: paper-extract 1200ms var(--ease-in-out-cubic) both;
+}
+.envelope-stage[data-opening="true"] .envelope-front,
+.envelope-stage[data-opening="true"] .envelope-pocket {
+  animation: envelope-release 1200ms var(--ease-in-out-cubic) both;
+}
+.envelope-stage[data-opening="true"] .envelope-under,
+.envelope-stage[data-opening="true"] .envelope-eyebrow {
+  visibility: hidden;
+}
+@keyframes paper-tear {
+  0% {
+    transform: none;
   }
-  to {
-    opacity: var(--fade-to, 1);
+  25% {
+    transform: translate(4%, -3%) rotate(3deg);
   }
-}
-
-.hero-sheet::after {
-  --fade-to: 0.62;
-}
-
-.hero-sheet::before {
-  --fade-to: 0.85;
-}
-
-/*
-   The photographed sheet is laid on top of them, wiped in from the bottom
-   edge the way a sheet slides onto a desk. The wipe is on the photograph
-   alone: `clip-path` on the wrapper would cut the two behind it back to the
-   photograph's own box, which is exactly the shape they exist to escape.
-*/
-.hero-photo .scanned-photo {
-  position: relative;
-  z-index: 1;
-  /*
-     Scaled, never cropped. `object-fit: cover` under a max-height cut the
-     bottom of the sheet off, and the bottom of a letter is where it is
-     signed. Width follows the height here, so the box is the photograph.
-  */
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  max-height: 72vh;
-  border-radius: 3px;
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-lift);
-  animation: lay-down 1000ms var(--ease-out-quint) 320ms both;
-}
-
-@keyframes lay-down {
-  from {
-    opacity: 0;
-    clip-path: inset(0 0 100% 0);
-  }
-  to {
+  70% {
+    transform: translate(32%, -28%) rotate(12deg);
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    transform: translate(100%, -60%) rotate(24deg);
+    opacity: 0;
   }
 }
-
-/*
-   Sideways type, and decorative. A screen reader given this would spell it
-   out as ordinary words in the middle of the opening, which is noise — the
-   sheet number is said properly on the section below.
-*/
-.hero-caption {
-  position: absolute;
-  z-index: 1;
-  /* On the blank sheets fanned out to the left, not on the photograph,
-     where a muted grey against a dark desk is unreadable. */
-  left: -2rem;
-  bottom: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+@keyframes envelope-steady {
+  0% {
+    transform: rotate(-5deg);
+  }
+  35%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes paper-extract {
+  0%,
+  22% {
+    transform: translateY(0);
+  }
+  51% {
+    transform: translateY(-72%) rotate(-2deg);
+    opacity: 1;
+  }
+  52%,
+  100% {
+    transform: translateY(-72%) rotate(-2deg);
+    opacity: 0;
+  }
+}
+@keyframes envelope-release {
+  0%,
+  46% {
+    transform: none;
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(70%) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110%) rotate(9deg);
+    opacity: 0;
+  }
+}
+@keyframes paper-close {
+  to {
+    transform: perspective(1000px) translateY(80px) rotateX(35deg) scale(0.65);
+  }
+}
+@keyframes paper-return {
+  from {
+    transform: translateY(18px) rotate(-2deg);
+  }
+  to {
+    transform: rotate(-5deg);
+  }
+}
+[data-phase="closing"] .paper-content {
+  animation: paper-close 380ms var(--ease-in-out-cubic) both;
+}
+[data-phase="sealed"] .envelope-body {
+  animation: paper-return 450ms var(--ease-out-quint) backwards;
 }
 
-/* ---- sheet navigation ------------------------------------------------
+/* Concealment is an enhancement; failed/absent scripts leave every word visible. */
+.reader[data-enhanced="true"][data-open="false"] .letter-deck,
+.reader[data-enhanced="true"][data-open="false"] .coda {
+  display: none;
+}
+.reader[data-enhanced="true"][data-open="true"] .envelope-stage {
+  display: none;
+}
+.reader[data-enhanced="true"][data-open="true"][data-phase="unfolding"]
+  .envelope-stage {
+  display: grid;
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  pointer-events: none;
+}
+.reader[data-phase="unfolding"] .envelope-open {
+  visibility: hidden;
+}
+.reader[data-phase="closing"] .coda {
+  display: none;
+}
 
-   Only where the sticky sections are not there to replace it.
+/* ---- the deck --------------------------------------------------------
+
+   One sheet at a time, the rest of them underneath it.
+
+   **The inactive sheets are `display: none`, and that is not a detail.** A
+   sheet moved off with a transform, faded to zero, or clipped is still laid
+   out and still intersecting, which means the `reachedEnd` observer fires the
+   moment the letter opens and every reader is recorded as having read to the
+   end. That measurement is why the `View` table exists, and a quietly wrong
+   one is worse than none at all. The same trap empties the passage reveal:
+   a hidden sheet measures as zeros, so every passage reads as already seen.
+
+   This is not theory. It was written the wrong way first, and the row it
+   wrote said a reader who never left the first sheet had read to the end.
    -------------------------------------------------------------------- */
 
-.sheet-nav {
+.reader[data-enhanced="true"][data-open="true"] .sheet[data-active="false"] {
   display: none;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  max-width: var(--reading-width);
-  margin: 0 auto;
-  padding: 0 clamp(1.25rem, 5vw, 4rem) 1.5rem;
 }
 
-/* ---- the spread ------------------------------------------------------ */
+/* The end of the letter arrives when the last sheet does. */
+.reader[data-enhanced="true"][data-at-end="false"] .coda {
+  display: none;
+}
+
+.deck-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0 clamp(1.25rem, 5vw, 4rem) clamp(3rem, 9vh, 5rem);
+}
+
+.deck-count {
+  margin: 0;
+  min-width: 3.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- the sheet, and its two faces ------------------------------------
+
+   The front is the transcription and the back is the photograph of that same
+   sheet. One object: the front is what you can read, the back is what was
+   written.
+
+   It replaced a two-column spread with the photograph `position: sticky`
+   beside the scrolling text. That layout was also what forced the old split
+   where a wide screen showed both halves and a phone toggled between them,
+   which meant the same letter was read two different ways depending on the
+   width of the window.
+
+   **The front is what the server renders and what shows by default**, at
+   every width. An image of text is invisible to a screen reader, so the
+   transcription is the content, and with no script there is no control to
+   turn the sheet over with — so both faces simply stack, front first.
+   -------------------------------------------------------------------- */
 
 .sheet {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  /* `start`, so the sticky column is not stretched to the row height —
-     a stretched grid item has nowhere to stick. */
-  align-items: start;
-  gap: clamp(2rem, 6vw, 5rem);
-  max-width: var(--reading-width);
+  max-width: 44rem;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 5vw, 4rem) clamp(4rem, 12vh, 9rem);
-  border-top: 1px solid var(--border-subtle);
+  /* The bar is fixed, so the sheet clears it itself. With the envelope gone
+     the sheet is the first thing on the page, and the head ran under the bar
+     — `scroll-margin-top` only covers being jumped to, not being landed on. */
+  padding: calc(var(--bar-h) + clamp(1.25rem, 4vh, 2.25rem))
+    clamp(1.25rem, 5vw, 4rem) clamp(2rem, 6vh, 3.5rem);
   scroll-margin-top: var(--bar-h);
 }
 
-.sheet-photo {
-  position: sticky;
-  top: calc(var(--bar-h) + 1.25rem);
-  padding-top: clamp(2rem, 7vh, 4rem);
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: clamp(1rem, 3vh, 1.6rem);
+}
+
+.sheet-head .meta {
+  margin: 0;
 }
 
 /*
-   The frame is the sheet's own aspect ratio, so nothing is cropped.
-   `max-width` rather than `max-height` keeps a tall portrait sheet inside the
-   viewport by narrowing it instead of letting it overflow.
+   The frame is the sheet's own aspect ratio, so nothing is cropped, and the
+   box is reserved before the bytes arrive so turning the sheet over shifts
+   no layout.
 */
 .sheet-frame {
   position: relative;
   width: 100%;
   aspect-ratio: var(--sheet-ratio, 0.75);
-  max-width: calc(68vh * var(--sheet-ratio, 0.75));
+  max-width: calc(72vh * var(--sheet-ratio, 0.75));
   margin-inline: auto;
   overflow: hidden;
   border-radius: 3px;
@@ -1342,32 +1450,42 @@ body::before {
   width: 100%;
   height: 100%;
   /* `contain`: if the stored ratio and the real one ever disagree, the
-     photograph shrinks inside the frame rather than losing an edge. */
+     photograph shrinks inside the frame rather than losing an edge. The
+     bottom of a letter is where it is signed. */
   object-fit: contain;
   object-position: center;
-}
-
-.sheet-frame-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  max-width: calc(68vh * var(--sheet-ratio, 0.75));
-  margin: 0.9rem auto 0;
-}
-
-.sheet-text {
-  padding-top: clamp(2rem, 7vh, 4rem);
-  max-width: 38rem;
 }
 
 /*
    Running text. Passages used to be spaced like separate items, which only
    made sense while each one carried a number in the margin.
 */
-.sheet-text .letter-prose > * + *,
-.sheet-text .letter-prose > div > * + * {
+.sheet-face--front .letter-prose > * + *,
+.sheet-face--front .letter-prose > div > * + * {
   margin-top: 1.1em;
+}
+
+/*
+   Which face is up. `display: none`, like everything else that hides
+   something here — a face that is merely moved or faded is still laid out,
+   and this page has two observers that believe what layout tells them.
+
+   Both rules are behind `data-enhanced`, so with no script neither matches
+   and the two faces stack in the document order they are written in:
+   transcription, then photograph.
+*/
+.reader[data-enhanced="true"][data-face="front"] .sheet-face--back,
+.reader[data-enhanced="true"][data-face="back"] .sheet-face--front {
+  display: none;
+}
+
+/* With no script the photograph follows the words rather than replacing them. */
+.sheet-face--back {
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.reader[data-enhanced="true"] .sheet-face--back {
+  margin-top: 0;
 }
 
 /* ---- the coda --------------------------------------------------------
@@ -1402,8 +1520,17 @@ body::before {
   text-wrap: balance;
 }
 
+/*
+   Colour alone, and deliberately. Several of these lines are already set in
+   Newsreader's italic, and an `em` inside italic has nowhere to go but back
+   to roman, which reads as a mistake. Colour works the same either way.
+
+   Colour is not carrying meaning here, only emphasis a sighted reader gets
+   as a bonus: the sentence reads the same without it, which is the test
+   WCAG 1.4.1 actually asks.
+*/
 .coda-line em {
-  font-style: italic;
+  font-style: normal;
   color: var(--fg-brand);
 }
 
@@ -1451,7 +1578,17 @@ body::before {
 
 .pill:disabled {
   opacity: 0.35;
-  cursor: default;
+  cursor: not-allowed;
+}
+
+/* The reset above strips the outline from every button, on the promise that
+   each one draws its own. Nothing did, so a keyboard reader turning sheets
+   could not see where they were. A ring, not an outline, so it follows the
+   radius. */
+.pill:focus-visible,
+.chip:focus-visible {
+  border-color: var(--fg-brand);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 /*
@@ -1550,6 +1687,40 @@ body::before {
   color: var(--fg-muted);
 }
 
+/*
+   The one button in the project that is not a word.
+
+   `.pill` was built around a label, and the deck's controls are arrows. Rather
+   than a second visual language for a button — which is the thing the pill
+   exists to have prevented — this is the same ring, the same border, the same
+   focus and the same disabled treatment, made round.
+
+   44px square, which is the smallest a target should be on a touch screen and
+   larger than the label pills need to be. An arrow has no text to widen it.
+
+   It is safe to have no text only because the markup gives it an `aria-label`
+   and the turn is announced. A control with no words is exactly the one that
+   cannot go without an accessible name.
+*/
+.pill--icon {
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  font-size: 15px;
+  /* The arrow is a glyph, not a label: none of the tracking or the uppercasing
+     the pill applies to words should reach it. */
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* A round button has room for one mark. While it is busy the spinner is that
+   mark and the glyph steps aside; left in, the two sat side by side and broke
+   the circle. The accessible name still changes in the markup. */
+.pill--icon[data-busy="true"] > [aria-hidden="true"] {
+  display: none;
+}
+
 .pill--solid {
   color: var(--bg-surface);
   background: var(--fg-brand);
@@ -1567,30 +1738,22 @@ body::before {
   opacity: 1;
 }
 
-.pill--solid:hover {
+.pill--solid:hover:not(:disabled) {
   color: var(--bg-surface);
   background: var(--fg-brand-hover);
   border-color: var(--fg-brand-hover);
   transform: translateY(-1px);
 }
 
-.reader-toggle {
-  display: none;
-}
-
 /* ---- narrow ----------------------------------------------------------
 
-   Not a port. Below the breakpoint the sticky spread and the parallax are
-   switched **off**, not shrunk: they both need two columns to mean anything
-   and a phone has one. What is left is the transcription first, with the
-   photograph one tap away (the opening has just shown it at full size),
-   plus sheet navigation, because there are no sticky sections here to
-   replace it.
+   Far less of a port than it used to be. The deck and the two-faced sheet are
+   the same at every width, so there is almost nothing left to switch off:
+   one sheet, one face, one column, everywhere.
 
    The bar loses the legend: filtering by colour is a way of re-reading a
-   letter rather than a way of reading it. What stays is the address and the
-   toggle, which is the only control on a phone that changes what you can
-   see.
+   letter rather than a way of reading it. What stays is the address, which is
+   the whole centre of the bar and the one thing always in it.
    -------------------------------------------------------------------- */
 
 @media (max-width: 899px) {
@@ -1601,119 +1764,24 @@ body::before {
   .reader-name {
     grid-column: 1;
     justify-self: start;
-    max-width: none;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .reader-controls {
     grid-column: 2;
   }
 
-  .legend,
-  .hero-caption {
+  .legend {
     display: none;
-  }
-
-  .reader-toggle {
-    display: inline-flex;
-  }
-
-  .sheet-nav {
-    display: flex;
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-    padding-top: clamp(5rem, 12vh, 7rem);
-    gap: 2.5rem;
-  }
-
-  /*
-     No drift in one column. The photograph sits directly above the sheets
-     here, so any distance it travels is travelled into the letter.
-  */
-  .hero {
-    --hero-drift: 0px;
-  }
-
-  .hero-photo {
-    justify-self: stretch;
-    max-width: none;
-    transform: none;
-  }
-
-  .hero-photo .scanned-photo {
-    max-height: 64vh;
-  }
-
-  .sheet {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .sheet-photo {
-    position: static;
-    padding-top: 2rem;
   }
 
   .sheet-frame {
     max-width: min(100%, calc(72vh * var(--sheet-ratio, 0.75)));
   }
-
-  .sheet-frame-foot {
-    max-width: none;
-  }
-
-  .sheet-text {
-    padding-top: 0;
-  }
-
-  /*
-     One at a time: neither half survives being half a phone wide. Which one
-     shows is a CSS decision, never a mount decision — both are in the DOM
-     either way, so the accessible half is never the one that needs
-     JavaScript to exist.
-  */
-  .reader[data-showing="photo"] .sheet-text {
-    display: none;
-  }
-
-  .reader[data-showing="text"] .sheet-photo {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-name,
-  .hero-title,
-  .hero-rule,
-  .hero-lede,
-  .hero-meta,
-  .hero-cue,
-  .hero-sheet::before,
-  .hero-sheet::after,
-  .hero-photo .scanned-photo,
-  .hero-title em,
-  .hero-lede mark[data-c] {
-    animation: none;
-    opacity: 1;
-  }
-
-  .hero-title em {
-    text-decoration-color: color-mix(in srgb, var(--fg-brand) 40%, transparent);
-  }
-
-  .hero-photo {
-    transform: none;
-  }
-
-  .hero-cue-arrow {
-    animation: none;
-  }
-
-  .hero-lede mark[data-c] {
-    background-size: 100% 100%;
-  }
-
   .pill,
   .chip,
   .reader-progress span {
@@ -1747,7 +1815,7 @@ body::before {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 58rem;
+  max-width: 52rem;
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2.5rem) 6rem;
   display: flex;
@@ -1773,6 +1841,7 @@ body::before {
 
 .admin-empty {
   color: var(--fg-muted);
+  font-family: var(--font-serif);
   font-style: italic;
 }
 
@@ -2102,6 +2171,60 @@ body::before {
 
 .admin-block-title {
   margin: 0;
+}
+
+/* ---- disclosures ----------------------------------------------------
+
+   Every `<details>` in the project is a secondary setting, so its summary is
+   a label, set like `.meta`, not a heading. The browser's triangle is a
+   glyph from nowhere in this design; it is replaced by a drawn chevron that
+   turns when the section opens. `list-style` removes it in Firefox and the
+   `-webkit-` marker in Safari, and both are needed.
+   -------------------------------------------------------------------- */
+
+summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: fit-content;
+  padding: 0.5rem 0;
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  transition: color 180ms ease;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::after {
+  content: "";
+  width: 0.45em;
+  height: 0.45em;
+  flex: none;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform 200ms var(--ease-out-quint);
+}
+
+details[open] > summary::after {
+  transform: translateY(25%) rotate(225deg);
+}
+
+summary:hover {
+  color: var(--fg-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  summary::after {
+    transition: none;
+  }
 }
 
 /* ---- the link, when starting a letter ------------------------------- */
@@ -2446,16 +2569,7 @@ body::before {
   }
 }
 
-.admin-shell {
-  max-width: 52rem;
-}
-
-/* ---- the region picker ----------------------------------------------
-
-   Drag a band down the photograph and the editor writes
-   `:::passage{at="…"}` into the markdown. No derived regions: a derived one
-   can be quietly wrong, and there is nothing to derive from anyway.
-   -------------------------------------------------------------------- */
+/* ---- hints ---------------------------------------------------------- */
 
 .editor-hint {
   margin: 0 0 1rem;
@@ -2464,58 +2578,21 @@ body::before {
   color: var(--fg-secondary);
 }
 
-.region-grid {
-  display: grid;
-  gap: clamp(1rem, 3vw, 2rem);
-  align-items: start;
+/* The preflight zeroes every margin, so a hint only ever had space below it.
+   One that follows something — a photograph, the editor, a row of buttons —
+   sat flush against it. And one inside a flex row kept its bottom margin,
+   which pushed it off the buttons' centre line and made the row taller. */
+.editor-bar .editor-hint,
+.step-footer .editor-hint,
+.mark-toolbar .editor-hint,
+.writing-savebar .editor-hint,
+.writing-reference .editor-hint {
+  margin: 0;
 }
 
-@media (min-width: 900px) {
-  .region-grid {
-    grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
-  }
-}
-
-.region-frame {
-  position: relative;
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-page);
-  /* The whole point is dragging down it, so the browser must not claim the
-     gesture for scrolling first. */
-  touch-action: none;
-  cursor: crosshair;
-  user-select: none;
-}
-
-.region-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
-  pointer-events: none;
-}
-
-.region-band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  background: var(--bg-surface-brand);
-  border-top: 1.5px solid var(--fg-brand);
-  border-bottom: 1.5px solid var(--fg-brand);
-  pointer-events: none;
-}
-
-.region-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.region-nudges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.writing-page > .editor-hint,
+.transcribe-action > .editor-hint {
+  margin: 1rem 0 0;
 }
 
 /* ============================================================
@@ -2603,13 +2680,6 @@ body::before {
   margin: 0.75rem 0;
 }
 
-.skeleton-chip {
-  display: inline-block;
-  width: 5.5rem;
-  height: 1.9rem;
-  border-radius: 999px;
-}
-
 .skeleton-figure {
   width: 4rem;
   height: 2.2rem;
@@ -2618,18 +2688,6 @@ body::before {
 .skeleton-surface {
   min-height: 24rem;
   border-radius: 12px;
-}
-
-.skeleton-sheet {
-  width: 100%;
-  aspect-ratio: 0.75;
-  max-height: 62vh;
-  border-radius: 3px;
-  box-shadow: var(--shadow-page);
-}
-
-.skeleton-stack {
-  margin-top: 1.5rem;
 }
 
 .skeleton-figures {
@@ -2641,13 +2699,6 @@ body::before {
 .admin-card--skeleton {
   animation: none;
   opacity: 1;
-}
-
-.hero--loading {
-  min-height: auto;
-  /* The copy sits at the top rather than centring against a tall placeholder,
-     so the typed line is where the reader is already looking. */
-  align-items: start;
 }
 
 /* ---- the blank sheet, and the smudged one ---------------------------- */
@@ -2848,6 +2899,71 @@ body::before {
    the front door is showing the thing rather than a picture of it.
    -------------------------------------------------------------------- */
 
+/*
+   The note on the front door, in the same envelope a letter arrives in.
+
+   The envelope and the note are stacked in one grid cell, not two: with no
+   script both show, envelope first; with a script one replaces the other.
+   Every rule that hides anything is behind `data-enhanced`, exactly as on the
+   letter route and for exactly the same reason.
+*/
+.home-letter {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  justify-self: center;
+  width: 100%;
+  max-width: 32rem;
+  min-height: 36rem;
+  grid-template-rows: minmax(32rem, auto) auto;
+  align-items: center;
+  gap: 2rem;
+}
+.home-letter .envelope-stage {
+  min-height: 32rem;
+  width: 100%;
+  padding: 3rem 0;
+  gap: 1.4rem;
+}
+.home-letter .envelope-eyebrow {
+  margin-bottom: 1rem;
+  font-size: 0.6rem;
+}
+.home-letter[data-enhanced="true"][data-open="false"] .home-stack,
+.home-letter[data-enhanced="true"][data-open="true"] .envelope-stage {
+  display: none;
+}
+.home-letter[data-enhanced="true"][data-open="true"][data-phase="unfolding"]
+  .envelope-stage {
+  display: grid;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.home-letter[data-phase="unfolding"] .envelope-open {
+  visibility: hidden;
+}
+.home-letter[data-enhanced="true"] .home-stack-sheet,
+.home-letter[data-enhanced="true"] .home-stack::before,
+.home-letter[data-enhanced="true"] .home-stack::after {
+  animation: none;
+  opacity: 1;
+}
+.home-note-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.home-note-head .paper-close {
+  flex-shrink: 0;
+}
+.home-letter > .paper-sound {
+  align-self: end;
+}
+
+
 .home-stack {
   position: relative;
   justify-self: center;
@@ -2864,8 +2980,7 @@ body::before {
   border-radius: 3px;
   background: var(--bg-surface);
   box-shadow: var(--shadow-lift);
-  opacity: 0;
-  animation: lay-down 1000ms var(--ease-out-quint) 620ms both;
+  opacity: 1;
 }
 
 .home-stack::before,
@@ -2897,14 +3012,15 @@ body::before {
 .home-stack-mark {
   margin: 0 0 1.2rem;
   font-family: var(--font-display);
-  font-size: 1.35rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  letter-spacing: 0;
   color: var(--fg-secondary);
 }
 
+/* Colour alone. See `.coda-line em`. */
 .home-stack-mark em {
-  font-style: italic;
+  font-style: normal;
   color: var(--fg-brand);
 }
 
@@ -2980,10 +3096,11 @@ body::before {
   letter-spacing: -0.035em;
 }
 
+/* Colour alone. See `.coda-line em` for why the italic is gone. */
 .home-title em,
 .home-h2 em,
 .home-note-line em {
-  font-style: italic;
+  font-style: normal;
   color: var(--fg-brand);
 }
 
@@ -3267,5 +3384,643 @@ body::before {
 
   .home-lede mark[data-c] {
     background-size: 100% 100%;
+  }
+}
+
+/* Paper is an object in both the front-door note and the reading deck. */
+.paper-content {
+  position: relative;
+  z-index: 3;
+  outline: none;
+  transform-origin: 50% 25%;
+}
+.letter-deck {
+  width: min(100% - 3rem, 40rem);
+  margin: 0 auto;
+  padding-top: calc(var(--bar-h) + 2.5rem);
+  padding-bottom: 2rem;
+  perspective: 1400px;
+}
+.sheet {
+  max-width: none;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+.paper-sheet {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(1.3rem, 5vw, 3.5rem);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 65%, transparent);
+  border-radius: 2px 4px 3px 2px;
+  background: linear-gradient(
+    105deg,
+    var(--bg-surface),
+    var(--bg-surface-elevated) 48%,
+    var(--bg-surface)
+  );
+  box-shadow: var(--shadow-page);
+  transform-origin: 50% 0;
+}
+.sheet .paper-sheet {
+  min-height: min(70svh, 48rem);
+}
+.sheet .letter-prose :is(h1, h2) {
+  font: 500 clamp(1.8rem, 4vw, 2.35rem)/1.2 var(--font-serif);
+  margin-bottom: 1.1em;
+}
+.paper-sheet::before,
+.paper-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 4px 3px -7px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 3px 4px color-mix(in srgb, var(--fg-primary) 5%, transparent);
+  z-index: -2;
+  transform: skewY(0.6deg);
+  pointer-events: none;
+}
+.paper-sheet::after {
+  inset: 2px 1px -4px;
+  transform: skewY(-0.4deg);
+  z-index: -1;
+}
+/* Insets keep the seams in the margins, clear of every word. */
+.paper-fold-line {
+  position: absolute;
+  inset: 33% 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--border-subtle),
+    transparent 7%,
+    transparent 93%,
+    var(--border-subtle)
+  );
+  pointer-events: none;
+}
+.sheet-head {
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.sheet-head .meta {
+  font-size: 0.62rem;
+}
+.sheet-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.sheet-turn.pill {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.7rem;
+  min-height: 2.5rem;
+}
+.paper-close.pill {
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  font: 400 1.4rem/1 var(--font-serif);
+  border-color: transparent;
+  background: transparent;
+}
+.paper-close.pill:hover {
+  border-color: var(--border-strong);
+}
+.paper-sound.pill {
+  font-size: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  gap: 0.45rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-secondary);
+}
+.paper-sound.pill:hover {
+  border-color: var(--border-subtle);
+}
+.reader-sound {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 1.5rem;
+}
+.reader[data-open="false"] .reader-sound {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 0;
+  right: 0;
+}
+.deck-controls {
+  padding: 0.5rem 0 0;
+  gap: 1.2rem;
+}
+.deck-controls .pill[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+.reader[data-turning="true"] .deck-controls .pill {
+  cursor: wait;
+}
+.sheet-face--back .sheet-frame {
+  box-shadow: none;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+}
+.reader[data-enhanced="true"] .sheet-face {
+  animation: paper-face 300ms var(--ease-out-quint);
+  transform-origin: 50% 0;
+}
+@keyframes paper-face {
+  from {
+    transform: perspective(1000px) rotateY(-7deg) translateY(8px);
+  }
+  to {
+    transform: none;
+  }
+}
+.home-stack {
+  rotate: -1.5deg;
+  max-width: 29rem;
+}
+.home-stack::before,
+.home-stack::after {
+  display: none;
+}
+.home-stack-sheet.paper-sheet {
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+}
+.home-stack-mark {
+  font-size: 1.65rem;
+}
+.home-stack .letter-prose {
+  font-size: 1.075rem;
+  line-height: 1.65;
+}
+.home-letter .paper-sound {
+  position: relative;
+  z-index: 4;
+}
+@media (max-width: 599px) {
+  .home-hero {
+    padding-top: 2rem;
+    gap: 1.25rem;
+  }
+  .letter-deck {
+    width: calc(100% - 2rem);
+    padding-top: calc(var(--bar-h) + 1.5rem);
+  }
+  .sheet-head {
+    gap: 0.5rem;
+  }
+  .sheet-actions {
+    gap: 0.1rem;
+  }
+  .sheet-turn.pill {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.5rem;
+  }
+  .sheet .letter-prose {
+    font-size: 1.08rem;
+    line-height: 1.7;
+  }
+  .envelope-stage {
+    padding-inline: 1rem;
+  }
+  .envelope-eyebrow {
+    font-size: 0.6rem;
+  }
+  .home-letter {
+    min-height: 26rem;
+    grid-template-rows: minmax(23rem, auto) auto;
+    gap: 1rem;
+  }
+  .home-letter .envelope-stage {
+    min-height: 23rem;
+    padding: 1.5rem 0;
+    gap: 1rem;
+  }
+  .home-letter .envelope-eyebrow {
+    margin-bottom: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-content,
+  .envelope-body,
+  .envelope-tear,
+  .envelope-front,
+  .envelope-pocket,
+  .envelope-fold,
+  .reader[data-enhanced="true"] .sheet-face {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* The writing desk: paper for the content, quiet controls around it. */
+.home-title,
+.home-stack-mark {
+  font-style: italic;
+}
+
+.admin-shell [hidden] {
+  display: none !important;
+}
+
+.admin-shell .field {
+  font-size: 1rem;
+}
+
+.admin-shell .admin-title {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.desk-header,
+.desk-title-row,
+.step-footer,
+.writing-tools,
+.writing-savebar,
+.writing-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.desk-wordmark {
+  font: italic 400 1.6rem/1.3 var(--font-serif);
+}
+
+.desk-wordmark span {
+  font: 400 11px/1.5 var(--font-mono);
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.workbench-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.workbench-step.pill {
+  font: 500 0.95rem/1.3 var(--font-serif);
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 0.5rem;
+  justify-content: flex-start;
+  padding: 1rem;
+  gap: 0.8rem;
+  text-align: left;
+  white-space: normal;
+}
+
+.workbench-step[aria-current] {
+  border-color: var(--fg-brand);
+  background: var(--bg-surface);
+  box-shadow: inset 0 -3px var(--fg-brand);
+}
+
+.step-number {
+  font: italic 1.6rem var(--font-serif);
+  color: var(--fg-muted);
+}
+
+.workbench-step small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--fg-muted);
+  margin-top: 0.3rem;
+}
+
+.workbench-panel,
+.writing-editor,
+.letter-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.step-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.step-intro h2,
+.admin-new h2 {
+  font: 400 clamp(1.7rem, 4vw, 2.3rem)/1.2 var(--font-serif);
+  margin: 0.5rem 0;
+}
+
+.step-intro p:not(.meta) {
+  max-width: 44rem;
+  color: var(--fg-muted);
+  font: 400 1rem/1.6 var(--font-serif);
+}
+
+.desk-paper-icon {
+  font: 3rem var(--font-serif);
+  color: var(--fg-brand);
+}
+
+.desk-photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 190px));
+  gap: 1.25rem;
+}
+
+.desk-photo-gallery figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.desk-photo-gallery img {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+}
+
+.desk-photo-gallery figcaption {
+  font: 0.85rem/1.5 var(--font-serif);
+  color: var(--fg-muted);
+  padding-top: 0.5rem;
+}
+
+.transcription-next {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.transcribe-action {
+  flex: 1;
+  min-width: 220px;
+}
+
+.writing-savebar {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 10;
+  padding: 0.9rem 1rem;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--fg-primary) 6%, transparent);
+}
+
+.writing-savebar > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.writing-savebar strong {
+  font: 500 1rem var(--font-serif);
+}
+
+.writing-tools,
+.mark-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* The hover rule on `.pill` is more specific and sets the text to the fill
+   colour, so the pressed one has to hold its own on hover. */
+.segmented .pill[aria-pressed="true"],
+.segmented .pill[aria-pressed="true"]:hover {
+  background: var(--fg-primary);
+  border-color: var(--fg-primary);
+  color: var(--bg-canvas);
+}
+
+/* Sticky under the save bar, so the colours stay in reach while the preview
+   scrolls past. */
+.mark-toolbar {
+  position: sticky;
+  top: 7rem;
+  z-index: 9;
+  padding: 1rem 0;
+  border-block: 1px solid var(--border-subtle);
+  background: var(--bg-canvas);
+}
+
+.tag-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--hl-important);
+  border: 1px solid currentColor;
+}
+
+.tag-button[data-tag="note"] .tag-swatch {
+  background: var(--hl-note);
+}
+
+.tag-button[data-tag="ask"] .tag-swatch {
+  background: var(--hl-ask);
+}
+
+.theme-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.theme-form .field {
+  flex: 1;
+  min-width: 180px;
+}
+
+.writing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.writing-grid[data-has-photos="true"] {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+.writing-page {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--fg-primary) 4%, transparent);
+}
+
+.writing-page > .writing-page-heading {
+  margin-bottom: 1rem;
+}
+
+.writing-source {
+  width: 100%;
+  min-height: 32rem;
+  resize: vertical;
+  background: transparent;
+  border: 0;
+  color: var(--fg-primary);
+  font: 400 1.15rem/1.85 var(--font-serif);
+}
+
+.writing-source:focus-visible {
+  outline: 2px solid var(--fg-brand);
+  outline-offset: 6px;
+}
+
+.writing-preview {
+  min-height: 32rem;
+  overflow-wrap: anywhere;
+}
+
+.writing-preview mark {
+  cursor: pointer;
+}
+
+.writing-reference {
+  min-width: 0;
+  position: sticky;
+  top: 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reference-photo {
+  max-height: 65vh;
+  overflow: auto;
+}
+
+.reference-photo img {
+  width: 100%;
+  height: auto;
+}
+
+.writing-extras,
+.letter-insights {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.writing-extras[open] > :not(summary) {
+  margin-top: 1rem;
+}
+
+.highlight-list,
+.upload-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.raw-transcription {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 24rem;
+  overflow: auto;
+  font: 1rem/1.8 var(--font-serif);
+}
+
+.review-notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font: 0.95rem/1.5 var(--font-serif);
+  flex-wrap: wrap;
+}
+
+.letter-details {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.letter-details h3 {
+  font: 400 1.6rem var(--font-serif);
+}
+
+.letter-details > button {
+  align-self: flex-start;
+}
+
+.admin-card .editor-bar {
+  margin-top: 1rem;
+}
+
+.letter-insights {
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 700px) {
+  .workbench-steps {
+    gap: 0.35rem;
+  }
+  .workbench-step.pill {
+    padding: 0.75rem 0.45rem;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+  .step-number,
+  .workbench-step small,
+  .desk-paper-icon {
+    display: none;
+  }
+  .writing-grid[data-has-photos="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .writing-reference {
+    display: none;
+    position: static;
+  }
+  .writing-reference[data-show="true"] {
+    display: flex;
+    grid-row: 1;
+  }
+  .reference-photo {
+    max-height: 45vh;
+  }
+  .writing-savebar {
+    top: 0;
+    gap: 0.5rem;
+  }
+  .writing-savebar .editor-hint {
+    max-width: 12rem;
+  }
+  .writing-source,
+  .writing-preview {
+    min-height: 24rem;
+  }
+  .desk-header {
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 701px) {
+  .photo-reference-toggle {
+    display: none;
   }
 }

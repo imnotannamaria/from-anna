@@ -219,6 +219,21 @@ Publishing uses npm trusted publishing, so there is no `NPM_TOKEN` anywhere in t
 
 ## Out of scope
 
-- A visual highlight editor. Highlights are written in the syntax.
+- A general-purpose rich text editor. Phase 7 adds source-aware highlighting while markdown remains authoritative.
 - Automatic tagging by sentiment analysis. The highlighting is editorial: I choose what gets read first.
 - More than three colours.
+
+## Phase 7 — Source-aware editing
+
+Extend the existing renderer with an editor-only entry point that annotates
+safe text and highlight nodes with numeric source offsets after sanitization.
+Normal publication output and the sanitize schema stay unchanged. The app uses
+these positions for selecting, recolouring and removing marks; unrepresentable
+selections direct the author to the source editor rather than guessing.
+
+**Done when**
+
+- [x] Repeated text, emphasis, escaped characters, existing marks and reversed selections preserve the intended source range.
+- [x] Marks cannot nest, including when a selection sits inside an existing mark.
+- [x] Removing or recolouring a mark preserves its content and adjacent text.
+- [x] Editor annotations cannot carry model-provided attributes or HTML; normal output is unchanged.

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { ScannedTranscription } from 'remark-scanned-page'
 
+import { HomeLetter } from '@/components/home/home-letter'
 import { ExternalLink } from '@/components/ui/external-link'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
@@ -45,6 +46,10 @@ made, I think a handwritten letter
 :::`
 
 /**
+ * It arrives in an envelope, the same one a real letter arrives in — one
+ * component imported twice, never a second copy. On the page that exists to
+ * explain the project, showing the mechanism beats describing it.
+ *
  * The demonstration is the real thing: the same package, the same sanitize
  * schema and the same stylesheet a published letter goes through.
  *
@@ -93,12 +98,9 @@ export default function Home() {
           />
 
           <p className="home-lede" style={{ animationDelay: '360ms' }}>
-            I write letters by hand, take a photo of the pages, and publish them
-            at a link meant for one person. The photo is what you see. The
-            transcription is what you can{' '}
-            <mark data-c="important">actually read</mark>, because a picture of
-            handwriting is invisible to a screen reader. And a letter nobody can
-            read isn&rsquo;t much of a letter.
+            I write letters by hand, photograph the pages, and send them at a
+            link <mark data-c="important">meant for one person</mark>.
+            A little ink, a little paper, and something you can keep.
           </p>
 
           <p className="home-actions" style={{ animationDelay: '480ms' }}>
@@ -115,24 +117,19 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="home-stack">
-          <div className="home-stack-sheet" data-revealed="true">
-            <p className="home-stack-mark">
-              from anna <em>to you</em>
-            </p>
-            <ScannedTranscription
-              markdown={OPENING}
-              className="letter-prose"
-              knownTags={HIGHLIGHT_TAGS}
-            />
-            <p className="home-sign">
-              Anna ·{' '}
-              <ExternalLink href={PORTFOLIO} className="home-link">
-                annamaria.app
-              </ExternalLink>
-            </p>
-          </div>
-        </div>
+        <HomeLetter>
+          <ScannedTranscription
+            markdown={OPENING}
+            className="letter-prose"
+            knownTags={HIGHLIGHT_TAGS}
+          />
+          <p className="home-sign">
+            Anna ·{' '}
+            <ExternalLink href={PORTFOLIO} className="home-link">
+              annamaria.app
+            </ExternalLink>
+          </p>
+        </HomeLetter>
       </section>
 
       <section className="home-section" aria-labelledby="how">

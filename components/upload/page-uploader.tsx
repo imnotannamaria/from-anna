@@ -24,6 +24,7 @@ type Item = {
 type Props = {
   letterId: string
   existingPageCount: number
+  onPendingChange?: (pending: boolean) => void
 }
 
 const STATE_LABEL: Record<Item['status'], string> = {
@@ -46,9 +47,16 @@ const STATE_LABEL: Record<Item['status'], string> = {
  * before anything uploads: the transcription is the letter's content, and the
  * alt text is what describes the photograph itself.
  */
-export function PageUploader({ letterId, existingPageCount }: Props) {
+export function PageUploader({
+  letterId,
+  existingPageCount,
+  onPendingChange,
+}: Props) {
   const [items, setItems] = useState<Item[]>([])
   const [uploading, setUploading] = useState(false)
+  const [processing, setProcessing] = useState(false)
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+  const busyRef = useRef(false)
   const [dragging, setDragging] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
@@ -59,16 +67,34 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
   // phone, so they are revoked when the component goes away.
   const previewUrls = useRef<string[]>([])
   useEffect(() => {
-    const urls = previewUrls.current
-    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+    return () => previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
   }, [])
+
+  useEffect(() => {
+    onPendingChange?.(items.length > 0 || uploading || processing)
+  }, [items.length, uploading, processing, onPendingChange])
+
+  useEffect(() => {
+    if (!items.length) return
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [items.length])
 
   const remaining = MAX_PAGES_PER_LETTER - existingPageCount
 
   const onSelect = useCallback(
     async (fileList: FileList | null) => {
-      if (!fileList || fileList.length === 0) return
+      if (!fileList || fileList.length === 0 || busyRef.current) return
 
+      if (
+        items.length &&
+        !window.confirm('Replace the queued photos and their descriptions?')
+      )
+        return
       const files = Array.from(fileList)
       setFailed(false)
 
@@ -80,6 +106,11 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
         return
       }
 
+      busyRef.current = true
+      setProcessing(true)
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+      previewUrls.current = []
+
       // Order comes from selection order: filenames off a phone do not sort
       // reliably.
       setItems(
@@ -90,7 +121,9 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
           alt: '',
         })),
       )
-      setMessage(`Preparing ${files.length} photo${files.length === 1 ? '' : 's'}…`)
+      setMessage(
+        `Preparing ${files.length} photo${files.length === 1 ? '' : 's'}…`,
+      )
 
       let done = 0
       await processImages(files, (result) => {
@@ -113,18 +146,29 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
         setMessage(`Prepared ${done} of ${files.length}.`)
       })
 
-      setMessage('Add a short description to each one, then upload.')
+      setProcessing(false)
+      busyRef.current = false
+      setMessage(
+        'Check the order and describe each photo, then add them to the letter.',
+      )
     },
-    [remaining],
+    [remaining, items.length],
   )
 
   const ready = items.filter((item) => item.status === 'ready')
   const anyFailed = items.some((item) => item.status === 'failed')
   const everyAltFilled = ready.every((item) => item.alt.trim() !== '')
   const canUpload =
-    ready.length > 0 && everyAltFilled && !uploading && !anyFailed
+    ready.length > 0 &&
+    everyAltFilled &&
+    !uploading &&
+    !processing &&
+    !anyFailed
 
   function clear() {
+    if (busyRef.current) return
+    previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+    previewUrls.current = []
     setItems([])
     setMessage('')
     setFailed(false)
@@ -163,9 +207,13 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
   }
 
   async function onUpload() {
+    if (!canUpload || busyRef.current) return
+    busyRef.current = true
     setUploading(true)
     setFailed(false)
-    setItems((current) => current.map((item) => ({ ...item, uploadError: undefined })))
+    setItems((current) =>
+      current.map((item) => ({ ...item, uploadError: undefined })),
+    )
 
     // One photograph per request, in order. A Vercel Function refuses a body
     // over 4.5MB, and three sheets at 2400px can pass that together when
@@ -177,18 +225,23 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
 
     for (const [i, item] of queue.entries()) {
       setMessage(`Uploading ${i + 1} of ${queue.length}…`)
+      setUploadingKey(item.key)
       error = await uploadOne(item)
       if (error) break
       done.add(item.key)
     }
 
     setUploading(false)
+    setUploadingKey(null)
+    busyRef.current = false
 
     if (error) {
       const reason = error
       const failedKey = queue[done.size]?.key
       setFailed(true)
-      setMessage(done.size > 0 ? `${done.size} uploaded, then: ${reason}` : reason)
+      setMessage(
+        done.size > 0 ? `${done.size} uploaded, then: ${reason}` : reason,
+      )
       // What went up stays up and leaves the list, so what is left on screen
       // is exactly what still has to go.
       setItems((current) =>
@@ -199,6 +252,8 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
           ),
       )
     } else {
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+      previewUrls.current = []
       setItems([])
       if (inputRef.current) inputRef.current.value = ''
       setMessage(`Uploaded ${done.size} photo${done.size === 1 ? '' : 's'}.`)
@@ -230,7 +285,7 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
         onDrop={(event) => {
           event.preventDefault()
           setDragging(false)
-          if (!uploading) onSelect(event.dataTransfer.files)
+          if (!busyRef.current) onSelect(event.dataTransfer.files)
         }}
       >
         {/*
@@ -245,7 +300,7 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
           multiple
           // `.heic` spelled out: desktop Chrome does not count it as image/*.
           accept="image/*,.heic,.heif"
-          disabled={uploading}
+          disabled={uploading || processing}
           onChange={(event) => onSelect(event.target.files)}
           className="sr-only"
         />
@@ -260,12 +315,20 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
       {items.length > 0 && (
         <ol className="upload-grid">
           {items.map((item, index) => (
-            <li key={item.key} className="upload-card" data-status={item.status}>
+            <li
+              key={item.key}
+              className="upload-card"
+              data-status={item.status}
+            >
               <div className="upload-card-head">
                 <span className="upload-card-title">
-                  Page {existingPageCount + index + 1}
+                  Sheet {existingPageCount + index + 1}
                 </span>
-                <span className="upload-card-state">{STATE_LABEL[item.status]}</span>
+                <span className="upload-card-state">
+                  {uploadingKey === item.key
+                    ? 'uploading…'
+                    : STATE_LABEL[item.status]}
+                </span>
               </div>
 
               <div className="upload-card-photo">
@@ -279,7 +342,10 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
                     height={item.image?.height}
                   />
                 ) : (
-                  <span className="skeleton upload-card-skeleton" aria-hidden="true" />
+                  <span
+                    className="skeleton upload-card-skeleton"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
 
@@ -293,19 +359,26 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
 
               {item.status === 'ready' && (
                 <div>
-                  <label htmlFor={`alt-${item.key}`} className="meta field-label">
+                  <label
+                    htmlFor={`alt-${item.key}`}
+                    className="meta field-label"
+                  >
                     Describe the photo
                   </label>
                   <input
                     id={`alt-${item.key}`}
                     type="text"
                     required
+                    maxLength={1000}
+                    disabled={uploading}
                     value={item.alt}
                     placeholder="A notebook page in blue ink"
                     onChange={(event) =>
                       setItems((current) =>
                         current.map((other, i) =>
-                          i === index ? { ...other, alt: event.target.value } : other,
+                          i === index
+                            ? { ...other, alt: event.target.value }
+                            : other,
                         ),
                       )
                     }
@@ -313,6 +386,61 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
                   />
                 </div>
               )}
+              <div className="upload-card-actions">
+                <button
+                  className="pill pill--icon"
+                  type="button"
+                  disabled={uploading || processing || index === 0}
+                  aria-label={`Move photo ${index + 1} earlier`}
+                  onClick={() =>
+                    setItems((current) => {
+                      const next = [...current]
+                      ;[next[index - 1], next[index]] = [
+                        next[index],
+                        next[index - 1],
+                      ]
+                      return next
+                    })
+                  }
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+                <button
+                  className="pill pill--icon"
+                  type="button"
+                  disabled={
+                    uploading || processing || index === items.length - 1
+                  }
+                  aria-label={`Move photo ${index + 1} later`}
+                  onClick={() =>
+                    setItems((current) => {
+                      const next = [...current]
+                      ;[next[index], next[index + 1]] = [
+                        next[index + 1],
+                        next[index],
+                      ]
+                      return next
+                    })
+                  }
+                >
+                  <span aria-hidden="true">→</span>
+                </button>
+                <button
+                  className="pill"
+                  type="button"
+                  disabled={uploading || processing}
+                  aria-label={`Remove photo ${index + 1}`}
+                  onClick={() => {
+                    if (inputRef.current) inputRef.current.value = ''
+                    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+                    setItems((current) =>
+                      current.filter((other) => other.key !== item.key),
+                    )
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
             </li>
           ))}
         </ol>
@@ -340,19 +468,20 @@ export function PageUploader({ letterId, existingPageCount }: Props) {
           >
             {uploading
               ? 'Uploading…'
-              : `Upload ${ready.length} photo${ready.length === 1 ? '' : 's'}`}
+              : `Add ${ready.length} photo${ready.length === 1 ? '' : 's'} to letter`}
           </button>
           <button
             type="button"
             className="pill"
             onClick={clear}
-            disabled={uploading}
+            disabled={uploading || processing}
           >
             {anyFailed ? 'Start over' : 'Clear'}
           </button>
           {anyFailed && (
             <span className="editor-hint">
-              Remove the one that couldn’t open by starting over without it.
+              Remove the photo that could not open; the others are ready to
+              keep.
             </span>
           )}
         </div>

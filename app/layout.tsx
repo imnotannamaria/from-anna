@@ -1,6 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
-import { Fraunces, Inter, JetBrains_Mono, Newsreader } from 'next/font/google'
+import { JetBrains_Mono, Newsreader } from 'next/font/google'
 
 import { SiteAnalytics } from '@/components/site-analytics'
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 }
 
 /*
-  The four faces, downloaded at build time and served from this domain.
+  The two faces, downloaded at build time and served from this domain.
 
   They used to come from an `@import url(...)` of Google Fonts at the top of
   `globals.css`, which is how entrepta ships them. The build dropped it: it is
@@ -23,9 +23,14 @@ export const metadata: Metadata = {
   nothing said so. Each one is exposed as a CSS variable that the font tokens
   in `globals.css` name first.
 
-  Variable fonts, so no weight list: every weight the stylesheet asks for is
-  in the one file. The axes are the ones the stylesheet sets by hand:
-  `opsz` on both serifs, and `SOFT` and `WONK` on Fraunces.
+  Both are variable, so no weight list: every weight the stylesheet asks for
+  is in the one file, and `opsz` on Newsreader is the axis the stylesheet sets
+  by hand.
+
+  Newsreader is everything that is read, the envelope's address in its
+  italic. JetBrains Mono is every label and control. There were four once —
+  Caveat for the hand and Inter for the admin — and a page set in four faces
+  reads as four voices, not one.
 */
 const newsreader = Newsreader({
   subsets: ['latin'],
@@ -35,28 +40,16 @@ const newsreader = Newsreader({
   display: 'swap',
 })
 
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  style: ['normal', 'italic'],
-  axes: ['opsz', 'SOFT', 'WONK'],
-  variable: '--font-fraunces',
-  display: 'swap',
-})
-
+// Roman only. Nothing sets the mono in italic, and the italic file was a
+// preload on every page for no glyph anyone saw.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  style: ['normal', 'italic'],
+  style: ['normal'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
 })
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const fontVariables = [newsreader, fraunces, jetbrainsMono, inter]
+const fontVariables = [newsreader, jetbrainsMono]
   .map((font) => font.variable)
   .join(' ')
 
