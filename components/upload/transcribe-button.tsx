@@ -9,6 +9,8 @@ type Props = {
   letterId: string
   pageCount: number
   alreadyTranscribed: boolean
+  blocked?: boolean
+  onComplete?: () => void
 }
 
 /**
@@ -25,13 +27,18 @@ export function TranscribeButton({
   letterId,
   pageCount,
   alreadyTranscribed,
+  blocked = false,
+  onComplete,
 }: Props) {
   const [running, setRunning] = useState(false)
   const [message, setMessage] = useState('')
-  const [tone, setTone] = useState<'idle' | 'warning' | 'error' | 'done'>('idle')
+  const [tone, setTone] = useState<'idle' | 'warning' | 'error' | 'done'>(
+    'idle',
+  )
   const router = useRouter()
 
   async function onTranscribe() {
+    if (running || blocked) return
     setRunning(true)
     setTone('idle')
     setMessage(
@@ -56,7 +63,7 @@ export function TranscribeButton({
       } else {
         setTone('done')
         setMessage(
-          `Transcribed ${body?.pages} page${body?.pages === 1 ? '' : 's'} with ${body?.provider}.` +
+          `The text for ${body?.pages} sheet${body?.pages === 1 ? '' : 's'} is ready to review.` +
             (body?.seededEditor === false
               ? ' The editor was left alone because it already has edited text.'
               : ''),
@@ -64,6 +71,7 @@ export function TranscribeButton({
       }
 
       router.refresh()
+      if (!body?.warning) onComplete?.()
     } catch {
       setTone('error')
       setMessage('Could not reach the server. Nothing was transcribed.')
@@ -75,12 +83,12 @@ export function TranscribeButton({
   if (pageCount === 0) return null
 
   return (
-    <section className="admin-section">
+    <section className="transcribe-action">
       <div className="editor-bar">
         <button
           type="button"
           onClick={onTranscribe}
-          disabled={running}
+          disabled={running || blocked}
           data-busy={running ? 'true' : 'false'}
           aria-busy={running}
           className="pill pill--solid"
@@ -89,13 +97,19 @@ export function TranscribeButton({
             ? 'Transcribing…'
             : alreadyTranscribed
               ? 'Transcribe again'
-              : 'Transcribe'}
+              : 'Turn handwriting into text'}
         </button>
       </div>
 
+      {blocked && (
+        <p className="editor-hint">
+          Save your text and finish uploading photos before transcribing.
+        </p>
+      )}
       {alreadyTranscribed && !running && (
         <p className="editor-hint">
-          Running again replaces the raw transcription of every page.
+          Running again updates the machine transcription. Your edited letter is
+          kept; the new raw text is available under Write & mark.
         </p>
       )}
 

@@ -1,3 +1,4 @@
+import { editorPositions } from './editor-positions.js'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeStringify from 'rehype-stringify'
 import remarkDirective from 'remark-directive'
@@ -69,16 +70,33 @@ export const schema = {
   },
 }
 
-export function renderMarkdown(
-  markdown: string,
-  options: RemarkMarkDirectiveOptions = {},
-): string {
+function processor(options: RemarkMarkDirectiveOptions) {
   return unified()
     .use(remarkParse)
     .use(remarkDirective)
     .use(remarkMarkDirective, options)
     .use(remarkRehype)
     .use(rehypeSanitize, schema)
+}
+
+/** Publication output contains no editor annotations. */
+export function renderMarkdown(
+  markdown: string,
+  options: RemarkMarkDirectiveOptions = {},
+): string {
+  return processor(options)
+    .use(rehypeStringify)
+    .processSync(markdown)
+    .toString()
+}
+
+/** A sanitized preview with exact source positions, not text-search guesses. */
+export function renderEditorMarkdown(
+  markdown: string,
+  options: RemarkMarkDirectiveOptions = {},
+): string {
+  return processor(options)
+    .use(editorPositions, markdown)
     .use(rehypeStringify)
     .processSync(markdown)
     .toString()

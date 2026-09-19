@@ -46,6 +46,7 @@ export function NewLetter() {
       const body = await response.json().catch(() => null)
 
       if (!response.ok) {
+        setSaving(false)
         setError(body?.error ?? `Could not create it (${response.status}).`)
         return
       }
@@ -54,9 +55,10 @@ export function NewLetter() {
       // photographs in it.
       router.push(`/admin/letters/${body.id}`)
     } catch {
-      setError('Could not reach the server. Nothing was created.')
-    } finally {
       setSaving(false)
+      setError(
+        'Could not reach the server. Check your letters before trying again.',
+      )
     }
   }
 
@@ -76,16 +78,22 @@ export function NewLetter() {
 
   return (
     <form className="admin-new admin-new--open" onSubmit={create}>
+      <h2>A new letter</h2>
+      <p className="editor-hint">
+        Start a private draft. Next, add your photographs and make the text your
+        own.
+      </p>
       <div className="admin-new-fields">
         <div>
           <label htmlFor="new-title" className="meta field-label">
-            Title
+            Title for your desk
           </label>
           <input
             id="new-title"
             className="field"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            disabled={saving}
             maxLength={200}
             required
             autoFocus
@@ -102,37 +110,40 @@ export function NewLetter() {
             className="field"
             value={recipient}
             onChange={(event) => setRecipient(event.target.value)}
+            disabled={saving}
             maxLength={200}
             placeholder="Who you wrote it for"
           />
         </div>
       </div>
 
-      <div className="admin-new-slug">
+      <details className="admin-new-slug">
+        <summary>Customize the link</summary>
         <label htmlFor="new-slug" className="meta field-label">
           Link <span className="admin-new-optional">optional</span>
         </label>
         <div className="admin-new-slug-field">
           <span className="admin-new-slug-prefix" aria-hidden="true">
-            from-anna.vercel.app/
+            /
           </span>
           <input
             id="new-slug"
             className="field"
             value={slug}
             onChange={(event) => setSlug(event.target.value)}
+            disabled={saving}
             maxLength={80}
             placeholder="made from the title and today’s date"
             aria-describedby="new-slug-hint"
           />
         </div>
-      </div>
+      </details>
 
       <p className="editor-hint" id="new-slug-hint">
-        The title is for you, but the link is made from it unless you type
-        one, so keep it something you would not mind in an address. The
-        recipient shows at the top of the letter as “from anna to …”. It
-        starts as a draft, which only you can open.
+        The title is for you, but the link is made from it unless you type one,
+        so keep it something you would not mind in an address. The recipient
+        shows at the top of the letter as “from anna to …”. It starts as a
+        draft, which only you can open.
       </p>
 
       <div className="editor-bar">
@@ -143,11 +154,12 @@ export function NewLetter() {
           data-busy={saving ? 'true' : 'false'}
           aria-busy={saving}
         >
-          {saving ? 'Starting…' : 'Start it'}
+          {saving ? 'Starting…' : 'Create draft'}
         </button>
         <button
           type="button"
           className="pill"
+          disabled={saving}
           onClick={() => {
             setOpen(false)
             setError('')

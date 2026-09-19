@@ -127,9 +127,15 @@ export default async function LetterPage({
         alt={page.alt}
         width={page.width}
         height={page.height}
-        // Everything but the opening is below the fold, and each sheet is
-        // large enough to zoom into.
+        // The opening is an envelope now and carries no photograph, so nothing
+        // here is ever the first paint. Each sheet is also large enough to
+        // zoom into, which is a reason not to fetch them all eagerly.
         priority={false}
+        // One centred column, capped by `.sheet-frame`. The package's default
+        // describes the two-column spread this used to be, and left alone it
+        // would send a wide screen the 2400px archive copy for a photograph
+        // laid out at half that.
+        sizes="(min-width: 700px) 33rem, calc(100vw - 5rem)"
       />
     ),
     prose: (
@@ -140,8 +146,6 @@ export default async function LetterPage({
       />
     ),
   }))
-
-  const first = pages[0]
 
   return (
     <LetterView
@@ -154,27 +158,6 @@ export default async function LetterPage({
       writeBackEmail={process.env.WRITE_BACK_EMAIL || null}
       tags={HIGHLIGHT_TAGS}
       sheets={sheets}
-      heroPhoto={
-        first ? (
-          <ScannedPhoto
-            imageSrc={photoSrc(first.index)}
-            screenSrc={
-              first.screenBlobUrl
-                ? `${photoSrc(first.index)}?size=screen`
-                : undefined
-            }
-            screenWidth={first.screenWidth ?? undefined}
-            // Deliberately empty: the same sheet appears again below with its
-            // real description and its transcription attached. Describing it
-            // twice makes the spoken page longer than the letter, and the
-            // wrapper in the hero is `aria-hidden` for the same reason.
-            alt=""
-            width={first.width}
-            height={first.height}
-            priority
-          />
-        ) : null
-      }
     />
   )
 }

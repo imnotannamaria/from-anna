@@ -2,10 +2,13 @@ import { del } from '@vercel/blob'
 import type { NextRequest } from 'next/server'
 
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
+import { validateLetterDetails } from '@/lib/letters/details'
 import {
   deleteLetter,
+  getLetterWithPages,
   saveMdContent,
   setLetterStatus,
+  updateLetterDetails,
 } from '@/lib/letters/mutations'
 
 export const dynamic = 'force-dynamic'
@@ -36,6 +39,8 @@ export async function PATCH(
   const { id } = await params
 
   const body = (await request.json().catch(() => null)) as {
+    title?: unknown
+    recipient?: unknown
     mdContent?: unknown
     status?: unknown
     expiresAt?: unknown
@@ -43,6 +48,36 @@ export async function PATCH(
 
   if (!body) {
     return Response.json({ error: 'Expected a JSON body.' }, { status: 400 })
+  }
+
+  // One kind of change per request: the text, the details, or the status and
+  // expiry. Each branch below returns, so a body that mixed two used to save
+  // the first and drop the rest without saying so.
+  const kinds = [
+    body.mdContent !== undefined,
+    body.title !== undefined || body.recipient !== undefined,
+    body.status !== undefined || body.expiresAt !== undefined,
+  ].filter(Boolean).length
+  if (kinds > 1) {
+    return Response.json(
+      {
+        error:
+          'Send the text, the details, or the status and expiry, one at a time.',
+      },
+      { status: 400 },
+    )
+  }
+
+  if (body.title !== undefined || body.recipient !== undefined) {
+    const details = validateLetterDetails(body)
+    if (!details.ok)
+      return Response.json({ error: details.error }, { status: 400 })
+    const row = await updateLetterDetails(id, {
+      title: details.title,
+      recipient: details.recipient,
+    })
+    if (!row) return new Response('Not found', { status: 404 })
+    return Response.json({ title: row.title, recipient: row.recipient })
   }
 
   // Validated on the server, not just in the form.
@@ -62,11 +97,32 @@ export async function PATCH(
     return Response.json({ savedAt: row.updatedAt })
   }
 
-  if (body.status !== undefined && body.status !== 'draft' && body.status !== 'published') {
+  if (
+    body.status !== undefined &&
+    body.status !== 'draft' &&
+    body.status !== 'published'
+  ) {
     return Response.json(
       { error: 'status must be draft or published.' },
       { status: 400 },
     )
+  }
+
+  // The desk disables Publish until there is a photograph and saved text, and
+  // the same rule holds here: a link that opens on an empty letter is the one
+  // mistake the recipient sees.
+  if (body.status === 'published') {
+    const current = await getLetterWithPages(id)
+    if (!current) return new Response('Not found', { status: 404 })
+    if (current.pages.length === 0 || !current.letter.mdContent.trim()) {
+      return Response.json(
+        {
+          error:
+            'Add a photograph and save the transcription before publishing.',
+        },
+        { status: 409 },
+      )
+    }
   }
 
   let expiresAt: Date | null | undefined

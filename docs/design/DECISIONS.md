@@ -4,13 +4,13 @@ Decision log. X because Y. Closed on 2026-09-09, from a design comp reviewed aga
 
 ---
 
-**The photograph goes sticky beside a scrolling transcription, on desktop** — because a portrait photo and its transcription were fighting for the same screen, and pinning one while the other moves reads like sitting with the letter instead of paging through a document.
+~~**The photograph goes sticky beside a scrolling transcription, on desktop.**~~ **Replaced by the envelope refactor.** See *The envelope* at the end.
 
-**Page-turn navigation is removed on desktop and kept on mobile** — because the sticky sections replace it where they exist, and nothing replaces it where they don't.
+~~**Page-turn navigation is removed on desktop and kept on mobile.**~~ **Reversed by the envelope refactor.** It is back, at every width. See *The envelope*.
 
-**Each photographed sheet becomes its own sticky section, stacked down the scroll** — because a letter is read in the order it was written, and stacking preserves that without asking anyone to find a control.
+~~**Each photographed sheet becomes its own sticky section, stacked down the scroll.**~~ **Replaced by the deck.** The order it argues for survives; the stacking does not. See *The envelope*.
 
-**Mobile keeps the toggle that already exists: photo first, one tap to the transcription** — because neither half survives being half a phone wide, and the handwriting is what someone opened the link to see.
+~~**Mobile keeps the toggle that already exists: photo first, one tap to the transcription.**~~ **Replaced by the two-faced sheet**, which is the same toggle at every width and attached to the sheet rather than the bar. The order was already reversed once, below, under *After the first deploy*. See *The envelope*.
 
 ~~**Crop regions, and a photograph that zooms to follow the passage being read.**~~ **Built, looked at, removed.** See *Reversed after building it* at the end.
 
@@ -24,7 +24,7 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 ~~**The letter is named by the three words of its slug.**~~ **Replaced after the first deploy.** Read on a real letter, `thirsty · gate · pier` meant nothing to anyone, including me. See *After the first deploy*.
 
-**The reader is shown their own reading progress**, as a thin bar at the top — it says how far down the letter you are, which is useful on its own.
+**The reader is shown their own reading progress** — it says how far through the letter you are, which is useful on its own. It was a thin bar measuring scroll; with the deck it is *sheet n of m*, which is the same fact stated exactly instead of approximately. See *The envelope*.
 
 ~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described has not changed: one row per open, deduplicated per session, no IP.
 
@@ -52,7 +52,7 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 **The privacy line uses `--fg-secondary`, not `--fg-muted`** — because the blush band is a darker ground than the paper and muted does not reach AA on it. Measured against the blush, as the phase said to.
 
-**The display face is Fraunces; the letter stays in Newsreader** — because a headline can afford an irregular old-style serif and four hundred words of transcription cannot. Fraunces' `SOFT` and `WONK` axes are the warm, hand-cut feel that was wanted; the same irregularities are friction at reading size.
+~~**The display face is Fraunces**~~; **the letter stays in Newsreader.** The second half holds and is the durable part: a headline can afford a face that four hundred words of transcription cannot. Fraunces itself was replaced, twice. See *The face on the front*.
 
 **WindsorEF and Ano were considered and not used** — because both are commercial licences, and a public repository cannot ship the font files. Buying a webfont licence and gitignoring the files would mean `npm install && npm run dev` no longer renders the project as designed for anyone who clones it.
 
@@ -165,3 +165,155 @@ Read on a real letter, on a real phone, at `from-anna.vercel.app`.
 **The editor preview draws the brackets and the highlight sweep** — it is `.letter-prose` and `data-revealed` on the same element, which the descendant selectors never matched, so a theme drew its label and no bracket there.
 
 **On a phone the transcription shows first, the photograph one tap away** — the opening has just shown the photograph at full size, so starting the sheets on it again read as photo, photo, then the words. With no JavaScript there is no toggle, and the half that shows has to be the one you can read.
+
+---
+
+## The envelope
+
+The second reversal, and a larger one than the first. The order of work is in
+`REFACTOR.md` next door; what follows is why.
+
+**The letter is opened, not scrolled** — because the sticky spread answered a
+layout question correctly and the wrong question. Two columns moving past each
+other is a good way to show a document; a letter is not a document, it is an
+object somebody sent you. Everything below follows from that one sentence, and
+each piece of it was built and deployed before it was replaced.
+
+**Page-turn navigation comes back at every width** — because the deck is the
+reading model now, not a fallback for the widths where sticky did not fit. It was
+removed on desktop for a good reason that no longer applies.
+
+**An inactive sheet is `display: none`, never a transform or an opacity** —
+because an element that is merely moved or faded is still laid out, still
+intersecting, and `reachedEnd` is an `IntersectionObserver`. Left laid out, every
+open would record a full read, the table would fill with plausible rows and
+nothing would error. The measurement is the reason the `View` table exists; a
+quietly wrong one is worse than none.
+
+**The photograph is the back of the sheet** — because it is the back of the
+sheet. The front is what you can read and the back is what was written, and it is
+one object either way. It also ends a split that had been managed rather than
+solved: the photo/transcription toggle existed only below 900px, so the two
+widths had been showing the same letter two different ways.
+
+**The transcription stays the face that shows first, and stays in the server
+HTML** — unchanged, and the one rule none of this gets to bend. An image of text
+is invisible to a screen reader, so the transcription is the content. A toggle is
+fine; a toggle whose readable half only exists after hydration is not.
+
+**The deck's controls are round, which needs `.pill--icon`** — because an arrow
+is not a word and the pill was built around a word. Every other button in the
+project stays a pill. The arrows keep a real accessible name and the sheet change
+is announced, because a control with no text is exactly the one that needs both.
+
+**Opening the envelope is not measured** — because it would need a column and a
+write, and `View` has five fields on purpose. *Opened the link* against *reached
+the end* is the distinction that was missing, and it already exists.
+
+**No sound (superseded by Tactile refinement below)** — because audio needs files in the repository, a control that
+persists, nothing playing before an interaction, and `prefers-reduced-motion`
+says nothing about it. It is a decision of its own and this is not it.
+
+**The opening is CSS keyframes, and `motion` was removed from the project** —
+because it was about 40KB of bundle for one sequence that three `@keyframes`
+do perfectly well, on a page whose whole argument is that the words arrive
+fast. The plan named it as the reason to finally use a dependency that had sat
+unused since it was added; measured against what it would buy, the honest
+answer was to take the dependency out instead. The lockfile was regenerated on
+Linux and the change is four packages removed and nothing else moved.
+
+CSS also gets the `prefers-reduced-motion` reset for free. The **handover** is
+still asked in JavaScript — `openLetter()` checks the media query itself and
+opens the letter with no sequence at all — because zeroing an animation would
+otherwise leave the letter waiting on an `animationend` that never fires. That
+is the shape of the rule: the reset covers how it looks, never when something
+happens.
+
+**The first opening animated a blank stand-in (superseded by Tactile refinement below)** — the real
+sheet is a transcription of whatever height it turned out to be, and animating
+it would mean compositing a few hundred words and a photograph while the
+reader waits for exactly those words. The folded sheet that comes out of the
+envelope is a drawn rectangle with two creases across it.
+
+**The envelope is drawn, not loaded** — same as the fanned sheets it replaces and
+the favicon: shapes in CSS and inline SVG, from the paper and ink tokens, costing
+no request and theming with everything else. The stamp and the postmark are
+generic. A real postal authority's stamp is somebody's artwork.
+
+**Nothing from the letter goes on the envelope** — not a line, not the title. The
+recipient's name is already on the published page and tells the reader nothing
+they did not know; that is the whole of what it may say.
+
+---
+
+## The face on the front
+
+> **Superseded (September 2026).** The site now ships two families: Newsreader
+> for everything that is read, the envelope's address in its italic, and
+> JetBrains Mono for every label and control. Caveat and Inter are gone. See
+> *The writing desk* below. What follows is kept as the history of how it got
+> there.
+
+**The display face is Caveat, the same hand that writes the envelope** — because
+a site about letters written by hand sets its headings in one. The address is at
+400 and every heading at 700, and Caveat is variable, so that is one file.
+
+It took two goes to get here, and both are worth keeping written down.
+
+~~**Fraunces**~~ was chosen for `SOFT` and `WONK`, the axes that make it
+irregular, and on warm paper at headline size it read as fussy rather than
+hand-cut.
+
+~~**Instrument Serif**~~ replaced it on an argument that was sound and produced
+the wrong thing: `.display em` needs a real italic, and of the serif candidates
+only Instrument Serif had one. It was correct and cold. **A defensible reason is
+not the same as a good result** — a display face decides how a site sounds, and
+that is not settled by a constraint check.
+
+**The italic went with it, and colour carries the emphasis alone** — a hand has
+no italic, so `font-style: italic` synthesises a slant on something already
+slanted, which reads as a rendering fault rather than as emphasis. Those `em`
+elements were already brand-coloured and are now only that. Colour is not
+carrying meaning here, only emphasis a sighted reader gets as a bonus: the
+sentences read the same without it, which is the test WCAG 1.4.1 asks.
+
+**The weight fell at every step, and the last step dropped a whole family** —
+Fraunces served 270KB of preloaded woff2 on every page. Instrument Serif plus
+Caveat was 105KB. Caveat alone is 74.5KB, which is 30KB less than the step
+before it: the envelope needed the hand anyway, so the second family was the
+part that was optional. 196KB less than where this started. All measured from
+clean builds, because a stale `.next` will happily report any of these numbers.
+
+**`--font-hand` and `--font-display` stay separate names** — they resolve to the
+same face today and mean different things: one is *written by a person*, the
+other is *this is a heading*. They need not always agree.
+
+**It comes from Google Fonts through `next/font`** — because the repository is
+public and a commercial webfont cannot ship in it, which is the same constraint
+that ruled out WindsorEF and Ano. And through `next/font` specifically, never an
+`@import url(...)`: the build drops a remote import without a warning, which is
+how every page on this site was set in Times New Roman for a full deploy.
+
+## Tactile refinement
+
+- The envelope starts sealed and tears open along a strip across the top because the opening needs a visible cause before the paper moves.
+- The insert and envelope move independently because fading their shared parent made the paper disappear before it became the reading surface.
+- The real sheet settles with transforms at full text opacity because continuity should not cost readable contrast.
+- Home and letter share the opening controller because interruption, focus and reduced motion must behave identically.
+- Closing returns the letter to its envelope without navigation because handling paper should be reversible and must not record another view.
+- Short tear and paper-turn sounds are generated offline with ElevenLabs because tactile feedback needs no runtime API, SDK or exposed key.
+- The sounds start on, and the reader can mute them persistently, because the tear is part of opening the letter; they only ever play after the reader's own click.
+- Stack edges skew rather than rotate because a rotated decoration on a very long sheet creates horizontal overflow on phones.
+
+## The writing desk
+
+- Photos, writing and sharing are steps in one mounted workspace because changing tasks must not discard unsaved text or prepared images.
+- The reference photograph sits beside the editor because correcting handwriting should not require scrolling between two sections.
+- Visual marking uses numeric source positions added by the package after sanitizing because repeated words must map to their exact markdown occurrence without a second renderer or a looser sanitize schema.
+- Saving remains explicit because saving a published letter changes what its recipient can read.
+- Publishing waits for saved text and uploaded photos because the recipient should receive the version the author just reviewed.
+- Analytics and destructive settings are secondary because the desk's primary task is making and finding letters.
+- Newsreader replaces Caveat in editorial and admin headings because longer titles need a calmer, more legible shape.
+- Two families, Newsreader and JetBrains Mono, and no third, because four faces on one page (a hand, a sans, a serif and a mono) read as four voices; the envelope and the wordmark use Newsreader's italic, and the admin's controls are the same mono pills as the public site.
+- A disclosure's summary is a `.meta` label with a drawn chevron because the browser's triangle is a glyph from outside this design.
+- Choosing a reference sheet is a row of numbered pills, not a native `<select>`, because a letter has two or three sheets and a menu hides a three-way choice behind a click in the browser's style.

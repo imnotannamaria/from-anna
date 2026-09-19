@@ -1,3 +1,5 @@
+import { highlightRanges } from './edit-highlight.js'
+
 /**
  * Wrapping a selection in a highlight directive.
  *
@@ -43,7 +45,14 @@ export function wrapSelection(
 
   const selected = value.slice(from, to)
 
-  if (selected.includes(':mark[')) {
+  if (
+    selected.includes(':mark[') ||
+    highlightRanges(value).some(
+      (range) =>
+        (from < range.end && to > range.start) ||
+        (from === to && from > range.start && from < range.end),
+    )
+  ) {
     return {
       status: 'refused',
       reason: 'nested',
@@ -54,7 +63,8 @@ export function wrapSelection(
 
   const opening = ':mark['
   const closing = `]{c=${tag}}`
-  const next = value.slice(0, from) + opening + selected + closing + value.slice(to)
+  const next =
+    value.slice(0, from) + opening + selected + closing + value.slice(to)
 
   // With a selection, keep it selected inside the brackets so it can be
   // replaced or extended. With none, the caret sits where the text goes.
@@ -240,7 +250,11 @@ export function wrapTheme(
   const around = openContainers(value.slice(0, lines.start).split('\n'))
   const inside = openContainers(selected.split('\n'))
 
-  if (around?.includes('theme') || inside?.includes('theme') || /^\s*:{3,}\s*theme/m.test(selected)) {
+  if (
+    around?.includes('theme') ||
+    inside?.includes('theme') ||
+    /^\s*:{3,}\s*theme/m.test(selected)
+  ) {
     return {
       status: 'refused',
       reason: 'nested',

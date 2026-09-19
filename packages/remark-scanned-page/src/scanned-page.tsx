@@ -19,6 +19,17 @@ type PhotoProps = {
   height: number
   /** Photos below the fold should not block the first paint. */
   priority?: boolean
+  /**
+   * What width the photo will actually be laid out at, as a `sizes` string.
+   *
+   * Only a layout knows this, and getting it wrong is what makes `srcset`
+   * pointless: too large and a phone downloads the archive copy anyway, too
+   * small and a wide screen gets a soft photograph of handwriting.
+   *
+   * The default describes a two-column spread, which is what this was written
+   * against. A consumer laying the sheet out any other way should say so.
+   */
+  sizes?: string
   className?: string
 }
 
@@ -38,6 +49,7 @@ export function ScannedPhoto({
   width,
   height,
   priority = false,
+  sizes = '(min-width: 900px) 50vw, 100vw',
   className,
 }: PhotoProps) {
   /*
@@ -57,10 +69,9 @@ export function ScannedPhoto({
     <img
       src={imageSrc}
       srcSet={srcSet}
-      // A sheet is one column of the reading layout at most, and full width on
-      // a phone. Without this the browser assumes 100vw and picks the large
-      // file for a 390px screen.
-      sizes={srcSet ? '(min-width: 900px) 50vw, 100vw' : undefined}
+      // Without this the browser assumes 100vw and picks the large file for a
+      // 390px screen. It only means anything alongside `srcSet`.
+      sizes={srcSet ? sizes : undefined}
       alt={alt}
       width={width}
       height={height}

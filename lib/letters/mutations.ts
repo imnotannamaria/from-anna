@@ -287,3 +287,24 @@ export async function seedMdContent(letterId: string, seeded: string) {
 
   return { seeded: true, reason: null }
 }
+
+/** Renaming a letter never changes an already shared URL. */
+export async function updateLetterDetails(
+  letterId: string,
+  details: { title: string; recipient?: string | null },
+) {
+  if (!isLetterId(letterId)) return null
+  const [row] = await getDb()
+    .update(letters)
+    .set({
+      title: details.title,
+      // `undefined` leaves the column alone rather than clearing it.
+      ...(details.recipient !== undefined
+        ? { recipient: details.recipient }
+        : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(letters.id, letterId))
+    .returning()
+  return row ?? null
+}
