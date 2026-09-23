@@ -10,7 +10,7 @@ const REPO = 'https://github.com/imnotannamaria/from-anna'
 /** Where you install it from. The source lives at `${REPO}` alongside it. */
 const PACKAGE = 'https://www.npmjs.com/package/remark-scanned-page'
 const PACKAGE_SOURCE = `${REPO}/tree/main/packages/remark-scanned-page`
-const PORTFOLIO = 'https://annamaria.app'
+const MY_SITE = 'https://annamaria.app'
 
 export const metadata: Metadata = {
   title: 'from anna · handwritten letters, published',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
  *
  * Not `aria-hidden`: this is the only place these words appear.
  */
-const OPENING = `Hi, whoever is testing this site. I'm Anna,
+const OPENING = `Hi, whoever is reading this. I'm Anna,
 and I built it because:
 
 A few days ago I got a notebook and realised it
@@ -125,7 +125,7 @@ export default function Home() {
           />
           <p className="home-sign">
             Anna ·{' '}
-            <ExternalLink href={PORTFOLIO} className="home-link">
+            <ExternalLink href={MY_SITE} className="home-link">
               annamaria.app
             </ExternalLink>
           </p>
@@ -328,7 +328,7 @@ npm run dev`}</code>
             MIT
           </ExternalLink>
           <span aria-hidden="true"> · </span>
-          <ExternalLink href={PORTFOLIO} className="home-link">
+          <ExternalLink href={MY_SITE} className="home-link">
             anna
           </ExternalLink>
         </p>

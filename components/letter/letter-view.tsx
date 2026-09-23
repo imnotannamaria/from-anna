@@ -6,6 +6,7 @@ import { DeckControls } from './deck-controls'
 import { EnvelopeStage } from './envelope-stage'
 import { SoundToggle } from './sound-toggle'
 import { useEnvelope } from './use-envelope'
+import { PhotoFrame } from '@/components/ui/photo-frame'
 import { playPaperSound } from '@/lib/paper-sounds'
 import { LetterCoda } from './letter-coda'
 import { ReaderBar } from './reader-bar'
@@ -459,10 +460,13 @@ export function LetterView({
                         aria-disabled={turning || envelope.busy}
                         data-busy={envelope.phase === 'closing' || undefined}
                         aria-busy={envelope.phase === 'closing'}
-                        onClick={() => {
+                        onClick={(event) => {
                           if (!turnLock.current) {
                             window.scrollTo({ top: 0, behavior: 'instant' })
-                            envelope.closeLetter()
+                            // `detail` is 0 when Enter or Space made the click.
+                            envelope.closeLetter({
+                              keyboard: event.detail === 0,
+                            })
                           }
                         }}
                       >
@@ -485,7 +489,16 @@ export function LetterView({
                 <div className="sheet-face sheet-face--front">{item.prose}</div>
 
                 <div className="sheet-face sheet-face--back">
-                  <div className="sheet-frame">{item.photo}</div>
+                  <PhotoFrame
+                    className="sheet-frame"
+                    // The sheet on top, once the letter is open: its photo
+                    // downloads while the words are being read, so turning
+                    // the sheet over is not a wait. Never all of them — each
+                    // one is large enough to zoom into.
+                    warm={enhanced && envelope.phase === 'open' && i === sheet}
+                  >
+                    {item.photo}
+                  </PhotoFrame>
                 </div>
                 <span className="paper-fold-line" aria-hidden="true" />
               </div>
