@@ -7,6 +7,7 @@ import {
   wrapSelection,
   wrapTheme,
 } from 'remark-scanned-page'
+import { PhotoFrame } from '@/components/ui/photo-frame'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { normaliseCase } from '@/lib/transcription/normalize-case'
 import {
@@ -50,6 +51,20 @@ export function TranscriptionEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
   const saveLock = useRef(false)
+  const stickyRef = useRef<HTMLDivElement>(null)
+
+  // The sticky block changes height — a hint appears, the theme form opens,
+  // the toolbar wraps — so its height is measured, never assumed.
+  useEffect(() => {
+    const bar = stickyRef.current
+    const host = bar?.parentElement
+    if (!bar || !host) return
+    const observer = new ResizeObserver(() => {
+      host.style.setProperty('--desk-sticky-h', `${bar.offsetHeight}px`)
+    })
+    observer.observe(bar)
+    return () => observer.disconnect()
+  }, [])
 
   if (initialMdContent !== fromServer) {
     setFromServer(initialMdContent)
@@ -287,34 +302,6 @@ export function TranscriptionEditor({
         }
       }}
     >
-      <div className="writing-savebar">
-        <div>
-          <span className="save-state" data-dirty={dirty}>
-            {saving
-              ? 'Saving…'
-              : dirty
-                ? 'Unsaved changes'
-                : 'All changes saved'}
-          </span>
-          <p className="editor-hint">
-            {published
-              ? 'Saving updates the letter your recipient can read.'
-              : 'Only you can see this draft.'}
-          </p>
-        </div>
-        <button
-          className="pill pill--solid"
-          type="button"
-          disabled={saving || !dirty}
-          data-busy={saving}
-          aria-busy={saving}
-          onClick={save}
-        >
-          {/* Disabled with nothing to save, and it says so: a solid button
-              that reads "Save changes" but will not click looks broken. */}
-          {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
-        </button>
-      </div>
       <div className="writing-tools">
         <div className="segmented" role="group" aria-label="Editing mode">
           <button
@@ -370,81 +357,118 @@ export function TranscriptionEditor({
           )}
         </div>
       </div>
-      <div className="mark-toolbar" aria-label="Mark selected words">
-        <span className="editor-hint">
-          {selection?.mark
-            ? 'Selected highlight'
-            : selection
-              ? 'Selected words'
-              : 'Select words to mark'}
-        </span>
-        {HIGHLIGHT_TAGS.map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            className="pill tag-button"
-            data-tag={tag}
-            disabled={
-              !selection || (value !== previewSource && mode === 'mark')
-            }
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => highlight(tag)}
-          >
-            <span className="tag-swatch" aria-hidden="true" />
-            {tag === 'important'
-              ? 'Important'
-              : tag === 'note'
-                ? 'Note'
-                : 'Question'}
-          </button>
-        ))}
-        {selection?.mark ? (
-          <button
-            className="pill"
-            type="button"
-            onClick={() => highlight(null)}
-          >
-            Remove highlight
-          </button>
-        ) : (
-          <button
-            className="pill"
-            type="button"
-            disabled={!selection}
-            onClick={() => setThemeOpen(!themeOpen)}
-          >
-            Group paragraphs
-          </button>
-        )}
-      </div>
-      {themeOpen && (
-        <form className="theme-form" onSubmit={groupTheme}>
-          <label htmlFor="theme-name">Name this theme</label>
-          <input
-            id="theme-name"
-            className="field"
-            value={themeName}
-            onChange={(event) => setThemeName(event.target.value)}
-            maxLength={100}
-            required
-            placeholder="For example: a small thing to remember"
-          />
+      {/*
+        One sticky block, not two. The save bar and the mark toolbar used to
+        stick separately at guessed offsets (0.5rem and 7rem), so the text
+        showed through the gap between them and the reference photograph,
+        stuck at the same 7rem, sat behind the toolbar. Its real height is
+        measured below and the photograph sticks under it.
+      */}
+      <div className="writing-sticky" ref={stickyRef}>
+        <div className="writing-savebar" data-dirty={dirty}>
+          <div>
+            <span className="save-state" data-dirty={dirty}>
+              {saving
+                ? 'Saving…'
+                : dirty
+                  ? 'Unsaved changes'
+                  : 'All changes saved'}
+            </span>
+            <p className="editor-hint">
+              {published
+                ? 'Saving updates the letter your recipient can read.'
+                : 'Only you can see this draft.'}
+            </p>
+          </div>
           <button
             className="pill pill--solid"
-            disabled={!selection}
-            type="submit"
-          >
-            Add theme
-          </button>
-          <button
-            className="pill"
             type="button"
-            onClick={() => setThemeOpen(false)}
+            disabled={saving || !dirty}
+            data-busy={saving}
+            aria-busy={saving}
+            onClick={save}
           >
-            Cancel
+            {/* Disabled with nothing to save, and it says so: a solid button
+                that reads "Save changes" but will not click looks broken. */}
+            {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
           </button>
-        </form>
-      )}
+        </div>
+        <div className="mark-toolbar" aria-label="Mark selected words">
+          <span className="editor-hint">
+            {selection?.mark
+              ? 'Selected highlight'
+              : selection
+                ? 'Selected words'
+                : 'Select words to mark'}
+          </span>
+          {HIGHLIGHT_TAGS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              className="pill tag-button"
+              data-tag={tag}
+              disabled={
+                !selection || (value !== previewSource && mode === 'mark')
+              }
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => highlight(tag)}
+            >
+              <span className="tag-swatch" aria-hidden="true" />
+              {tag === 'important'
+                ? 'Important'
+                : tag === 'note'
+                  ? 'Note'
+                  : 'Question'}
+            </button>
+          ))}
+          {selection?.mark ? (
+            <button
+              className="pill"
+              type="button"
+              onClick={() => highlight(null)}
+            >
+              Remove highlight
+            </button>
+          ) : (
+            <button
+              className="pill"
+              type="button"
+              disabled={!selection}
+              onClick={() => setThemeOpen(!themeOpen)}
+            >
+              Group paragraphs
+            </button>
+          )}
+        </div>
+        {themeOpen && (
+          <form className="theme-form" onSubmit={groupTheme}>
+            <label htmlFor="theme-name">Name this theme</label>
+            <input
+              id="theme-name"
+              className="field"
+              value={themeName}
+              onChange={(event) => setThemeName(event.target.value)}
+              maxLength={100}
+              required
+              placeholder="For example: a small thing to remember"
+            />
+            <button
+              className="pill pill--solid"
+              disabled={!selection}
+              type="submit"
+            >
+              Add theme
+            </button>
+            <button
+              className="pill"
+              type="button"
+              onClick={() => setThemeOpen(false)}
+            >
+              Cancel
+            </button>
+          </form>
+        )}
+      </div>
       <p className="editor-status" role="status" data-failed={failed}>
         {message}
       </p>
@@ -550,7 +574,13 @@ export function TranscriptionEditor({
                 </div>
               )}
             </div>
-            <div className="reference-photo">{photos[photo] ?? photos[0]}</div>
+            <div className="reference-photo">
+              {/* Keyed, so choosing another sheet starts its own loading
+                  state instead of inheriting "loaded" from the last one. */}
+              <PhotoFrame key={photo} warm>
+                {photos[photo] ?? photos[0]}
+              </PhotoFrame>
+            </div>
             <p className="editor-hint">
               Compare the handwriting while you correct the text.
             </p>

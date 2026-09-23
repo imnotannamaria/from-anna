@@ -90,6 +90,10 @@ What went with it, and why the whole chain went rather than just the animation:
 
 **Skeletons are shaped like the thing they stand in for, and every one is `aria-hidden`** — a dozen grey rectangles read out one at a time is worse than silence, so one live line does the announcing.
 
+**A photograph shows a skeleton until it arrives, and says so when it does not** — the photos come through a Function reading a private store, so a slow one left a blank frame that looked like a broken page. The state is set on mount, never in the server HTML, so with no script the photograph is exactly what was sent.
+
+**The sheet that is open fetches its photograph while it is read** — the back of a sheet is `display: none` and a lazy image that is not laid out is never requested, so the download used to start at the tap on "View original photo". Only the sheet on top is warmed; each photograph is large enough to zoom into, which is still a reason not to fetch them all.
+
 **The typed line is CSS, not JavaScript** — because it has to work inside a `loading.tsx`, which is a file that sometimes exists for four hundred milliseconds and cannot wait for hydration to say anything. The text is clipped rather than built up, so a screen reader gets the sentence and not the performance.
 
 **The favicon is drawn shapes, no letterform** — a favicon is 16px before it is anything else, and a glyph there would depend on a font the browser has no reason to have.
@@ -304,6 +308,9 @@ how every page on this site was set in Times New Roman for a full deploy.
 - Short tear and paper-turn sounds are generated offline with ElevenLabs because tactile feedback needs no runtime API, SDK or exposed key.
 - The sounds start on, and the reader can mute them persistently, because the tear is part of opening the letter; they only ever play after the reader's own click.
 - Stack edges skew rather than rotate because a rotated decoration on a very long sheet creates horizontal overflow on phones.
+- The envelope's focus ring is on "Open the letter", not around the whole invitation, because a ring as wide as the screen ran into the viewport edge on a phone and framed the drawing instead of the control.
+- Focus returned to the envelope after a tap draws no ring, because focus moved by a script matches `:focus-visible` in some browsers whatever the last input was, and a phone showed a keyboard ring after every close.
+- A pill's focus indicator is one paper halo and a brand edge, for `<a>` and `<button>` alike, because link pills drew the global outline and the pill ring together, with a gap between them.
 
 ## The writing desk
 
@@ -316,4 +323,6 @@ how every page on this site was set in Times New Roman for a full deploy.
 - Newsreader replaces Caveat in editorial and admin headings because longer titles need a calmer, more legible shape.
 - Two families, Newsreader and JetBrains Mono, and no third, because four faces on one page (a hand, a sans, a serif and a mono) read as four voices; the envelope and the wordmark use Newsreader's italic, and the admin's controls are the same mono pills as the public site.
 - A disclosure's summary is a `.meta` label with a drawn chevron because the browser's triangle is a glyph from outside this design.
+- The save bar and the mark toolbar are one sticky block whose height is measured, because two bars stuck at guessed offsets let the text show through between them and hid the top of the reference photograph behind the toolbar.
+- On a phone the save bar is one line and the mark toolbar scrolls sideways, because the two sticky bars took about 40% of a 667px screen; the save bar's warning appears only when there is something unsaved.
 - Choosing a reference sheet is a row of numbered pills, not a native `<select>`, because a letter has two or three sheets and a menu hides a three-way choice behind a click in the browser's style.

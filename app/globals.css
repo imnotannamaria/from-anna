@@ -1045,10 +1045,31 @@ body::before {
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
+/*
+   The ring goes on the words, not the whole invitation. Around the link it was
+   a box as wide as the screen with a 12px offset, which on a phone ran into
+   the viewport edge and framed the envelope rather than pointing at what to
+   press. The envelope lifts the way it does on hover, so the whole object
+   still says it is the thing in focus.
+*/
 .envelope-invitation:focus-visible {
+  outline: none;
+}
+.envelope-invitation:focus-visible .envelope-open {
   outline: 2px solid var(--fg-brand);
-  outline-offset: 12px;
-  border-radius: 4px;
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.envelope-invitation:focus-visible .envelope-body {
+  transform: translateY(-7px) rotate(-2deg);
+}
+/* Focus handed back by a script after a tap, not reached by a key. See
+   `returnQuietly` in `use-envelope.ts`. */
+.envelope-invitation[data-quiet-focus]:focus-visible .envelope-open {
+  outline: none;
+}
+.envelope-invitation[data-quiet-focus]:focus-visible .envelope-body {
+  transform: rotate(-5deg);
 }
 .envelope {
   width: 100%;
@@ -1585,10 +1606,23 @@ body::before {
    each one draws its own. Nothing did, so a keyboard reader turning sheets
    could not see where they were. A ring, not an outline, so it follows the
    radius. */
-.pill:focus-visible,
-.chip:focus-visible {
+/* One ring, for a link or a button alike. A pill that is an `<a>` also
+   matched the global outline above, and drew both, with a gap between them.
+   A 35% ring alone all but vanished on the solid pill, so this is a paper
+   halo and a solid brand edge, which reads on either. The `:not(:disabled)`
+   is specificity: without it the hover shadow replaced the ring. */
+.pill:focus-visible:not(:disabled),
+.chip:focus-visible:not(:disabled) {
+  outline: none;
   border-color: var(--fg-brand);
-  box-shadow: 0 0 0 3px var(--ring);
+  box-shadow:
+    0 0 0 2px var(--bg-canvas),
+    0 0 0 4px var(--fg-brand);
+}
+
+/* A text link's outline follows the words rather than a hard box. */
+a:not(.pill):focus-visible {
+  border-radius: 3px;
 }
 
 /*
@@ -2701,6 +2735,83 @@ summary:hover {
   opacity: 1;
 }
 
+/* ---- a photograph on its way ----------------------------------------
+
+   `PhotoFrame` writes `data-state` once mounted. With no script there is no
+   attribute, nothing here matches, and the photograph is what the server
+   sent. The box is already reserved by the image's own width and height, so
+   the skeleton only fills a space that exists anyway.
+   -------------------------------------------------------------------- */
+
+.photo-frame {
+  position: relative;
+}
+
+.photo-frame-status {
+  display: none;
+}
+
+.photo-frame[data-state="loading"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 0%,
+    color-mix(in srgb, var(--border-subtle) 55%, var(--bg-surface)) 45%,
+    var(--bg-surface) 90%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.photo-frame[data-state="loading"] > [data-for="loading"],
+.photo-frame[data-state="failed"] > [data-for="failed"] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.photo-frame-status p {
+  margin: 0;
+  font: 400 0.95rem/1.5 var(--font-serif);
+  color: var(--fg-secondary);
+}
+
+/* A broken-image icon from the browser is not part of this design. */
+.photo-frame[data-state="failed"] img {
+  visibility: hidden;
+}
+
+.photo-frame[data-state="failed"] {
+  background: var(--bg-surface);
+}
+
+/* The photograph arriving is the one thing allowed to fade: it is an image,
+   not the words, and it replaces a skeleton rather than anything readable. */
+.photo-frame[data-state="loaded"] img {
+  animation: photo-in 320ms var(--ease-out-quint) both;
+}
+
+@keyframes photo-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-frame[data-state="loading"]::before {
+    animation: none;
+  }
+}
+
 /* ---- the blank sheet, and the smudged one ---------------------------- */
 
 .state {
@@ -3501,6 +3612,13 @@ summary:hover {
 .paper-sound.pill:hover {
   border-color: var(--border-subtle);
 }
+/* These two draw no border at rest, and the rule that does is declared later
+   than `.pill:focus-visible` at the same specificity, so the ring arrived
+   without its edge. */
+.paper-sound.pill:focus-visible,
+.paper-close.pill:focus-visible {
+  border-color: var(--fg-brand);
+}
 .reader-sound {
   display: flex;
   justify-content: center;
@@ -3574,8 +3692,10 @@ summary:hover {
   .sheet-head {
     gap: 0.5rem;
   }
+  /* Room for two focus rings side by side: at 0.1rem the × ring ran into
+     the pill next to it. */
   .sheet-actions {
-    gap: 0.1rem;
+    gap: 0.4rem;
   }
   .sheet-turn.pill {
     font-size: 0.65rem;
@@ -3769,20 +3889,41 @@ summary:hover {
   min-width: 220px;
 }
 
-.writing-savebar {
+.writing-sticky {
   position: sticky;
-  top: 0.5rem;
+  top: 0;
   z-index: 10;
-  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* The strip above the save bar is part of the block, so nothing scrolls
+     through between the viewport edge and the bar either. */
+  padding-top: 0.5rem;
+  background: var(--bg-canvas);
+}
+
+.writing-savebar {
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
   background: var(--bg-canvas);
   border: 1px solid var(--border-subtle);
   border-radius: 0.5rem;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--fg-primary) 6%, transparent);
 }
 
+/* State and hint on one line while they fit, so the bar is a bar and not a
+   card taking a fifth of the screen. */
 .writing-savebar > div {
-  display: grid;
-  gap: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  row-gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.writing-savebar .editor-hint {
+  font-size: 0.85rem;
 }
 
 .writing-savebar strong {
@@ -3812,15 +3953,11 @@ summary:hover {
   color: var(--bg-canvas);
 }
 
-/* Sticky under the save bar, so the colours stay in reach while the preview
-   scrolls past. */
+/* Inside `.writing-sticky`, under the save bar, so the colours stay in reach
+   while the preview scrolls past. */
 .mark-toolbar {
-  position: sticky;
-  top: 7rem;
-  z-index: 9;
-  padding: 1rem 0;
-  border-block: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
+  padding: 0.5rem 0 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .tag-swatch {
@@ -3901,14 +4038,16 @@ summary:hover {
 .writing-reference {
   min-width: 0;
   position: sticky;
-  top: 7rem;
+  /* Under the sticky block, whatever height it is right now. */
+  top: calc(var(--desk-sticky-h, 7rem) + 1rem);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
 .reference-photo {
-  max-height: 65vh;
+  /* The viewport under the sticky block, less the heading and the hint. */
+  max-height: max(18rem, calc(100svh - var(--desk-sticky-h, 7rem) - 9rem));
   overflow: auto;
 }
 
@@ -4004,11 +4143,28 @@ summary:hover {
     max-height: 45vh;
   }
   .writing-savebar {
-    top: 0;
     gap: 0.5rem;
+    flex-wrap: nowrap;
   }
-  .writing-savebar .editor-hint {
-    max-width: 12rem;
+  /* The warning only matters when there is something to save. At rest the
+     state and the button say everything, in one line. */
+  .writing-savebar:not([data-dirty="true"]) .editor-hint {
+    display: none;
+  }
+  /* One row that scrolls sideways instead of three that eat the screen. The
+     row clipping the last pill is what says there is more. */
+  .mark-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Room for the last pill's focus ring once scrolled to the end. */
+    padding-inline-end: 0.25rem;
+  }
+  .mark-toolbar > * {
+    flex: none;
+  }
+  .mark-toolbar .editor-hint {
+    font-size: 0.8rem;
   }
   .writing-source,
   .writing-preview {

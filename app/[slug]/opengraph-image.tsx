@@ -31,22 +31,27 @@ export default function OpengraphImage() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 24,
-          background: '#09090b',
-          color: '#fafafa',
+          // Paper and ink, the light tokens from `globals.css`. It was
+          // entrepta's dark card, so the first thing a recipient saw in a
+          // chat was a black rectangle for a site that is all paper.
+          //
           // satori does not resolve CSS custom properties: a var() here
-          // renders at size zero. Every value is a literal.
+          // renders at size zero. Every value is a literal, copied from
+          // `--bg-canvas`, `--fg-primary`, `--fg-secondary` and `--fg-brand`.
+          background: '#f6f3ec',
+          color: '#221d18',
           fontSize: 64,
         }}
       >
         <div style={{ fontSize: 72, letterSpacing: '-0.02em' }}>from anna</div>
-        <div style={{ fontSize: 30, color: '#a1a1aa' }}>
+        <div style={{ fontSize: 30, color: '#5d5348' }}>
           A handwritten letter
         </div>
         <div
           style={{
             width: 120,
             height: 2,
-            background: '#e85a8a',
+            background: '#b8305f',
           }}
         />
       </div>

@@ -50,7 +50,13 @@ export function useEnvelope() {
   useLayoutEffect(() => {
     if (phase !== 'unfolding' || reducedMotion) return
     const insert = openerRef.current?.querySelector('.envelope-fold')
-    const paper = contentRef.current?.querySelector<HTMLElement>('.paper-sheet')
+    // The sheet on top of the deck, not the first one: closing on sheet 2 and
+    // opening again shows sheet 2, and animating sheet 1 — `display: none`
+    // by then — measured zeros and gave the visible sheet no entrance.
+    const content = contentRef.current
+    const paper =
+      content?.querySelector<HTMLElement>('[data-active="true"] .paper-sheet') ??
+      content?.querySelector<HTMLElement>('.paper-sheet')
     if (!insert || !paper) return
     const from = insert.getBoundingClientRect()
     const to = paper.getBoundingClientRect()
@@ -86,8 +92,15 @@ export function useEnvelope() {
     timers.current.push(setTimeout(() => change('open'), 1200))
   }, [change, clear, reducedMotion])
 
-  const closeLetter = useCallback(() => {
+  // Whether focus goes back to the envelope quietly. Focus moved by a script
+  // matches `:focus-visible` in some browsers whatever the last input was, so
+  // a tap on × drew a keyboard ring on the envelope — the "random" ring on a
+  // phone. The ring is only earned when the close came from a key.
+  const returnQuietly = useRef(false)
+
+  const closeLetter = useCallback((options?: { keyboard?: boolean }) => {
     if (phaseRef.current !== 'open') return
+    returnQuietly.current = !options?.keyboard
     clear()
     playPaperSound('turn')
     if (reducedMotion) {
@@ -104,7 +117,20 @@ export function useEnvelope() {
       hasOpened.current = true
       contentRef.current?.focus({ preventScroll: true })
     } else if (phase === 'sealed' && hasOpened.current) {
-      openerRef.current?.focus({ preventScroll: true })
+      const opener = openerRef.current
+      if (!opener) return
+      if (returnQuietly.current) {
+        opener.dataset.quietFocus = 'true'
+        // Any key afterwards means the reader is on a keyboard after all.
+        const loud = () => {
+          delete opener.dataset.quietFocus
+          opener.removeEventListener('blur', loud)
+          opener.removeEventListener('keydown', loud)
+        }
+        opener.addEventListener('blur', loud)
+        opener.addEventListener('keydown', loud)
+      }
+      opener.focus({ preventScroll: true })
     }
   }, [phase])
 

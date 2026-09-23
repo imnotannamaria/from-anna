@@ -43,7 +43,10 @@ export function HomeLetter({ children }: Props) {
                 aria-disabled={envelope.busy}
                 aria-busy={envelope.phase === 'closing'}
                 data-busy={envelope.phase === 'closing' || undefined}
-                onClick={envelope.closeLetter}
+                // `detail` is 0 when Enter or Space made the click.
+                onClick={(event) =>
+                  envelope.closeLetter({ keyboard: event.detail === 0 })
+                }
               >
                 <span aria-hidden="true">×</span>
                 <span className="sr-only">

@@ -6,6 +6,7 @@ import { LetterControls } from './letter-controls'
 import { TranscriptionEditor } from '@/components/editor/transcription-editor'
 import { PageUploader } from '@/components/upload/page-uploader'
 import { TranscribeButton } from '@/components/upload/transcribe-button'
+import { PhotoFrame } from '@/components/ui/photo-frame'
 
 type Props = {
   letterId: string
@@ -130,7 +131,7 @@ export function LetterWorkbench(props: Props) {
           <div className="desk-photo-gallery">
             {props.photos.map((photo, index) => (
               <figure key={index}>
-                {photo}
+                <PhotoFrame warm>{photo}</PhotoFrame>
                 <figcaption>Sheet {index + 1} </figcaption>
               </figure>
             ))}
