@@ -1,67 +1,51 @@
 'use client'
 
-import { EnvelopeStage } from '@/components/letter/envelope-stage'
-import { SoundToggle } from '@/components/letter/sound-toggle'
-import { useEnvelope } from '@/components/letter/use-envelope'
+import { BrandMark } from '@/components/ui/brand-mark'
 
-type Props = { children: React.ReactNode }
+import { useState, type ReactNode } from 'react'
+import { HighlightLegend } from '@/components/letter/highlight-legend'
+import { Icon } from '@/components/ui/icon'
+import { SegmentTrack } from '@/components/ui/segment-track'
+import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
-/** The home note uses the same paper, opening, sound and fallback as a letter. */
-export function HomeLetter({ children }: Props) {
-  const envelope = useEnvelope()
-  const { attachContent } = envelope
+/** The demo uses the real server-rendered package output and the reader's legend. */
+export function HomeLetter({ children }: { children: ReactNode }) {
+  const [filter, setFilter] = useState<string | null>(null)
   return (
-    <div
-      className="home-letter"
-      data-open={String(envelope.open)}
-      data-phase={envelope.phase}
-      data-enhanced={envelope.enhanced || undefined}
+    <article
+      className="home-letter surface"
+      data-filter={filter ?? ''}
+      data-revealed="true"
+      aria-label="A demonstration note from Anna"
     >
-      <EnvelopeStage
-        envelope={envelope}
-        recipient={null}
-        target="#the-note"
-        label="Open the note"
-        caption="Written by hand. Sent with care."
-      />
-      <div
-        className="home-stack paper-content"
-        id="the-note"
-        ref={attachContent}
-        tabIndex={-1}
-      >
-        <div className="home-stack-sheet paper-sheet" data-revealed="true">
-          <div className="home-note-head">
-            <p className="home-stack-mark">
-              from anna <em>to you</em>
-            </p>
-            {envelope.enhanced && (
-              <button
-                type="button"
-                className="pill pill--icon paper-close"
-                aria-label="Close the note"
-                aria-disabled={envelope.busy}
-                aria-busy={envelope.phase === 'closing'}
-                data-busy={envelope.phase === 'closing' || undefined}
-                // `detail` is 0 when Enter or Space made the click.
-                onClick={(event) =>
-                  envelope.closeLetter({ keyboard: event.detail === 0 })
-                }
-              >
-                <span aria-hidden="true">×</span>
-                <span className="sr-only">
-                  {envelope.phase === 'closing'
-                    ? 'Closing the note'
-                    : 'Close the note'}
-                </span>
-              </button>
-            )}
-          </div>
-          {children}
-          <span className="paper-fold-line" aria-hidden="true" />
+      <header className="home-note-head">
+        <BrandMark size={44} />
+        <div>
+          <h2>
+            for <em>you</em>, visitor
+          </h2>
+          <p className="meta">a demo note · one page</p>
         </div>
+        <span className="demo-label">demo</span>
+      </header>
+      <HighlightLegend
+        tags={HIGHLIGHT_TAGS}
+        filter={filter}
+        onFilter={setFilter}
+      />
+      <div className="home-demo-prose">{children}</div>
+      <div className="home-demo-dock island">
+        <SegmentTrack label="Explore the demonstration">
+          <a href="#syntax">
+            <Icon name="text" />
+            The syntax
+          </a>
+          <a href="#package">
+            <Icon name="package" />
+            The package
+          </a>
+        </SegmentTrack>
       </div>
-      {envelope.enhanced && <SoundToggle />}
-    </div>
+    </article>
   )
 }

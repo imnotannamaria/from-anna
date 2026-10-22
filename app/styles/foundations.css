@@ -1,0 +1,451 @@
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+}
+.display em,
+.wordmark em {
+  color: var(--fg-brand-text);
+  font-weight: 400;
+}
+.meta {
+  font: 10px/1.7 var(--font-mono);
+  letter-spacing: 0.055em;
+  color: var(--fg-muted);
+}
+.rule {
+  display: block;
+  height: 1px;
+  background: var(--border-subtle);
+}
+.surface {
+  position: relative;
+  border: 1px solid var(--border-subtle);
+  border-radius: 28px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-page);
+}
+.surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 100% 0%,
+    var(--bg-surface-brand),
+    transparent 45%
+  );
+  opacity: 0.4;
+}
+.surface > * {
+  position: relative;
+}
+.wordmark {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  font: 24px/1 var(--font-serif);
+  white-space: nowrap;
+}
+.brand-mark {
+  flex: none;
+  display: block;
+  width: auto;
+  object-fit: contain;
+}
+.pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-overlay);
+  color: var(--fg-secondary);
+  font: 11px/1.4 var(--font-mono);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 140ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.pill:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--bg-hover-soft);
+  color: var(--fg-primary);
+  border-color: var(--ring);
+}
+.pill:active:not(:disabled):not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+.pill--solid {
+  background: var(--fg-brand);
+  color: var(--fg-on-brand);
+  border-color: var(--fg-brand);
+}
+.pill--solid:hover:not(:disabled) {
+  background: var(--fg-brand-hover);
+  border-color: var(--fg-brand-hover);
+  color: var(--fg-on-brand);
+  transform: translateY(-2px);
+}
+.pill--icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 9px;
+}
+.pill:disabled,
+.pill[aria-disabled='true'] {
+  cursor: default;
+  color: var(--fg-muted);
+  background: var(--bg-hover-strong);
+  border-color: var(--border-strong);
+}
+.pill[data-busy='true'] {
+  cursor: progress;
+}
+.pill[data-busy='true']::before {
+  content: '';
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+.pill--icon[data-busy='true'] > svg {
+  display: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--fg-brand-text);
+  outline-offset: 4px;
+}
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 8px;
+  left: 12px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  color: var(--fg-primary);
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+.island {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-overlay);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.06);
+}
+.island-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-strong);
+  margin: 0 5px;
+  flex: none;
+}
+.segment-track {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-field);
+}
+.segment-track::before {
+  content: '';
+  pointer-events: none;
+  z-index: 0;
+  position: absolute;
+  top: var(--segment-y, 4px);
+  left: 0;
+  width: var(--segment-w, 0px);
+  height: var(--segment-h, 36px);
+  transform: translateX(var(--segment-x, 4px));
+  border: 1px solid var(--ring);
+  border-radius: 999px;
+  background: var(--bg-surface-brand);
+  visibility: hidden;
+}
+.segment-track[data-ready='true']::before {
+  visibility: visible;
+}
+.segment-track[data-moving='true']::before {
+  transition:
+    transform 220ms var(--ease-out),
+    width 220ms var(--ease-out),
+    height 220ms var(--ease-out);
+}
+.segment-track[data-reduced-motion='true']::before {
+  transition: none;
+}
+.segment-track > :is(button, a) {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-secondary);
+  font: 11px/1.35 var(--font-mono);
+  white-space: nowrap;
+}
+.segment-track > :is(button, a):hover {
+  color: var(--fg-primary);
+  background: var(--bg-hover-soft);
+}
+.segment-track > :is([aria-pressed='true'], [aria-current]) {
+  color: var(--fg-primary);
+  background: var(--bg-surface-brand);
+  border-color: var(--ring);
+}
+.segment-track[data-ready='true'] > :is([aria-pressed='true'], [aria-current]) {
+  background: transparent;
+  border-color: transparent;
+}
+.icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-surface-brand);
+  color: var(--fg-brand-text);
+  border: 1px solid var(--ring);
+}
+.icon-tile[data-tone='ask'] {
+  color: var(--status-info);
+  background: var(--status-info-soft);
+  border-color: color-mix(in srgb, var(--status-info) 30%, transparent);
+}
+.icon-tile[data-tone='note'] {
+  color: var(--status-warning);
+  background: var(--status-warning-soft);
+  border-color: color-mix(in srgb, var(--status-warning) 30%, transparent);
+}
+.icon-tile[data-tone='good'] {
+  color: var(--status-success);
+  background: var(--status-success-soft);
+  border-color: color-mix(in srgb, var(--status-success) 30%, transparent);
+}
+.field {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-field);
+  font: 14px/1.5 var(--font-body);
+}
+.field:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+.field-label {
+  display: block;
+  margin-bottom: 7px;
+}
+.editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.editor-hint {
+  color: var(--fg-secondary);
+  font: 12px/1.7 var(--font-body);
+  max-width: 65ch;
+}
+.editor-status {
+  font: 11px/1.6 var(--font-mono);
+  color: var(--fg-muted);
+  min-height: 1.6em;
+}
+.editor-status[data-failed='true'] {
+  color: var(--status-error);
+}
+.state {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+.state-inner {
+  width: min(100%, 580px);
+  text-align: center;
+  padding: clamp(24px, 6vw, 60px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 28px;
+  box-shadow: var(--shadow-page);
+  background: var(--bg-card);
+  animation: arrive 500ms var(--ease-out);
+}
+.state-brand {
+  margin: 0 auto 24px;
+}
+.state-title {
+  font-size: clamp(40px, 8vw, 58px);
+  margin: 18px 0;
+}
+.state-lede {
+  font-size: 13px;
+  color: var(--fg-secondary);
+  line-height: 1.8;
+}
+.state-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+.state-digest {
+  margin-top: 22px;
+}
+.sign-in-frame {
+  margin-top: 28px;
+  display: grid;
+  justify-items: center;
+}
+/* entrepta Skeleton's sweep stays visible on both card and canvas surfaces. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.sheen {
+  background-image: radial-gradient(
+    ellipse at 100% 0%,
+    var(--bg-surface-brand),
+    transparent 65%
+  );
+}
+/* One picture changes theme at a time; individual color transitions cannot trail it. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+::view-transition {
+  pointer-events: none;
+}
+:root[data-theme-switching]::view-transition-old(root),
+:root[data-theme-switching]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+:root[data-theme-switching]::view-transition-new(root) {
+  z-index: 2;
+  animation: theme-curtain 620ms cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+@keyframes theme-curtain {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes arrive {
+  from {
+    transform: translateY(18px);
+  }
+}
+
+/* The mode is driven by the same html attribute as the entrepta palette. */
+.theme-toggle > span {
+  display: inline-flex;
+}
+.theme-toggle .theme-icon-dark {
+  display: none;
+}
+:root[data-mode='dark'] .theme-toggle .theme-icon-light {
+  display: none;
+}
+:root[data-mode='dark'] .theme-toggle .theme-icon-dark {
+  display: inline-flex;
+}
+.state-inner {
+  position: relative;
+}
+.state-inner > .theme-toggle {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+}
+
+.admin-masthead > .theme-toggle {
+  float: right;
+}
+.desk-header > .theme-toggle {
+  margin-left: auto;
+}
+.pill--danger {
+  color: var(--status-error);
+  border-color: color-mix(
+    in srgb,
+    var(--status-error) 45%,
+    var(--border-subtle)
+  );
+}
+.pill--danger-solid {
+  color: var(--fg-on-danger);
+  background: var(--bg-danger);
+  border-color: var(--bg-danger);
+}
+.pill--danger:hover:not(:disabled) {
+  color: var(--status-error);
+  border-color: var(--status-error);
+}
+.pill--danger-solid:hover:not(:disabled) {
+  color: var(--fg-on-danger);
+  background: color-mix(in srgb, var(--bg-danger) 88%, black);
+  border-color: var(--bg-danger);
+}
+.desk-header {
+  position: relative;
+  padding-right: 52px;
+}
+.desk-header > .theme-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 0;
+}

@@ -1,5 +1,14 @@
 'use client'
 
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/entrepta/accordion'
+
+import { SegmentedControl } from '@/app/components/entrepta/segmented-control'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   changeHighlight,
@@ -303,31 +312,20 @@ export function TranscriptionEditor({
       }}
     >
       <div className="writing-tools">
-        <div className="segmented" role="group" aria-label="Editing mode">
-          <button
-            className="pill"
-            type="button"
-            aria-pressed={mode === 'write'}
-            onClick={() => {
-              setMode('write')
-              setSelection(null)
-            }}
-          >
-            Edit text
-          </button>
-          <button
-            className="pill"
-            type="button"
-            aria-pressed={mode === 'mark'}
-            onClick={() => {
-              setMode('mark')
-              setSelection(null)
-              setPreviewSource(value)
-            }}
-          >
-            Mark & preview
-          </button>
-        </div>
+        <SegmentedControl
+          aria-label="Editing mode"
+          value={mode}
+          options={[
+            { value: 'write', label: 'Edit text' },
+            { value: 'mark', label: 'Mark & preview' },
+          ]}
+          onValueChange={(next) => {
+            if (next !== 'write' && next !== 'mark') return
+            setMode(next)
+            setSelection(null)
+            if (next === 'mark') setPreviewSource(value)
+          }}
+        />
         <div className="editor-bar">
           <button
             className="pill"
@@ -554,24 +552,15 @@ export function TranscriptionEditor({
                   sheets, and a menu for three numbers hides the choice behind
                   a click and draws in the browser's style, not this one. */}
               {photos.length > 1 && (
-                <div
-                  className="segmented"
-                  role="group"
+                <SegmentedControl
                   aria-label="Reference sheet"
-                >
-                  {photos.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="pill pill--icon"
-                      aria-pressed={photo === i}
-                      aria-label={`Sheet ${i + 1} of ${photos.length}`}
-                      onClick={() => setPhoto(i)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
+                  value={String(photo)}
+                  options={photos.map((_, i) => ({
+                    value: String(i),
+                    label: String(i + 1),
+                  }))}
+                  onValueChange={(next) => setPhoto(Number(next))}
+                />
               )}
             </div>
             <div className="reference-photo">
@@ -587,53 +576,57 @@ export function TranscriptionEditor({
           </aside>
         )}
       </div>
-      <details className="writing-extras">
-        <summary>Highlights & text tools</summary>
-        <p className="editor-hint">
-          Every highlight can also be selected here with the keyboard.
-        </p>
-        <div className="highlight-list">
-          {[
-            ...html.matchAll(
-              /<mark\b[^>]*data-mark-start="(\d+)"[^>]*data-mark-end="(\d+)"[^>]*>([\s\S]*?)<\/mark>/g,
-            ),
-          ].map((match, index) => (
+      <Accordion type="single" collapsible className="writing-extras">
+        <AccordionItem value="tools">
+          <AccordionTrigger>Highlights & text tools</AccordionTrigger>
+          <AccordionContent className="writing-tools-content">
+            <p className="editor-hint">
+              Every highlight can also be selected here with the keyboard.
+            </p>
+            <div className="highlight-list">
+              {[
+                ...html.matchAll(
+                  /<mark\b[^>]*data-mark-start="(\d+)"[^>]*data-mark-end="(\d+)"[^>]*>([\s\S]*?)<\/mark>/g,
+                ),
+              ].map((match, index) => (
+                <button
+                  className="pill"
+                  type="button"
+                  key={match[1]}
+                  onClick={() => {
+                    setSelection({
+                      start: Number(match[1]),
+                      end: Number(match[2]),
+                      text: '',
+                      mark: true,
+                    })
+                    setMode('mark')
+                  }}
+                >
+                  Highlight {index + 1} · edit or remove
+                </button>
+              ))}
+            </div>
             <button
               className="pill"
               type="button"
-              key={match[1]}
               onClick={() => {
-                setSelection({
-                  start: Number(match[1]),
-                  end: Number(match[2]),
-                  text: '',
-                  mark: true,
-                })
-                setMode('mark')
+                const next = normaliseCase(value)
+                edit(next)
+                setMessage(
+                  'Capitalization adjusted. Check names and places before saving. You can undo this change.',
+                )
               }}
             >
-              Highlight {index + 1} · edit or remove
+              Convert ALL CAPS to sentence case
             </button>
-          ))}
-        </div>
-        <button
-          className="pill"
-          type="button"
-          onClick={() => {
-            const next = normaliseCase(value)
-            edit(next)
-            setMessage(
-              'Capitalization adjusted. Check names and places before saving. You can undo this change.',
-            )
-          }}
-        >
-          Convert ALL CAPS to sentence case
-        </button>
-        <p className="editor-hint">
-          Ctrl / ⌘ S to save · Ctrl / ⌘ Z to undo · Ctrl / ⌘ Shift H to
-          highlight.
-        </p>
-      </details>
+            <p className="editor-hint">
+              Ctrl / ⌘ S to save · Ctrl / ⌘ Z to undo · Ctrl / ⌘ Shift H to
+              highlight.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   )
 }

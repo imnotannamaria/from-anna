@@ -1,3 +1,6 @@
+import { EmptyState } from '@/app/components/entrepta/empty-state'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { BrandMark } from '@/components/ui/brand-mark'
 import Link from 'next/link'
 
 import { TypeLine } from '@/components/ui/type-line'
@@ -22,32 +25,36 @@ export const metadata = {
  */
 export default function NotFound() {
   return (
-    <main className="state">
+    <main id="main-content" className="state">
       <div className="state-inner">
-        <div className="state-sheet" aria-hidden="true">
-          <span className="state-sheet-rules" />
-        </div>
-
-        <p className="meta state-eyebrow">
-          <TypeLine duration={1400}>404 · nothing written here</TypeLine>
-        </p>
-
-        <h1 className="display state-title">
-          This page is <em>blank.</em>
-        </h1>
-
-        <p className="state-lede">
-          Either the link is wrong, or the letter it pointed at isn&rsquo;t
-          being shared anymore. Every letter here is meant for one person, so
-          there&rsquo;s no list to look through. If one was sent to you, the
-          link you got is the only way in.
-        </p>
-
-        <p className="state-actions">
-          <Link href="/" className="pill">
-            What this is
-          </Link>
-        </p>
+        <ThemeToggle />
+        <EmptyState
+          size="page"
+          illustration={<BrandMark size={90} />}
+          eyebrow={
+            <>
+              <TypeLine duration={1400}>404 · nothing written here</TypeLine>
+            </>
+          }
+          title={
+            <>
+              This page is <em>blank.</em>
+            </>
+          }
+          description={
+            <>
+              Either the link is wrong, or the letter it pointed at isn&rsquo;t
+              being shared anymore. Every letter here is meant for one person,
+              so there&rsquo;s no list to look through. If one was sent to you,
+              the link you got is the only way in.
+            </>
+          }
+          action={
+            <Link href="/" className="pill">
+              What this is
+            </Link>
+          }
+        />
       </div>
     </main>
   )

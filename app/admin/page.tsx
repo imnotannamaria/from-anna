@@ -1,4 +1,13 @@
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/entrepta/accordion'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import Link from 'next/link'
+import { BrandMark } from '@/components/ui/brand-mark'
+import { LetterList } from '@/components/admin/letter-list'
 import { notFound } from 'next/navigation'
 
 import { NewLetter } from '@/components/admin/new-letter'
@@ -51,9 +60,11 @@ export default async function AdminPage() {
   )
 
   return (
-    <main className="admin-shell">
+    <main id="main-content" className="admin-shell surface">
       <header className="admin-masthead">
+        <ThemeToggle />
         <p className="desk-wordmark">
+          <BrandMark size={40} />
           from anna <span>/ the writing desk</span>
         </p>
         <h1 className="display admin-title">Your letters</h1>
@@ -66,12 +77,18 @@ export default async function AdminPage() {
 
       <NewLetter />
 
-      {letters.length === 0 ? (
-        <p className="admin-empty">
-          Nothing written yet. Start one, photograph a page, and it will appear
-          here.
-        </p>
-      ) : (
+      <LetterList
+        counts={{
+          all: letters.length,
+          published: letters.filter((letter) => isPubliclyReadable(letter))
+            .length,
+          draft: letters.filter((letter) => letter.status === 'draft').length,
+          expired: letters.filter(
+            (letter) =>
+              letter.status === 'published' && !isPubliclyReadable(letter),
+          ).length,
+        }}
+      >
         <ul className="admin-list">
           {stats.map(({ letter, stats }, i) => {
             const live = isPubliclyReadable(letter)
@@ -81,6 +98,13 @@ export default async function AdminPage() {
               <li
                 key={letter.id}
                 className="admin-card"
+                data-status={
+                  live
+                    ? 'published'
+                    : letter.status === 'published'
+                      ? 'expired'
+                      : 'draft'
+                }
                 /* One orchestrated entrance, staggered by position. */
                 style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
               >
@@ -121,69 +145,74 @@ export default async function AdminPage() {
                   )}
                 </p>
 
-                {/*
-                  The three cases the project was started to tell apart.
-                  Opens without ends means the letter was abandoned partway,
-                  which needs a different fix from never being opened at all.
-                */}
                 <div className="editor-bar">
                   <Link className="pill" href={`/admin/letters/${letter.id}`}>
                     Edit letter →
                   </Link>
                 </div>
-                <details className="letter-insights">
-                  <summary>
-                    Reading activity · {stats.opens}{' '}
-                    {stats.opens === 1 ? 'open' : 'opens'}
-                  </summary>
-                  <dl className="figures">
-                    <div>
-                      <dt>Opened</dt>
-                      <dd>{stats.opens}</dd>
-                    </div>
-                    <div>
-                      <dt>Read to the end</dt>
-                      <dd data-good={stats.reachedEnd > 0 ? 'true' : 'false'}>
-                        {stats.reachedEnd}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Left partway</dt>
-                      <dd>{unread}</dd>
-                    </div>
-                  </dl>
+                <Accordion
+                  type="single"
+                  collapsible
+                  className="activity-accordion"
+                >
+                  <AccordionItem value="activity" className="letter-insights">
+                    <AccordionTrigger>
+                      Reading activity · {stats.opens}{' '}
+                      {stats.opens === 1 ? 'open' : 'opens'}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <dl className="figures">
+                        <div>
+                          <dt>Opened</dt>
+                          <dd>{stats.opens}</dd>
+                        </div>
+                        <div>
+                          <dt>Read to the end</dt>
+                          <dd
+                            data-good={stats.reachedEnd > 0 ? 'true' : 'false'}
+                          >
+                            {stats.reachedEnd}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Not recorded as finished</dt>
+                          <dd>{unread}</dd>
+                        </div>
+                      </dl>
 
-                  {stats.bySource.length > 0 && (
-                    <div className="source-table-wrap">
-                      <table className="source-table">
-                        <caption className="sr-only">
-                          Opens by source for {letter.title}
-                        </caption>
-                        <thead>
-                          <tr>
-                            <th scope="col">Source</th>
-                            <th scope="col">Opened</th>
-                            <th scope="col">Read</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {stats.bySource.map((row) => (
-                            <tr key={row.source ?? 'direct'}>
-                              <td>{row.source ?? 'no ?from='}</td>
-                              <td>{row.opens}</td>
-                              <td>{row.reachedEnd}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </details>
+                      {stats.bySource.length > 0 && (
+                        <div className="source-table-wrap">
+                          <table className="source-table">
+                            <caption className="sr-only">
+                              Opens by source for {letter.title}
+                            </caption>
+                            <thead>
+                              <tr>
+                                <th scope="col">Source</th>
+                                <th scope="col">Opened</th>
+                                <th scope="col">Read</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {stats.bySource.map((row) => (
+                                <tr key={row.source ?? 'direct'}>
+                                  <td>{row.source ?? 'no ?from='}</td>
+                                  <td>{row.opens}</td>
+                                  <td>{row.reachedEnd}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </li>
             )
           })}
         </ul>
-      )}
+      </LetterList>
     </main>
   )
 }

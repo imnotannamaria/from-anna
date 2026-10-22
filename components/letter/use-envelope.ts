@@ -45,39 +45,35 @@ export function useEnvelope() {
   }, [])
   useEffect(() => clear, [clear])
 
-  // Measure the insert and the actual paper once at handover. The sheet begins
-  // where the insert left the envelope, including on a narrow viewport.
+  // The real content stays complete and at full text opacity during handover.
   useLayoutEffect(() => {
     if (phase !== 'unfolding' || reducedMotion) return
-    const insert = openerRef.current?.querySelector('.envelope-fold')
-    // The sheet on top of the deck, not the first one: closing on sheet 2 and
-    // opening again shows sheet 2, and animating sheet 1 — `display: none`
-    // by then — measured zeros and gave the visible sheet no entrance.
     const content = contentRef.current
-    const paper =
-      content?.querySelector<HTMLElement>('[data-active="true"] .paper-sheet') ??
-      content?.querySelector<HTMLElement>('.paper-sheet')
-    if (!insert || !paper) return
-    const from = insert.getBoundingClientRect()
-    const to = paper.getBoundingClientRect()
-    const dx = from.left + from.width / 2 - (to.left + to.width / 2)
-    const dy = from.top - to.top
-    const scale = Math.min(1, from.width / to.width)
-    const animation = paper.animate(
-      [
-        {
-          transform: `translate(${dx}px, ${dy}px) perspective(1000px) rotateX(-64deg) scale(${scale})`,
-        },
-        {
-          transform: 'translateY(-5px) perspective(1000px) rotateX(4deg)',
-          offset: 0.72,
-        },
-        { transform: 'none' },
-      ],
-      { duration: 580, easing: 'cubic-bezier(.23,1,.32,1)' },
+    if (!content) return
+    const animation = content.animate(
+      [{ transform: 'translateY(24px)' }, { transform: 'none' }],
+      { duration: 440, easing: 'cubic-bezier(.16,1,.3,1)' },
     )
     return () => animation.cancel()
   }, [phase, reducedMotion])
+
+  // A preference change during the sequence must settle it immediately.
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const settle = () => {
+      if (!media.matches) return
+      const current = phaseRef.current
+      if (current === 'tearing' || current === 'unfolding') {
+        clear()
+        change('open')
+      } else if (current === 'closing') {
+        clear()
+        change('sealed')
+      }
+    }
+    media.addEventListener('change', settle)
+    return () => media.removeEventListener('change', settle)
+  }, [change, clear])
 
   const openLetter = useCallback(() => {
     if (phaseRef.current !== 'sealed') return
@@ -89,7 +85,7 @@ export function useEnvelope() {
     }
     change('tearing')
     timers.current.push(setTimeout(() => change('unfolding'), 620))
-    timers.current.push(setTimeout(() => change('open'), 1200))
+    timers.current.push(setTimeout(() => change('open'), 1060))
   }, [change, clear, reducedMotion])
 
   // Whether focus goes back to the envelope quietly. Focus moved by a script
@@ -98,18 +94,21 @@ export function useEnvelope() {
   // phone. The ring is only earned when the close came from a key.
   const returnQuietly = useRef(false)
 
-  const closeLetter = useCallback((options?: { keyboard?: boolean }) => {
-    if (phaseRef.current !== 'open') return
-    returnQuietly.current = !options?.keyboard
-    clear()
-    playPaperSound('turn')
-    if (reducedMotion) {
-      change('sealed')
-      return
-    }
-    change('closing')
-    timers.current.push(setTimeout(() => change('sealed'), 380))
-  }, [change, clear, reducedMotion])
+  const closeLetter = useCallback(
+    (options?: { keyboard?: boolean }) => {
+      if (phaseRef.current !== 'open') return
+      returnQuietly.current = !options?.keyboard
+      clear()
+      playPaperSound('turn')
+      if (reducedMotion) {
+        change('sealed')
+        return
+      }
+      change('closing')
+      timers.current.push(setTimeout(() => change('sealed'), 380))
+    },
+    [change, clear, reducedMotion],
+  )
 
   const hasOpened = useRef(false)
   useEffect(() => {

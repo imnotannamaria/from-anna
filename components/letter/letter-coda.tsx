@@ -51,7 +51,6 @@ export function LetterCoda({
             </button>
           )}
         </div>
-
       </div>
     </section>
   )

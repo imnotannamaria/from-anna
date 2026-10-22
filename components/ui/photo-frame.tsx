@@ -1,5 +1,7 @@
 'use client'
 
+import { Skeleton } from '@/app/components/entrepta/skeleton'
+
 import { useEffect, useRef } from 'react'
 
 type Props = {
@@ -96,6 +98,7 @@ export function PhotoFrame({ children, className, warm = false }: Props) {
           skeleton here; the photograph's own alt text is what a screen
           reader gets. */}
       <div className="photo-frame-status" data-for="loading" aria-hidden="true">
+        <Skeleton className="photo-loading-skeleton" />
         <span className="meta">Loading the photograph…</span>
       </div>
       <div className="photo-frame-status" data-for="failed">

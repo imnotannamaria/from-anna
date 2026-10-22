@@ -19,10 +19,10 @@ import { AA_NORMAL, contrastRatio } from 'remark-scanned-page'
  * `--bg-canvas:` mid-sentence, and parsing it as a value produced a colour of
  * three paragraphs of English.
  */
-const CSS = readFileSync(join(process.cwd(), 'app/globals.css'), 'utf8').replace(
-  /\/\*[\s\S]*?\*\//g,
-  '',
-)
+const CSS = readFileSync(
+  join(process.cwd(), 'app/globals.css'),
+  'utf8',
+).replace(/\/\*[\s\S]*?\*\//g, '')
 
 /** The structural rules ship with the package; only the colours are ours. */
 const PACKAGE_CSS = readFileSync(
@@ -57,7 +57,12 @@ function blocksWith(selector: string, contains: string): Map<string, string>[] {
     `${selector}\\s*\\{([^}]*${contains}[^}]*)\\}`,
     'gm',
   )
-  return [...CSS.matchAll(pattern)].map((match) => collectVars(match[1]))
+  // Attribute quote style is formatting, not a change to the palette.
+  const source = CSS.replace(
+    /\[data-mode=(['"])light\1\]/g,
+    '[data-mode="light"]',
+  )
+  return [...source.matchAll(pattern)].map((match) => collectVars(match[1]))
 }
 
 /**
@@ -126,15 +131,39 @@ describe('highlight palette', () => {
       })
     }
 
-    it(`${mode.name}: every highlight is visible against the canvas`, () => {
-      // A fill indistinguishable from the page is not a highlight.
+    it(`${mode.name}: every highlight has a visible fill or a contrasting underline`, () => {
+      // The approved pastel fills use saturated, distinct underlines. When a
+      // fill is subtle, its underline must remain visible against both grounds.
       const canvas = mode.canvas
       for (const tag of TAGS) {
         const fill = mode.highlights.get(`--hl-${tag}`)!
+        const fillContrast = contrastRatio(canvas, fill)
+        if (fillContrast > 1.2) continue
+        expect(mode.name, 'Only the light palette uses pastel fills').toBe(
+          'light',
+        )
+        const underlineToken = {
+          important: '--status-error',
+          note: '--status-warning',
+          ask: '--status-info',
+          unknown: '--fg-primary',
+        }[tag]
+        const ink = resolve(globals, underlineToken)
+        const readingCSS = readFileSync(
+          join(process.cwd(), 'app/styles/reading.css'),
+          'utf8',
+        )
+        expect(readingCSS).toContain(
+          `text-decoration-color: var(${underlineToken})`,
+        )
         expect(
-          contrastRatio(canvas, fill),
-          `${mode.name} ${tag} against canvas`,
-        ).toBeGreaterThan(1.2)
+          contrastRatio(ink, fill),
+          `${tag} underline against fill`,
+        ).toBeGreaterThanOrEqual(3)
+        expect(
+          contrastRatio(ink, canvas),
+          `${tag} underline against canvas`,
+        ).toBeGreaterThanOrEqual(3)
       }
     })
   }
@@ -154,7 +183,9 @@ describe('highlight palette', () => {
       return rule![1].match(/text-decoration-style:\s*([\w-]+)/)?.[1]
     })
 
-    expect(styles.every(Boolean), 'every tag needs a decoration style').toBe(true)
+    expect(styles.every(Boolean), 'every tag needs a decoration style').toBe(
+      true,
+    )
     expect(new Set(styles).size, `styles were ${styles.join(', ')}`).toBe(3)
   })
 
@@ -176,9 +207,15 @@ describe('highlight palette', () => {
     it(`${mode.name}: a dimmed highlight recedes further than any live one`, () => {
       // The point of dimming is that the filtered-out tags stop competing.
       // A dimmed fill that stands out more than a real one inverts that.
-      const dimmed = contrastRatio(mode.canvas, mode.highlights.get('--hl-dimmed')!)
+      const dimmed = contrastRatio(
+        mode.canvas,
+        mode.highlights.get('--hl-dimmed')!,
+      )
       for (const tag of ['important', 'note', 'ask'] as const) {
-        const live = contrastRatio(mode.canvas, mode.highlights.get(`--hl-${tag}`)!)
+        const live = contrastRatio(
+          mode.canvas,
+          mode.highlights.get(`--hl-${tag}`)!,
+        )
         expect(dimmed, `${tag} vs dimmed against canvas`).toBeLessThan(live)
       }
     })
@@ -233,8 +270,10 @@ describe('the paper surface', () => {
     // WCAG's reckoning. Paper is warmer and lighter than white, so a muted
     // grey tuned against white lands short here.
     const ratio = contrastRatio(muted, canvas)
-    expect(ratio, `${muted} on ${canvas} is ${ratio.toFixed(2)}:1`)
-      .toBeGreaterThanOrEqual(AA_NORMAL)
+    expect(
+      ratio,
+      `${muted} on ${canvas} is ${ratio.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(AA_NORMAL)
   })
 
   it('the coda is measured against the blush, not the paper', () => {
@@ -244,8 +283,10 @@ describe('the paper surface', () => {
       ['the privacy line', secondary],
     ] as const) {
       const ratio = contrastRatio(colour, blush)
-      expect(ratio, `${name}: ${colour} on ${blush} is ${ratio.toFixed(2)}:1`)
-        .toBeGreaterThanOrEqual(AA_NORMAL)
+      expect(
+        ratio,
+        `${name}: ${colour} on ${blush} is ${ratio.toFixed(2)}:1`,
+      ).toBeGreaterThanOrEqual(AA_NORMAL)
     }
   })
 
@@ -253,7 +294,105 @@ describe('the paper surface', () => {
     // `write back` is paper-coloured text on brand, which is the one place
     // in the project where the brand colour is a background.
     const ratio = contrastRatio(surface, brand)
-    expect(ratio, `${surface} on ${brand} is ${ratio.toFixed(2)}:1`)
-      .toBeGreaterThanOrEqual(AA_NORMAL)
+    expect(
+      ratio,
+      `${surface} on ${brand} is ${ratio.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(AA_NORMAL)
   })
+})
+
+/** Guard actual foreground roles now that both modes are user-selectable. */
+describe('selectable entrepta modes', () => {
+  const root = blocksWith(':root', '--bg-canvas').at(-1)!
+  const light = blocksWith(':root\\[data-mode="light"\\]', '--bg-canvas').at(
+    -1,
+  )!
+  const composite = (fill: string, background: string) => {
+    if (fill.startsWith('#')) return fill
+    const channels = fill
+      .match(/rgba\(([^)]+)\)/)![1]
+      .split(',')
+      .map(Number)
+    return (
+      '#' +
+      channels
+        .slice(0, 3)
+        .map((value, index) =>
+          Math.round(
+            value * channels[3] +
+              parseInt(background.slice(1 + index * 2, 3 + index * 2), 16) *
+                (1 - channels[3]),
+          )
+            .toString(16)
+            .padStart(2, '0'),
+        )
+        .join('')
+    )
+  }
+  for (const [name, vars] of [
+    ['dark', root],
+    ['light', new Map([...root, ...light])],
+  ] as const) {
+    const get = (token: string) => resolve(vars, token)
+    for (const foreground of [
+      '--fg-primary',
+      '--fg-secondary',
+      '--fg-muted',
+      '--fg-brand-text',
+    ]) {
+      for (const surface of [
+        '--bg-canvas',
+        '--bg-card',
+        '--bg-overlay',
+        '--bg-inset',
+        '--bg-field',
+        '--bg-surface',
+        '--bg-surface-elevated',
+      ]) {
+        it(`${name}: ${foreground} reads on ${surface}`, () => {
+          expect(
+            contrastRatio(
+              get(foreground),
+              composite(get(surface), get('--bg-card')),
+            ),
+          ).toBeGreaterThanOrEqual(AA_NORMAL)
+        })
+      }
+    }
+    it(`${name}: envelope ink reads on its paper stock`, () => {
+      expect(
+        contrastRatio(get('--envelope-ink'), get('--envelope-paper')),
+      ).toBeGreaterThanOrEqual(AA_NORMAL)
+    })
+    it(`${name}: primary action uses its on-brand ink`, () => {
+      expect(
+        contrastRatio(get('--fg-on-brand'), get('--fg-brand')),
+      ).toBeGreaterThanOrEqual(AA_NORMAL)
+    })
+    for (const status of ['success', 'warning', 'error', 'info']) {
+      it(`${name}: ${status} text reads on its soft surface`, () => {
+        const ground = composite(
+          get(`--status-${status}-soft`),
+          get('--bg-surface'),
+        )
+        expect(
+          contrastRatio(get(`--status-${status}`), ground),
+        ).toBeGreaterThanOrEqual(AA_NORMAL)
+        expect(
+          contrastRatio(get('--fg-primary'), ground),
+        ).toBeGreaterThanOrEqual(AA_NORMAL)
+      })
+    }
+    for (const [tag, status] of [
+      ['important', 'error'],
+      ['note', 'warning'],
+      ['ask', 'info'],
+    ]) {
+      it(`${name}: ${tag} legend reads on the actual fill`, () => {
+        expect(
+          contrastRatio(get(`--status-${status}`), get(`--hl-${tag}`)),
+        ).toBeGreaterThanOrEqual(AA_NORMAL)
+      })
+    }
+  }
 })

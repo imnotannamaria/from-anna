@@ -1,5 +1,12 @@
 'use client'
 
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/entrepta/accordion'
+
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -117,27 +124,31 @@ export function NewLetter() {
         </div>
       </div>
 
-      <details className="admin-new-slug">
-        <summary>Customize the link</summary>
-        <label htmlFor="new-slug" className="meta field-label">
-          Link <span className="admin-new-optional">optional</span>
-        </label>
-        <div className="admin-new-slug-field">
-          <span className="admin-new-slug-prefix" aria-hidden="true">
-            /
-          </span>
-          <input
-            id="new-slug"
-            className="field"
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-            disabled={saving}
-            maxLength={80}
-            placeholder="made from the title and today’s date"
-            aria-describedby="new-slug-hint"
-          />
-        </div>
-      </details>
+      <Accordion type="single" collapsible className="admin-new-slug">
+        <AccordionItem value="link">
+          <AccordionTrigger>Customize the link</AccordionTrigger>
+          <AccordionContent>
+            <label htmlFor="new-slug" className="meta field-label">
+              Link <span className="admin-new-optional">optional</span>
+            </label>
+            <div className="admin-new-slug-field">
+              <span className="admin-new-slug-prefix" aria-hidden="true">
+                /
+              </span>
+              <input
+                id="new-slug"
+                className="field"
+                value={slug}
+                onChange={(event) => setSlug(event.target.value)}
+                disabled={saving}
+                maxLength={80}
+                placeholder="made from the title and today’s date"
+                aria-describedby="new-slug-hint"
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <p className="editor-hint" id="new-slug-hint">
         The title is for you, but the link is made from it unless you type one,
