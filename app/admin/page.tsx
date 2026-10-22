@@ -14,6 +14,7 @@ import { NewLetter } from '@/components/admin/new-letter'
 import { NotAuthorizedError, requireAdmin } from '@/lib/auth/admin'
 import { isPubliclyReadable } from '@/lib/letters/access'
 import { getLetterStats, listLetters } from '@/lib/letters/queries'
+import { REACTIONS, totalOf } from '@/lib/letters/reactions'
 
 export const dynamic = 'force-dynamic'
 
@@ -92,7 +93,7 @@ export default async function AdminPage() {
         <ul className="admin-list">
           {stats.map(({ letter, stats }, i) => {
             const live = isPubliclyReadable(letter)
-            const unread = stats.opens - stats.reachedEnd
+            const quiet = stats.opens - stats.reacted
 
             return (
               <li
@@ -167,18 +168,30 @@ export default async function AdminPage() {
                           <dd>{stats.opens}</dd>
                         </div>
                         <div>
-                          <dt>Read to the end</dt>
-                          <dd
-                            data-good={stats.reachedEnd > 0 ? 'true' : 'false'}
-                          >
-                            {stats.reachedEnd}
+                          <dt>Reacted</dt>
+                          <dd data-good={stats.reacted > 0 ? 'true' : 'false'}>
+                            {stats.reacted}
                           </dd>
                         </div>
                         <div>
-                          <dt>Not recorded as finished</dt>
-                          <dd>{unread}</dd>
+                          <dt>Opened, no reaction</dt>
+                          <dd>{quiet}</dd>
                         </div>
                       </dl>
+
+                      {totalOf(stats.reactions) > 0 && (
+                        <ul className="reaction-tally" aria-label="Reactions">
+                          {REACTIONS.filter(({ id }) => stats.reactions[id] > 0).map(
+                            ({ id, emoji, label }) => (
+                              <li key={id}>
+                                <span aria-hidden="true">{emoji}</span>{' '}
+                                {stats.reactions[id]}
+                                <span className="sr-only"> {label}</span>
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      )}
 
                       {stats.bySource.length > 0 && (
                         <div className="source-table-wrap">
@@ -190,7 +203,7 @@ export default async function AdminPage() {
                               <tr>
                                 <th scope="col">Source</th>
                                 <th scope="col">Opened</th>
-                                <th scope="col">Read</th>
+                                <th scope="col">Reacted</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -198,7 +211,7 @@ export default async function AdminPage() {
                                 <tr key={row.source ?? 'direct'}>
                                   <td>{row.source ?? 'no ?from='}</td>
                                   <td>{row.opens}</td>
-                                  <td>{row.reachedEnd}</td>
+                                  <td>{row.reacted}</td>
                                 </tr>
                               ))}
                             </tbody>

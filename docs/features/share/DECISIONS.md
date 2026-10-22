@@ -32,7 +32,11 @@ An earlier version of this file claimed a word list alone gave billions of combi
 
 **A generated OG image, with none of the letter's text in it** — because link previews are public and cached by third parties.
 
-**Views are recorded server-side, one row per open, plus a single event when the last block enters the viewport** — because a letter you send either gets opened or it doesn't, and you never find out. Two marks separate the three cases: never opened, opened and abandoned, read to the end.
+**Views are recorded server-side, one row per open, and a reader answers with a reaction** — because a letter you send either gets opened or it doesn't, and you never find out. An open says the link worked; a reaction says someone read it and chose to reply. That separates three cases: never opened, opened and left, opened and answered.
+
+**Reactions replace "reached the end"** — because scrolling to the bottom is something a page does to a reader, and a reaction is something the reader does. The scroll signal also needed an `IntersectionObserver` that was easy to break silently, and it could not tell a read from a skim. The `reached_end` column was dropped with it.
+
+**Reactions are a closed list of six, stored by id, one row per reader per reaction** — because an emoji typed into a request is a string written into a table by whoever has the link, and a unique index on (letter, session, reaction) makes a double click or a retry a no-op instead of a second count. Who reacted is the session cookie, as on `View`, and nothing about the person.
 
 **Vercel Analytics alone was rejected** — because it runs in the client, misses anyone blocking JS, doesn't segment by `?from=` reliably, and doesn't show up in my own admin. The `View` table costs code, not money: Neon is already in the project.
 

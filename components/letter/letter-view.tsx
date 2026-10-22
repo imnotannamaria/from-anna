@@ -10,11 +10,12 @@ import { SoundToggle } from './sound-toggle'
 import { useEnvelope } from './use-envelope'
 import { PhotoFrame } from '@/components/ui/photo-frame'
 import { playPaperSound } from '@/lib/paper-sounds'
-import { LetterCoda } from './letter-coda'
+import { Reactions } from './reactions'
 import { ReaderBar } from './reader-bar'
 import { BrandMark } from '@/components/ui/brand-mark'
 import { SegmentTrack } from '@/components/ui/segment-track'
 import { Icon } from '@/components/ui/icon'
+import type { ReactionCounts, ReactionId } from '@/lib/letters/reactions'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 export type SheetProps = {
@@ -39,8 +40,8 @@ type Props = {
   recipient: string | null
   /** Formatted on the server, in UTC, so it cannot disagree with itself. */
   sentOn: string | null
-  /** From an env var, never the repository. Null hides the button. */
-  writeBackEmail: string | null
+  /** What the letter has been answered with so far. */
+  reactions: { counts: ReactionCounts; mine: ReactionId[] }
   tags: readonly string[]
   /**
    * The letter's language when it is clearly not the page's English, so a
@@ -82,14 +83,12 @@ export function LetterView({
   isAuthor,
   recipient,
   sentOn,
-  writeBackEmail,
+  reactions,
   tags,
   language,
   sheets,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const codaRef = useRef<HTMLElement>(null)
-  const reported = useRef(false)
 
   const [filter, setFilter] = useState<string | null>(null)
   // Which face of the sheet is up. The transcription is the front and the
@@ -251,49 +250,6 @@ export function LetterView({
       if (frame) cancelAnimationFrame(frame)
     }
   }, [sheet, sheets.length, open])
-
-  /* ---- reached the end ----------------------------------------------- */
-  useEffect(() => {
-    if (isPreview || isAuthor || reported.current) return
-
-    // The same trap as the reveal above, and this one is the expensive one.
-    // A coda that is laid out but unreached still intersects, so an observer
-    // attached while the envelope is closed fires immediately and every open
-    // is recorded as a full read. `display: none` gives it no box to
-    // intersect, and this guard means it is never asked in the first place.
-    if (!open || envelope.phase !== 'open') return
-
-    const target = codaRef.current
-    if (!target) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return
-        if (reported.current) return
-        reported.current = true
-        observer.disconnect()
-
-        // Fire and forget: a failed measurement must never disturb reading.
-        fetch(`/api/letters/${letterId}/reached-end`, {
-          method: 'POST',
-          keepalive: true,
-        }).catch(() => {})
-      },
-      { threshold: 0.6 },
-    )
-
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [letterId, isPreview, isAuthor, enhanced, open, envelope.phase])
-
-  const readAgain = useCallback(() => {
-    // Back to the first sheet, not to the top of the last one. Never a reload:
-    // the letter has already been counted as opened, and reading it twice is
-    // not two readers.
-    setSheet(0)
-    setFace('front')
-    window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [])
 
   /* ---- turning a sheet ------------------------------------------------ */
 
@@ -536,10 +492,12 @@ export function LetterView({
           )}
         </div>
       </main>
-      <LetterCoda
-        ref={codaRef}
-        writeBackEmail={writeBackEmail}
-        onReadAgain={readAgain}
+      <Reactions
+        letterId={letterId}
+        counts={reactions.counts}
+        mine={reactions.mine}
+        // Previewing a draft and checking my own letter are not readers.
+        readOnly={isPreview || isAuthor}
         enhanced={enhanced}
       />
       <footer className="reader-footer meta">

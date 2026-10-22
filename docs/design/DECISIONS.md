@@ -26,9 +26,9 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 **The reader is shown their own reading progress** — it says how far through the letter you are, which is useful on its own. It was a thin bar measuring scroll; with the deck it is *sheet n of m*, which is the same fact stated exactly instead of approximately. See *The envelope*.
 
-~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described has not changed: one row per open, deduplicated per session, no IP.
+~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described is one row per open, deduplicated per session, no IP.
 
-**`WRITE BACK` is a `mailto:` for now, with the address in an env var** — because a form is more work than the first version needs. The address is not in the repository, and an address on a public page gets harvested; if that becomes a problem the swap is to a form.
+~~**`WRITE BACK` is a `mailto:` for now, with the address in an env var.**~~ **Removed with the coda.** See *Reactions replace the end of the letter*. The reply is a reaction now, and there is no address on the page to harvest.
 
 **The legend filter is momentary and does not go in the URL** — because it is a way of looking at a letter, not a way of arriving at one.
 
@@ -187,11 +187,10 @@ reading model now, not a fallback for the widths where sticky did not fit. It wa
 removed on desktop for a good reason that no longer applies.
 
 **An inactive sheet is `display: none`, never a transform or an opacity** —
-because an element that is merely moved or faded is still laid out, still
-intersecting, and `reachedEnd` is an `IntersectionObserver`. Left laid out, every
-open would record a full read, the table would fill with plausible rows and
-nothing would error. The measurement is the reason the `View` table exists; a
-quietly wrong one is worse than none.
+because an element that is merely moved or faded is still laid out and still
+intersecting, and the passage reveal is an `IntersectionObserver`. Left laid out,
+every passage on every sheet would measure as already on screen and spend its
+entrance before anyone saw it, and nothing would error.
 
 **The photograph is the back of the sheet** — because it is the back of the
 sheet. The front is what you can read and the back is what was written, and it is
@@ -210,8 +209,8 @@ project stays a pill. The arrows keep a real accessible name and the sheet chang
 is announced, because a control with no text is exactly the one that needs both.
 
 **Opening the envelope is not measured** — because it would need a column and a
-write, and `View` has five fields on purpose. *Opened the link* against *reached
-the end* is the distinction that was missing, and it already exists.
+write, and `View` has few fields on purpose. *Opened the link* against *answered
+it* is the distinction that was missing, and reactions already give it.
 
 **No sound (superseded by Tactile refinement below)** — because audio needs files in the repository, a control that
 persists, nothing playing before an interaction, and `prefers-reduced-motion`
@@ -370,3 +369,21 @@ Chosen from four directions built as pages: the envelope alone, the letter peeki
 - The page leaves room above the envelope for the open flap, because the stage clips so decoration never reaches the letter, and the flap's tip was being cut off.
 - Every piece of the envelope — front, inside, pocket and flap — shares one corner radius, because a rounded inside under a square-cornered flap left a transparent wedge at each top corner once the flap opened.
 - A disabled button has no fill, only muted ink and a quieter edge, because a translucent white over near-black reads as a grey slab in dark mode.
+
+---
+
+## Reactions replace the end of the letter — October 2026
+
+**A reader answers with a reaction, and the end-of-letter measurement is gone** — because scrolling to the bottom is something a page does to a reader and a reaction is something the reader does. The scroll signal also needed an `IntersectionObserver` that failed silently when the envelope was laid out but closed, and it could not tell a read from a skim. The coda, its closing lines, `Read it again`, the `reached-end` endpoint and the `reached_end` column went with it.
+
+**The reply is a row of reactions and a button to add one, like a message in a chat app** — because the smallest reply a letter can ask for is an emoji, and a reader who has just finished a letter should not have to compose anything. Pills show what the letter has been answered with; the button opens the list.
+
+**Six reactions, fixed, stored by id** — because the table must never hold a string a visitor typed, and because the emoji is only how an id is drawn. The set is `lib/letters/reactions.ts`.
+
+**A reader's reactions are rows keyed by their session, not a counter** — because a unique index on (letter, session, reaction) makes a double click or a retried request a no-op, and the page can show a reader their own picks after a reload. The session is the cookie `views` already uses; nothing about the person is stored.
+
+**There is no rate limit on the reaction endpoint** — because one would have to be keyed on something about the caller. A session holds at most six rows and the endpoint is only reachable with the letter's unguessable address.
+
+**The author, a draft preview, a bot and an unpublished letter cannot react, and all answer the same 404** — because a reaction from the author would be counted as the reader's answer, and telling the cases apart would give back what the slug withholds. The author sees the counts, read-only.
+
+**`Write back` (the `mailto:`) went with the coda** — because the reply is a reaction now. `WRITE_BACK_EMAIL` is no longer read anywhere.

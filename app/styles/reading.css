@@ -437,8 +437,8 @@
   }
 }
 /* The cover is never a wall in server HTML. It only becomes an opening once
-   the controller is mounted. Inactive coda stays unlaid-out for analytics. */
-.reader[data-enhanced='true'][data-open='false'] :is(.letter-deck, .coda) {
+   the controller is mounted. */
+.reader[data-enhanced='true'][data-open='false'] :is(.letter-deck, .reactions) {
   display: none;
 }
 .reader[data-enhanced='true'][data-open='true'] .envelope-stage {
@@ -447,8 +447,8 @@
 .reader[data-enhanced='true'] .sheet[data-active='false'] {
   display: none;
 }
-.reader[data-enhanced='true'][data-at-end='false'] .coda,
-.reader[data-phase='closing'] .coda {
+.reader[data-enhanced='true'][data-at-end='false'] .reactions,
+.reader[data-phase='closing'] .reactions {
   display: none;
 }
 .reader[data-enhanced='true'][data-face='front'] .sheet-face--back,
@@ -639,29 +639,158 @@ html:has(.reader[data-enhanced='true'][data-open='true']) {
   color: var(--fg-muted);
   padding: 0 8px;
 }
-.coda {
+/* The reply: what the letter has been answered with, and a way to add to it. */
+.reactions {
   width: min(720px, 100%);
-  margin: 36px auto 0;
-  text-align: center;
-  padding: 32px;
-  border: 1px solid var(--ring);
-  border-radius: 24px;
-  background: var(--bg-surface-brand);
+  margin: 32px auto 0;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
-.coda-line {
-  font-size: 31px;
-  line-height: 1.2;
-  margin: 16px 0 24px;
-}
-.coda-line em {
-  display: block;
-  margin-top: 8px;
-}
-.coda-actions {
+.reactions-inner {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+}
+.reactions-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reaction {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-overlay);
+  color: var(--fg-secondary);
+  font: 12px/1 var(--font-mono);
+  transition:
+    transform 140ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+button.reaction:hover {
+  background: var(--bg-hover-soft);
+  border-color: var(--ring);
+  color: var(--fg-primary);
+}
+button.reaction:active {
+  transform: scale(0.96);
+}
+.reaction[aria-pressed='true'] {
+  border-color: var(--ring);
+  background: var(--bg-surface-brand);
+  color: var(--fg-brand-text);
+}
+.reaction[data-static] {
+  background: transparent;
+  border-color: var(--border-subtle);
+}
+.reaction-emoji {
+  font-size: 17px;
+  line-height: 1;
+}
+.reaction-count {
+  font-variant-numeric: tabular-nums;
+}
+.reaction--add {
+  gap: 8px;
+}
+.reaction--add[data-bare] {
+  width: 40px;
+  padding: 0;
+}
+/* The emoji of a reaction just chosen drifts up and away. Decoration, and a
+   transform, so there is nothing for contrast to be measured against. */
+.reaction-flight {
+  position: absolute;
+  left: 12px;
+  bottom: 100%;
+  font-size: 17px;
+  line-height: 1;
+  pointer-events: none;
+  animation: reaction-flight 700ms var(--ease-out) forwards;
+}
+@keyframes reaction-flight {
+  from {
+    transform: translateY(10px) scale(0.8);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-30px) scale(1.5);
+    opacity: 0;
+  }
+}
+/* Below the row rather than above it: the letter is above. */
+.reaction-picker {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-overlay);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.28);
+  transform: translateX(-50%);
+  animation: reaction-picker-in 180ms var(--ease-out);
+}
+@keyframes reaction-picker-in {
+  from {
+    transform: translate(-50%, -6px) scale(0.96);
+  }
+}
+.reaction-choice {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  transition:
+    transform 140ms var(--ease-out),
+    background 160ms ease;
+}
+.reaction-choice:hover {
+  background: var(--bg-hover-strong);
+  transform: scale(1.18);
+}
+.reaction-choice[aria-pressed='true'] {
+  background: var(--bg-surface-brand);
+}
+/* Heard by everyone, seen only when something went wrong. */
+.reactions-note {
+  margin: 0;
+  min-height: 0;
+  font: 11px/1.4 var(--font-mono);
+  color: var(--fg-muted);
+}
+.reactions-note:not([data-failed]) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .reader-footer {
   display: flex;
@@ -769,12 +898,6 @@ html:has(.reader[data-enhanced='true'][data-open='true']) {
   .reading-dock .segment-track > button {
     min-width: 40px;
     padding-inline: 10px;
-  }
-  .coda {
-    padding: 24px 18px;
-  }
-  .coda-line {
-    font-size: 28px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

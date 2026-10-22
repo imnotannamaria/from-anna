@@ -56,7 +56,7 @@ const STEPS: { icon: IconName; tone: string; title: string; body: string }[] = [
     icon: 'send',
     tone: 'good',
     title: 'Publish, then know',
-    body: 'Send the link. I can see if it was opened and read to the end, without storing anyone’s IP.',
+    body: 'Send the link. I can see if it was opened and answered with a reaction, without storing anyone’s IP.',
   },
 ]
 
@@ -202,7 +202,7 @@ export default function Home() {
           <ul className="privacy-list">
             <li>
               <Icon name="check" />
-              Opened, read to the end, where it came from
+              Opened, reacted to, where it came from
             </li>
             <li>
               <Icon name="check" />

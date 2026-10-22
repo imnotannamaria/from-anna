@@ -72,7 +72,9 @@ Letter    id, slug, title (internal, but the default slug is made from it),
 Page      id, letterId, index, blobUrl, width, height, alt,
           rawTranscription, transcriptionProvider
 
-View      id, letterId, source, referrer, country, device, reachedEnd, viewedAt
+View      id, letterId, source, referrer, country, device, viewedAt
+
+Reaction  id, letterId, sessionId, reaction, createdAt   (unique on letter + session + reaction)
 ```
 
 Four rules that are load-bearing:
@@ -119,7 +121,8 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 ## Conventions
 
 - **The app starts in light mode and offers an explicit saved dark choice.** `data-mode="light"` is the server fallback on `<html>`. A plain inline script in `<head>` restores only the saved color preference before first paint; it never hides or constructs letter content. Not `next/script`: even `beforeInteractive` queues inline code until the runtime loads, after first paint. Both palettes live in `globals.css`, and contrast checks cover both modes. Photographs retain their original colors.
-- **The author is never a reader.** Opening a published letter while signed in as the author records no view and no `reachedEnd`, on the page and at the endpoint. Analytics that count the person checking the letter measure the wrong thing.
+- **A reaction is a row per reader, from a closed list.** The six live in `lib/letters/reactions.ts` and are stored by id; the endpoint takes an id and a boolean, reads the reader from the session cookie, and answers one 404 for everyone who may not react. Never a free-text emoji, never a counter that can drift from its rows.
+- **The author is never a reader.** Opening a published letter while signed in as the author records no view, and cannot react, on the page and at the endpoint. Analytics that count the person checking the letter measure the wrong thing.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
 - **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists. `proxy.ts` refuses as well, and that is about the **status code**, not the access: see the next rule.
@@ -131,7 +134,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 - **The transcription is content, not a nicety.** An image of text is invisible to a screen reader. The transcription can never be the hidden half of a toggle that only exists after hydration, and it ships in the server HTML.
 - **`alt` on a page photo is required, not optional.** It's a column on `Page` and a required field in the form.
 - **Anything animated in JS asks `useReducedMotion()` itself.** The global `prefers-reduced-motion` reset only zeroes CSS.
-- **`IntersectionObserver` never fires on a zero-size element, and fires immediately on a laid-out one.** Both halves matter. Put a trigger on something with a real box — and keep a trigger off anything that is merely moved, faded or clipped rather than `display: none`. A coda that is laid out but unreached still intersects, so an observer attached while the envelope is closed records every open as a full read. `reachedEnd` is the measurement the `View` table exists for, and a quietly wrong one is worse than none.
+- **`IntersectionObserver` never fires on a zero-size element, and fires immediately on a laid-out one.** Both halves matter. Put a trigger on something with a real box — and keep a trigger off anything that is merely moved, faded or clipped rather than `display: none`. A sheet that is laid out but not on top still intersects, so a reveal attached while the envelope is closed spends every passage's entrance before anyone sees it.
 - **`overflow` other than `visible` on an ancestor creates a scroll container**, and that is what silently kills `position: sticky` — no error, no warning. Where something has to be contained, use `overflow: clip`, which does not create one. `overflow-x: hidden` is nowhere near `html` or `body`, and should stay that way.
 - **Decoration never paints over the letter.** It cost an opening once: a photograph that drifted on scroll slid over the first line of the transcription. The envelope that replaced it clips on both axes for the same reason, so nothing it draws can reach the sheets.
 - **The envelope may never become a wall.** Nothing that hides the letter is in the server HTML. The rules that cover it are all behind `data-enhanced`, which is set on mount — so with no script, a script that failed, or a script still parsing, the envelope is a header and the whole letter is below it and reachable. A cover that hides the content by default hides it forever the day the bundle 404s, and this is a letter somebody was sent.

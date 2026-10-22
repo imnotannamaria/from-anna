@@ -235,15 +235,15 @@ describe('highlight palette', () => {
  * The rest of the reading surface.
  *
  * The highlights were never the only pair on the page. The metadata labels
- * are 11px and sit on paper rather than white, and the coda sits on a blush
- * band, which is a different ground and therefore a different measurement.
+ * are 11px and sit on paper rather than white, and a reaction the reader has
+ * chosen sits on a blush fill, which is a different ground and therefore a
+ * different measurement.
  * The app runs in light mode, so light is what these check.
  */
 describe('the paper surface', () => {
   const LIGHT = ':root\\[data-mode="light"\\]'
   const canvas = tokenIn(LIGHT, '--bg-canvas', globals)
   const muted = tokenIn(LIGHT, '--fg-muted', globals)
-  const secondary = tokenIn(LIGHT, '--fg-secondary', globals)
   const brand = tokenIn(LIGHT, '--fg-brand', globals)
   const surface = tokenIn(LIGHT, '--bg-surface', globals)
 
@@ -276,11 +276,11 @@ describe('the paper surface', () => {
     ).toBeGreaterThanOrEqual(AA_NORMAL)
   })
 
-  it('the coda is measured against the blush, not the paper', () => {
-    // The band changes the background, so the text on it is a different pair.
+  it('a chosen reaction is measured against the blush, not the paper', () => {
+    // The fill changes the background, so the text on it is a different pair.
     for (const [name, colour] of [
       ['body', tokenIn(LIGHT, '--fg-primary', globals)],
-      ['the privacy line', secondary],
+      ['a chosen reaction', tokenIn(LIGHT, '--fg-brand-text', globals)],
     ] as const) {
       const ratio = contrastRatio(colour, blush)
       expect(
@@ -290,8 +290,22 @@ describe('the paper surface', () => {
     }
   })
 
+  it('a chosen reaction reads on the blush in the dark palette too', () => {
+    const darkCanvas = tokenIn(':root', '--bg-canvas', globals)
+    const darkBlush = over(
+      tokenIn(':root', '--bg-surface-brand', globals),
+      darkCanvas,
+    )
+    const colour = tokenIn(':root', '--fg-brand-text', globals)
+    const ratio = contrastRatio(colour, darkBlush)
+    expect(
+      ratio,
+      `${colour} on ${darkBlush} is ${ratio.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(AA_NORMAL)
+  })
+
   it('the solid button reads against its own fill', () => {
-    // `write back` is paper-coloured text on brand, which is the one place
+    // The solid pill is paper-coloured text on brand, which is the one place
     // in the project where the brand colour is a background.
     const ratio = contrastRatio(surface, brand)
     expect(
