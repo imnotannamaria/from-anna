@@ -24,7 +24,7 @@ For setup and env vars, see [README.md](README.md). For why any of it is the way
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + entrepta tokens |
-| Design system | entrepta (julia), run in light mode |
+| Design system | entrepta v4 (violet), light by default, optional saved dark mode |
 | Markdown | unified, remark-parse, remark-directive, remark-rehype, rehype-sanitize, rehype-stringify |
 | Database | Postgres (Neon) via Drizzle ORM |
 | File storage | Vercel Blob |
@@ -118,7 +118,8 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 
 ## Conventions
 
-- **The app runs in light mode, and that is a decision, not a default.** entrepta ships dark-first with an IDE metaphor; here every page frames a photograph of ink on paper, and dark editor chrome frames the wrong thing. `data-mode="light"` is set on `<html>` and the surfaces are overridden to paper rather than white in `globals.css`.
+- **The app starts in light mode and offers an explicit saved dark choice.** `data-mode="light"` is the server fallback on `<html>`. A plain inline script in `<head>` restores only the saved color preference before first paint; it never hides or constructs letter content. Not `next/script`: even `beforeInteractive` queues inline code until the runtime loads, after first paint. Both palettes live in `globals.css`, and contrast checks cover both modes. Photographs retain their original colors.
+- **The author is never a reader.** Opening a published letter while signed in as the author records no view and no `reachedEnd`, on the page and at the endpoint. Analytics that count the person checking the letter measure the wrong thing.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.
 - **entrepta components are owned code.** Edit them directly rather than wrapping or overriding from the outside.
 - **Everything under `/admin` checks authorization in the route handler and the page**, not only in a middleware matcher. A matcher can be edited wrong. Unauthorized gets a 404, never a 403 — a 403 confirms the thing exists. `proxy.ts` refuses as well, and that is about the **status code**, not the access: see the next rule.

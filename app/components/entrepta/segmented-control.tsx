@@ -1,4 +1,4 @@
-// Owned entrepta v4 SegmentedControl; pill geometry adapted to the approved UI.
+// Owned entrepta v4 SegmentedControl; pill geometry adapted to this app.
 'use client'
 
 import * as React from 'react'

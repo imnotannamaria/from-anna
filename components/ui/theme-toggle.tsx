@@ -2,15 +2,16 @@
 
 import { useEffect, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
+import { MODE_KEY, syncThemeColor } from '@/lib/theme/mode'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { Icon } from './icon'
 
-const KEY = 'from-anna-mode'
+const KEY = MODE_KEY
 let activeTransition: ViewTransition | undefined
 let switchVersion = 0
 let requestedMode: 'dark' | 'light' | undefined
 
-/** The same downward curtain as annamaria.app, with an instant fallback. */
+/** A downward view-transition curtain, with an instant fallback. */
 function changeMode(mode: 'dark' | 'light', reduced: boolean) {
   const root = document.documentElement
   const version = ++switchVersion
@@ -20,6 +21,7 @@ function changeMode(mode: 'dark' | 'light', reduced: boolean) {
     if (version !== switchVersion) return
     flushSync(() => {
       root.dataset.mode = mode
+      syncThemeColor(mode)
       try {
         localStorage.setItem(KEY, mode)
       } catch {

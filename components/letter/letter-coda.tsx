@@ -28,7 +28,7 @@ export function LetterCoda({
   return (
     <section ref={ref} className="coda" aria-label="The end of the letter">
       <div className="coda-inner">
-        <p className="meta">The end of the page</p>
+        <p className="meta">The end of the letter</p>
 
         <p className="display coda-line">
           That is the whole letter.{' '}

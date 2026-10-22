@@ -30,6 +30,11 @@ export type SheetProps = {
 type Props = {
   letterId: string
   isPreview: boolean
+  /**
+   * The author is reading. Nothing is measured: opening my own letter to
+   * check it is not a reader. A draft is always the author's.
+   */
+  isAuthor: boolean
   /** Who it is for, if I said. The bar reads "to you" when this is null. */
   recipient: string | null
   /** Formatted on the server, in UTC, so it cannot disagree with itself. */
@@ -37,6 +42,11 @@ type Props = {
   /** From an env var, never the repository. Null hides the button. */
   writeBackEmail: string | null
   tags: readonly string[]
+  /**
+   * The letter's language when it is clearly not the page's English, so a
+   * screen reader pronounces it as written. Null leaves the page's `lang`.
+   */
+  language: string | null
   sheets: SheetProps[]
 }
 
@@ -69,10 +79,12 @@ type Props = {
 export function LetterView({
   letterId,
   isPreview,
+  isAuthor,
   recipient,
   sentOn,
   writeBackEmail,
   tags,
+  language,
   sheets,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -242,7 +254,7 @@ export function LetterView({
 
   /* ---- reached the end ----------------------------------------------- */
   useEffect(() => {
-    if (isPreview || reported.current) return
+    if (isPreview || isAuthor || reported.current) return
 
     // The same trap as the reveal above, and this one is the expensive one.
     // A coda that is laid out but unreached still intersects, so an observer
@@ -272,7 +284,7 @@ export function LetterView({
 
     observer.observe(target)
     return () => observer.disconnect()
-  }, [letterId, isPreview, enhanced, open, envelope.phase])
+  }, [letterId, isPreview, isAuthor, enhanced, open, envelope.phase])
 
   const readAgain = useCallback(() => {
     // Back to the first sheet, not to the top of the last one. Never a reload:
@@ -392,11 +404,18 @@ export function LetterView({
       data-enhanced={enhanced ? 'true' : undefined}
     >
       <main id="main-content" className="reader-main">
-        {isPreview && (
+        {isPreview ? (
           <p className="preview-banner">
             <span className="meta">Preview</span> Not published. No reading
             activity is counted.
           </p>
+        ) : (
+          isAuthor && (
+            <p className="preview-banner">
+              <span className="meta">Published</span> You are signed in as the
+              author, so this visit is not counted.
+            </p>
+          )
         )}
         <EnvelopeStage
           envelope={envelope}
@@ -404,7 +423,7 @@ export function LetterView({
           sentOn={sentOn}
           target="#sheet-0"
           label="Open the letter"
-          caption={`${sheets.length === 1 ? 'One sheet' : `${sheets.length} sheets`} · shared directly with you`}
+          caption={`${sheets.length === 1 ? 'One sheet' : `${sheets.length} sheets`} · written by hand${sentOn ? ` · ${sentOn}` : ''}`}
         />
         <div
           className="letter-deck surface paper-content"
@@ -458,7 +477,12 @@ export function LetterView({
               style={{ ['--sheet-ratio' as string]: String(item.ratio) }}
             >
               <div className="paper-sheet">
-                <div className="sheet-face sheet-face--front">{item.prose}</div>
+                <div
+                  className="sheet-face sheet-face--front"
+                  lang={language ?? undefined}
+                >
+                  {item.prose}
+                </div>
                 <div className="sheet-face sheet-face--back">
                   <PhotoFrame
                     className="sheet-frame"
@@ -492,7 +516,7 @@ export function LetterView({
                     }}
                   >
                     <Icon name="text" />
-                    Text
+                    <span className="dock-label">Text</span>
                   </button>
                   <button
                     type="button"
@@ -504,7 +528,7 @@ export function LetterView({
                     }}
                   >
                     <Icon name="photo" />
-                    Photo
+                    <span className="dock-label">Photo</span>
                   </button>
                 </SegmentTrack>
               </div>
@@ -520,9 +544,8 @@ export function LetterView({
       />
       <footer className="reader-footer meta">
         written by hand ·{' '}
-        <Link href="/" className="wordmark">
+        <Link href="/" className="wordmark wordmark--mark" aria-label="from anna">
           <BrandMark size={30} />
-          from anna
         </Link>
       </footer>
     </div>

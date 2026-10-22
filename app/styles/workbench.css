@@ -113,7 +113,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-primary);
-  background: var(--tag-fill, var(--bg-surface));
+  background: var(--tag-fill, var(--bg-overlay));
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 0.45rem 0.9rem;
@@ -666,7 +666,7 @@
 }
 .filter-count {
   color: var(--fg-muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 .admin-list {
   list-style: none;
@@ -713,7 +713,7 @@
   border-radius: 999px;
   padding: 4px 9px;
   white-space: nowrap;
-  font: 9px/1.4 var(--font-mono);
+  font: 10px/1.4 var(--font-mono);
 }
 .status-dot {
   width: 5px;
@@ -743,7 +743,7 @@
   margin: 24px 0;
 }
 .figures dt {
-  font: 9px/1.6 var(--font-mono);
+  font: 10px/1.6 var(--font-mono);
   color: var(--fg-muted);
 }
 .figures dd {
@@ -798,7 +798,7 @@
 }
 .workbench-step small {
   display: block;
-  font: 9px/1.5 var(--font-mono);
+  font: 10px/1.5 var(--font-mono);
   color: var(--fg-muted);
   margin-top: 4px;
 }
@@ -814,7 +814,7 @@
   margin: 6px 0 10px;
 }
 .step-intro p:not(.meta) {
-  font: 12px/1.8 var(--font-body);
+  font: 14px/1.8 var(--font-body);
 }
 .writing-tools {
   border-bottom: 1px solid var(--border-subtle);
@@ -829,7 +829,7 @@
   padding: 10px 12px 10px 18px;
 }
 .writing-savebar strong {
-  font: 12px var(--font-body);
+  font: 13px var(--font-body);
 }
 .writing-savebar .editor-hint {
   font-size: 11px;
@@ -868,13 +868,13 @@
   box-shadow: none;
 }
 .writing-source {
-  font: 13px/1.95 var(--font-mono);
+  font: 14px/1.95 var(--font-mono);
 }
 .writing-preview {
   font-size: 14px;
 }
 .writing-page .meta {
-  font-size: 9px;
+  font-size: 10px;
 }
 .reference-photo {
   border-radius: 8px;
@@ -882,7 +882,7 @@
 .review-notice {
   border-radius: 16px;
   background: var(--status-warning-soft);
-  font: 12px/1.7 var(--font-body);
+  font: 14px/1.7 var(--font-body);
 }
 .step-footer {
   margin-top: 12px;
@@ -899,7 +899,7 @@
   height: 9px;
 }
 .editor-hint {
-  font: 12px/1.75 var(--font-body);
+  font: 13px/1.75 var(--font-body);
 }
 .editor-status {
   color: var(--fg-muted);
@@ -912,7 +912,7 @@
   padding: 16px;
 }
 .count-chip {
-  font-size: 9px;
+  font-size: 10px;
   text-transform: none;
   letter-spacing: 0;
   color: var(--fg-brand-text);
@@ -929,7 +929,7 @@
     font-size: 23px;
   }
   .desk-wordmark span {
-    font-size: 8px;
+    font-size: 10px;
   }
   .desk-header .desk-wordmark {
     order: -1;
@@ -951,7 +951,7 @@
     width: 100%;
   }
   .filter-count {
-    font-size: 8px;
+    font-size: 10px;
   }
   .workbench-steps {
     width: 100%;
@@ -962,7 +962,7 @@
   .workbench-step.pill {
     flex: 1;
     padding: 10px 5px;
-    font-size: 9px;
+    font-size: 10px;
   }
   .workbench-step :is(small, .step-number) {
     display: none;
@@ -1017,7 +1017,7 @@
     font-size: 28px;
   }
   .figures dt {
-    font-size: 8px;
+    font-size: 10px;
   }
   .letter-details .editor-bar {
     align-items: stretch;
@@ -1177,4 +1177,16 @@
 .desk-loading-controls .desk-loading-pill {
   flex: 0 1 150px;
   min-width: 0;
+}
+
+/* The wordmark is one unit. Squeezed beside the mode switch in the desk's
+   header it broke as "from / anna"; on the narrowest screens its subtitle
+   steps aside instead, and the name stays whole. */
+.desk-wordmark {
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .desk-header .desk-wordmark span {
+    display: none;
+  }
 }

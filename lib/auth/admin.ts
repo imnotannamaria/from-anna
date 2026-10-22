@@ -77,6 +77,18 @@ export async function requireAdmin(): Promise<void> {
 }
 
 /**
+ * Whether the caller is the author, without throwing.
+ *
+ * For the public letter route, which is not an admin surface but must not
+ * count the author's own visits as reading: opening a published letter to
+ * check it is not a reader, any more than previewing a draft is.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const { userId } = await auth()
+  return isAdminAllowed(readAdminContext(userId))
+}
+
+/**
  * The signed-in user id, whether or not they are allowed in.
  *
  * Only the sign-in page uses this, to tell "signed in and allowed" (sent on

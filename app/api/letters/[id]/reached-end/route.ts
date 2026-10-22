@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
 import { SESSION_COOKIE, isAutomated } from '@/lib/analytics/visit'
+import { isAdmin } from '@/lib/auth/admin'
 import { isPubliclyReadable } from '@/lib/letters/access'
 import { getLetterWithPages } from '@/lib/letters/mutations'
 import { markReachedEnd } from '@/lib/letters/queries'
@@ -31,6 +32,10 @@ export async function POST(
   if (isAutomated((await headers()).get('user-agent'))) {
     return new Response(null, { status: 204 })
   }
+
+  // The author checking their own letter is not a reader. The page already
+  // never asks; this is the same rule where the row is written.
+  if (await isAdmin()) return new Response(null, { status: 204 })
 
   const found = await getLetterWithPages(id)
   // Only a published letter is measured. Previewing my own draft is not a

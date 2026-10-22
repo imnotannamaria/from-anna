@@ -43,16 +43,20 @@ export function HomeNavigation() {
   }, [])
   return (
     <nav className="island home-navigation" aria-label="Main">
-      <a className="wordmark" href="#top">
-        <BrandMark size={36} />
-        from <em>anna</em>
+      {/* The mark alone; the name is the link's, for a screen reader. */}
+      <a
+        className="wordmark wordmark--mark"
+        href="#top"
+        aria-label="from anna, top of the page"
+      >
+        <BrandMark size={38} />
       </a>
       <SegmentTrack label="On this page">
         {sections.map(([id, label]) => (
           <a
             key={id}
             href={`#${id}`}
-            aria-current={current === id ? 'page' : undefined}
+            aria-current={current === id ? 'true' : undefined}
           >
             {label}
           </a>

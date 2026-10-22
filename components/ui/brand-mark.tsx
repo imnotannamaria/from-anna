@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import mark from '@/public/from-anna.png'
 
-/** The supplied artwork, shared by every brand touchpoint. */
+/** The brand artwork, shared by every brand touchpoint. */
 export function BrandMark({
   size = 40,
   className = '',

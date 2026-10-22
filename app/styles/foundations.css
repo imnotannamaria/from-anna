@@ -104,8 +104,10 @@
 .pill[aria-disabled='true'] {
   cursor: default;
   color: var(--fg-muted);
-  background: var(--bg-hover-strong);
-  border-color: var(--border-strong);
+  /* No fill: a translucent white over near-black reads as a grey slab.
+     Muted ink and a quieter edge say "unavailable" in both modes. */
+  background: transparent;
+  border-color: var(--border-subtle);
 }
 .pill[data-busy='true'] {
   cursor: progress;
@@ -448,4 +450,17 @@
   right: 0;
   top: 0;
   margin: 0;
+}
+
+/* The mark without the name: a round target the size of a control, so it
+   reads as the brand and is still easy to press and to see focused. */
+.wordmark--mark {
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+}
+.home-navigation .wordmark--mark {
+  padding-inline: 2px;
 }

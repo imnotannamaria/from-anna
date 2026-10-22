@@ -2,7 +2,7 @@
 
 This is everything I worked out before opening the editor.
 
-Start with [GOAL.md](./GOAL.md). It says why this project exists, and it is short.
+Start with [GOAL.md](./GOAL.md). It says why this project exists, and it is short. To run your own, [SETUP.md](./SETUP.md) lists the accounts and keys, in the order that matters.
 
 ## The board
 
@@ -36,6 +36,10 @@ This is also the one that becomes an npm package. The other two are app code.
 ### [share](./features/share/)
 
 The published letter. Readable but unguessable slug, one link per recipient, `noindex`, page-turn navigation, and counting whether the letter was actually opened and read.
+
+## [design](./design/)
+
+The reading page and everything around it: the envelope, the deck, the writing desk and the visual system. Same two files, `DECISIONS.md` and `IMPLEMENTATION.md`.
 
 ---
 

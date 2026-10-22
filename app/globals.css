@@ -36,7 +36,7 @@
   --font-serif: var(--font-newsreader), Georgia, serif;
 }
 
-/* entrepta v4 semantic roles. The supplied HTML adapts the violet preset.
+/* entrepta v4 semantic roles, adapted from the violet preset.
    Fills and text have separate roles: colored text must use fg-brand-text. */
 :root {
   --bg-canvas: #09090b;
@@ -61,10 +61,15 @@
   --motion-slow: 320ms;
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-card: 0 2px 8px rgb(0 0 0 / 0.04);
-  /* A physical paper object keeps its ink/stock pair in either chrome mode. */
-  --envelope-paper: #f3f0e9;
-  --envelope-ink: #27232d;
-  --envelope-seam: #c8c1d0;
+  /* The envelope follows the mode: in dark it is the same near-black as the
+     home's cards, never a grey, and its edges are what separate it; paper
+     stock with dark ink in light mode. */
+  --envelope-paper: #0b0b0e;
+  --envelope-inside: #09090b;
+  --envelope-sheet: #0e0e10;
+  --envelope-ink: #ece8f2;
+  --envelope-seam: #27272a;
+  --envelope-shadow: rgb(0 0 0 / 0.5);
   --envelope-fold: color-mix(
     in srgb,
     var(--fg-brand) 7%,
@@ -123,6 +128,12 @@
 }
 :root[data-mode='light'] {
   color-scheme: light;
+  --envelope-paper: #f3f0e9;
+  --envelope-inside: #e2dccf;
+  --envelope-sheet: #fcfbf7;
+  --envelope-ink: #27232d;
+  --envelope-seam: #c8c1d0;
+  --envelope-shadow: rgb(40 30 20 / 0.16);
   --bg-canvas: #f4f4f2;
   --bg-card: #fbfbfa;
   --bg-card-hover: #ffffff;

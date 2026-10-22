@@ -225,7 +225,7 @@ export default function Home() {
           <h2 className="display home-h2" id="run-title">
             Clone it. <em>It’s yours.</em>
           </h2>
-          <div className="home-demo">
+          <div className="home-demo home-demo--run">
             <pre className="home-code">
               <code>{`git clone ${REPO}
 cd from-anna
@@ -289,9 +289,12 @@ npm run dev`}</code>
       </Reveal>
 
       <footer className="home-foot">
-        <a href="#top" className="wordmark" aria-label="from anna, back to top">
+        <a
+          href="#top"
+          className="wordmark wordmark--mark"
+          aria-label="from anna, back to top"
+        >
           <BrandMark size={40} />
-          from <em>anna</em>
         </a>
         <p className="meta">written by hand, read on a screen</p>
         <nav className="island" aria-label="Footer">
@@ -299,10 +302,7 @@ npm run dev`}</code>
             <ExternalLink href={REPO}>Source</ExternalLink>
             <ExternalLink href={PACKAGE}>Package</ExternalLink>
             <ExternalLink href={`${REPO}/blob/main/LICENSE`}>MIT</ExternalLink>
-            <ExternalLink href="https://annamaria.app">
-              annamaria.app
-              <Icon name="external" />
-            </ExternalLink>
+            <ExternalLink href="https://annamaria.app">annamaria.app</ExternalLink>
           </SegmentTrack>
         </nav>
       </footer>

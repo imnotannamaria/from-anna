@@ -73,11 +73,11 @@ describe('deviceFrom', () => {
 
 describe('normaliseSource', () => {
   it('keeps a plain name', () => {
-    expect(normaliseSource('yonatan')).toBe('yonatan')
+    expect(normaliseSource('marina')).toBe('marina')
   })
 
   it('lowercases and trims', () => {
-    expect(normaliseSource('  Yonatan  ')).toBe('yonatan')
+    expect(normaliseSource('  Marina  ')).toBe('marina')
   })
 
   it('is null when the parameter is absent', () => {

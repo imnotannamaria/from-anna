@@ -34,12 +34,13 @@ export function ReaderBar({
       <header className="reader-bar">
         <BrandMark size={44} />
         <div className="reader-address">
-          <h1 className="reader-name">
+          {/* h2: the page's h1 is the envelope's "A letter, for …". */}
+          <h2 className="reader-name">
             for <em>{recipient ?? 'you'}</em>
-          </h1>
+          </h2>
           <p className="meta">
             from Anna{sentOn ? ` · ${sentOn}` : ''} · {count}{' '}
-            {count === 1 ? 'page' : 'pages'}
+            {count === 1 ? 'sheet' : 'sheets'}
           </p>
         </div>
         <div className="reader-controls">

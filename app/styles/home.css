@@ -46,7 +46,7 @@
   max-width: 43ch;
   margin-top: 24px;
   color: var(--fg-secondary);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.85;
 }
 .home-actions {
@@ -73,21 +73,21 @@
 }
 .home-note-head .meta {
   margin-top: 4px;
-  font-size: 9px;
+  font-size: 10px;
 }
 .demo-label {
   margin-left: auto;
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   color: var(--fg-muted);
-  font: 9px var(--font-mono);
+  font: 10px var(--font-mono);
   padding: 4px 7px;
 }
 .home-demo-prose {
   padding: 20px 0 22px;
 }
 .home-letter .letter-prose {
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.9;
 }
 .home-sign {
@@ -132,7 +132,7 @@
   margin-bottom: 12px;
 }
 .home-steps p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-secondary);
   line-height: 1.85;
 }
@@ -171,17 +171,17 @@
   height: calc(100% - 26px);
 }
 .home-render .letter-prose {
-  font-size: 14px;
+  font-size: 15px;
 }
 .home-body {
   color: var(--fg-secondary);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.9;
 }
 .home-body--quiet {
   max-width: 88ch;
   margin-top: 22px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .home-body a {
   text-decoration: underline;
@@ -214,7 +214,7 @@
   padding: 0;
   margin: 24px 0;
   list-style: none;
-  font-size: 12px;
+  font-size: 14px;
 }
 .privacy-list li {
   display: flex;
@@ -239,7 +239,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .home-setup li svg {
   color: var(--fg-brand-text);
@@ -248,7 +248,7 @@
 .home-setup li span {
   display: block;
   color: var(--fg-muted);
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 2px;
 }
 .home-personal-note {
@@ -275,7 +275,7 @@
   border-top: 1px solid var(--border-strong);
 }
 .home-foot .meta {
-  font-size: 9px;
+  font-size: 10px;
 }
 .home-foot .segment-track > a {
   font-size: 10px;
@@ -335,8 +335,9 @@
     padding: 3px;
   }
   .home-navigation .segment-track > a {
-    font-size: 9px;
-    padding: 8px 6px;
+    font-size: 10px;
+    letter-spacing: 0;
+    padding: 8px 4px;
     flex: 1;
   }
   .home-navigation .wordmark .brand-mark {
@@ -352,7 +353,7 @@
     max-width: 12ch;
   }
   .home-lede {
-    font-size: 13px;
+    font-size: 15px;
   }
   .home-section {
     margin: 40px 0 50px;
@@ -367,7 +368,7 @@
     font-size: 22px;
   }
   .home-steps p {
-    font-size: 11px;
+    font-size: 13px;
   }
   .home-demo,
   .home-package-grid {
@@ -399,6 +400,31 @@
   }
   .home-foot .segment-track > a {
     padding-inline: 9px;
-    font-size: 9px;
+    font-size: 10px;
+  }
+}
+
+/* The commands are six short lines: sized to them, not stretched to the
+   height of the list beside them. */
+.home-demo--run {
+  align-items: start;
+}
+.home-demo--run .home-code {
+  height: auto;
+}
+
+/* Four steps in two columns leave each card about 130px of text at 375px.
+   One column reads as a list, which is what it is. */
+@media (max-width: 520px) {
+  .home-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* On a phone the sticky navigation is two rows tall; an anchor has to land
+   below it, not behind it. */
+@media (max-width: 600px) {
+  html {
+    scroll-padding-top: 136px;
   }
 }

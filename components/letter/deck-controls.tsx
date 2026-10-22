@@ -33,7 +33,7 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atStart || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the page' : 'Previous sheet'}
+        aria-label={busy ? 'Turning the sheet' : 'Previous sheet'}
       >
         <Icon name="left" />
       </button>
@@ -64,12 +64,12 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atEnd || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the page' : 'Next sheet'}
+        aria-label={busy ? 'Turning the sheet' : 'Next sheet'}
       >
         <Icon name="right" />
       </button>
       <p className="sr-only" aria-live="polite">
-        {busy ? 'Turning the page' : `Sheet ${sheet + 1} of ${count}`}
+        {busy ? 'Turning the sheet' : `Sheet ${sheet + 1} of ${count}`}
       </p>
     </nav>
   )

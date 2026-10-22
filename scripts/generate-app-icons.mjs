@@ -5,7 +5,7 @@ import { createElement } from 'react'
 const { ImageResponse } = createRequire(import.meta.url)('next/og')
 const mark = `data:image/png;base64,${(await readFile(new URL('../public/from-anna.png', import.meta.url))).toString('base64')}`
 
-// Compose the supplied artwork on ink without changing the source bitmap.
+// Compose the brand artwork on ink without changing the source bitmap.
 // Static metadata files also bypass the letter-session middleware matcher.
 for (const [name, size] of [
   ['icon', 64],

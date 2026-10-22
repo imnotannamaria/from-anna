@@ -28,20 +28,19 @@ export function EnvelopeStage({
       data-opening={opening ? 'true' : 'false'}
     >
       <header className="envelope-stationery-head">
-        <span className="wordmark">
-          <BrandMark size={34} />
-          from <em>anna</em>
+        <span className="wordmark wordmark--mark">
+          <BrandMark size={38} />
         </span>
         <ThemeToggle />
       </header>
-      <div className="envelope-heading">
-        <h1 className="display">
-          A letter, <em>for {recipient ?? 'you'}.</em>
-        </h1>
-        <p className="meta">
-          written by hand · from Anna{sentOn ? ` · ${sentOn}` : ''}
-        </p>
-      </div>
+      {/*
+        The envelope carries the name, where a real one would. The page's
+        heading is for a screen reader, which the envelope is hidden from.
+      */}
+      <h1 className="sr-only">
+        A letter for {recipient ?? 'you'}, from Anna
+        {sentOn ? `, ${sentOn}` : ''}
+      </h1>
       <a
         ref={attachOpener}
         href={target}
@@ -62,7 +61,7 @@ export function EnvelopeStage({
           openLetter()
         }}
       >
-        <Envelope recipient={recipient} />
+        <Envelope recipient={recipient} sentOn={sentOn} />
         <span
           className="pill pill--solid envelope-open"
           data-busy={opening || undefined}

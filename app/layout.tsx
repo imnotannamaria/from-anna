@@ -1,9 +1,10 @@
 import { ClerkProvider } from '@clerk/nextjs'
-import type { Metadata } from 'next'
-import Script from 'next/script'
+import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono, Newsreader } from 'next/font/google'
 
 import { SiteAnalytics } from '@/components/site-analytics'
+import { ModeSync } from '@/components/ui/mode-sync'
+import { MODE_SCRIPT, THEME_COLOR } from '@/lib/theme/mode'
 
 import 'remark-scanned-page/styles/scanned-page.css'
 
@@ -18,7 +19,13 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
 }
 
-// The approved reference uses Newsreader display, Inter body and Mono controls.
+// The light canvas. The head script swaps it for the dark one when that is
+// the saved choice, so the browser chrome matches the page either way.
+export const viewport: Viewport = {
+  themeColor: THEME_COLOR.light,
+}
+
+// Newsreader for headings, Inter for reading and JetBrains Mono for controls.
 // next/font downloads them at build time; no browser request to Google Fonts.
 const newsreader = Newsreader({
   subsets: ['latin'],
@@ -46,8 +53,15 @@ const fontVariables = [newsreader, inter, jetbrainsMono]
   .map((font) => font.variable)
   .join(' ')
 
-// Server HTML is complete in light mode. The critical script only restores an
+// Server HTML is complete in light mode. The head script only restores an
 // explicit color choice; it never gates rendering or changes letter content.
+// `suppressHydrationWarning` covers exactly that: the script changes
+// `data-mode` on <html> before React hydrates.
+//
+// A 404 thrown from inside `/[slug]` makes Next render this layout again on
+// the client, and React 19 logs "Encountered a script tag" in development
+// when it does. That warning is dev-only and harmless; `ModeSync` puts the
+// saved mode back on that path.
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
@@ -58,15 +72,15 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       data-theme="entrepta"
       className={`h-full ${fontVariables}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: MODE_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
-        <Script
-          id="restore-color-mode"
-          strategy="beforeInteractive"
-        >{`try { document.documentElement.dataset.mode = localStorage.getItem('from-anna-mode') === 'dark' ? 'dark' : 'light' } catch {}`}</Script>
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
         <ClerkProvider>{children}</ClerkProvider>
+        <ModeSync />
         <SiteAnalytics />
       </body>
     </html>

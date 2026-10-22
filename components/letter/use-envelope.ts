@@ -83,9 +83,11 @@ export function useEnvelope() {
       change('open')
       return
     }
+    // The envelope turns over (520ms), the flap lifts and the letter rises
+    // (to ~1100ms); then the real sheet takes over from it.
     change('tearing')
-    timers.current.push(setTimeout(() => change('unfolding'), 620))
-    timers.current.push(setTimeout(() => change('open'), 1060))
+    timers.current.push(setTimeout(() => change('unfolding'), 1150))
+    timers.current.push(setTimeout(() => change('open'), 1590))
   }, [change, clear, reducedMotion])
 
   // Whether focus goes back to the envelope quietly. Focus moved by a script

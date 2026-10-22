@@ -1,5 +1,7 @@
 .letter-prose {
-  font: 15px/1.95 var(--font-body);
+  /* The transcription is the content. 17px with a calmer leading reads as a
+     letter; the 15px it was read as a caption under a photograph. */
+  font: 17px/1.8 var(--font-body);
   color: var(--fg-primary);
   overflow-wrap: break-word;
 }
@@ -101,11 +103,28 @@
   background: var(--bg-card);
   font-size: 12px;
 }
+/* ---- the sealed letter ---------------------------------------------
+
+   The page before the letter is opened is the envelope and almost nothing
+   else: a small header, the envelope front-on, the button, one quiet line.
+   The name is on the envelope, where a real one carries it; the heading for
+   a screen reader is in the markup, hidden.
+
+   Opening turns the envelope over, lifts the flap and raises the letter,
+   then the real sheet takes over (`use-envelope.ts`). Transforms only: no
+   text in it ever fades. The paper keeps its stock and ink in both modes.
+   -------------------------------------------------------------------- */
+
 .envelope-stage {
   position: relative;
-  width: min(660px, 100%);
-  margin: clamp(12px, 3vh, 36px) auto 56px;
-  padding: 18px 24px 30px;
+  display: grid;
+  justify-items: center;
+  width: min(720px, 100%);
+  min-height: min(760px, calc(100svh - 64px));
+  margin: 0 auto 40px;
+  padding: 4px 0 24px;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
   text-align: center;
   overflow: clip;
 }
@@ -113,178 +132,139 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 22px;
-  margin-bottom: 28px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.envelope-stationery-head .wordmark {
-  font-size: 23px;
-}
-.envelope-heading h1 {
-  font-size: clamp(40px, 6vw, 56px);
-  margin: 12px 0;
-  overflow-wrap: anywhere;
-}
-.envelope-heading .meta {
-  font-size: 10px;
-}
-.envelope-heading h1 em {
-  display: block;
+  width: 100%;
 }
 .envelope-opener {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 36px;
+  width: 100%;
+  /* Room above the envelope for the flap once it turns over (60% of the
+     envelope's height, which is 65% of its width): the stage clips, so the
+     flap would otherwise be cut off at its tip. The tip is narrow, so it may
+     rise into the header row, between the mark and the mode switch. */
+  padding-top: calc(min(560px, 100vw - 24px) * 0.42 - 48px);
   color: inherit;
   text-decoration: none;
-  border-radius: 20px;
   cursor: pointer;
 }
 .envelope-open {
-  margin: 24px 0 14px;
   padding-inline: 22px;
 }
 .envelope-under {
-  font-size: 9px;
-  max-width: 42ch;
-  margin-inline: auto;
+  margin-top: 14px;
 }
+
 .envelope {
-  position: relative;
-  width: min(440px, 94%);
-  aspect-ratio: 1.38;
-  margin: 8px auto 14px;
-  padding-top: 48px;
-  perspective: 1000px;
+  --env-w: min(560px, 100%);
+  width: var(--env-w);
+  aspect-ratio: 400 / 260;
+  perspective: 1800px;
 }
-.envelope-shadow {
-  position: absolute;
-  inset: 30% 8% 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--fg-primary) 10%, transparent);
-  filter: blur(24px);
-  transform: translateY(20px) scaleY(0.22);
-}
-.envelope-body {
+.envelope-turn {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 7px;
-  background: var(--envelope-paper);
-  border: 1px solid var(--envelope-seam);
-  box-shadow:
-    0 2px 3px rgb(0 0 0 / 0.12),
-    0 24px 36px -24px rgb(0 0 0 / 0.45);
-  transform: rotate(-5deg);
-  transition: transform 320ms var(--ease-out);
+  transform-style: preserve-3d;
+  transition: transform 520ms cubic-bezier(0.65, 0, 0.35, 1);
 }
-.envelope-pocket {
+.envelope-face {
   position: absolute;
   inset: 0;
-  background: var(--envelope-fold);
-  border-radius: inherit;
-}
-.envelope-flap {
-  position: absolute;
-  left: 0;
-  top: -1px;
-  width: 100%;
-  z-index: 3;
-  fill: var(--envelope-fold);
-  stroke: var(--envelope-seam);
-  stroke-width: 0.7;
-  transform-origin: 50% 0%;
   backface-visibility: hidden;
-  filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.06));
+  filter: drop-shadow(0 26px 28px var(--envelope-shadow))
+    drop-shadow(0 2px 3px var(--envelope-shadow));
 }
-.envelope-flap-stitch {
-  fill: none;
-  stroke-dasharray: 2 3;
-  opacity: 0.65;
+.envelope-face--back {
+  transform: rotateY(180deg);
 }
-.envelope-front {
+.envelope-art {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 2;
+}
+.envelope-paper {
   fill: var(--envelope-paper);
   stroke: var(--envelope-seam);
-  stroke-width: 0.7;
-  border-radius: inherit;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
-.envelope-front path + path {
+.envelope-crease {
   fill: none;
+  stroke: var(--envelope-seam);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
-.envelope-fold {
-  visibility: hidden;
+.envelope-face--front .envelope-crease {
+  opacity: 0.35;
+}
+
+/* The front */
+.envelope-stamp {
   position: absolute;
-  z-index: 1;
-  left: 12%;
-  right: 12%;
-  top: 18px;
-  bottom: 22px;
-  padding: 24px;
+  top: 8%;
+  right: 5%;
+  width: 16%;
+  aspect-ratio: 0.82;
+  padding: 5px;
+  background: var(--envelope-sheet);
+  rotate: 3deg;
+  --perf: radial-gradient(circle at 4px 4px, transparent 2.4px, #000 2.8px);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    var(--perf) -4px -4px / 8px 8px;
+  mask-composite: add;
+}
+.envelope-stamp-inner {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  height: 100%;
   border: 1px solid var(--envelope-seam);
-  border-radius: 4px;
-  background: var(--envelope-paper);
-  display: grid;
-  align-content: start;
-  gap: 15px;
+  background: var(--envelope-fold);
+  color: var(--envelope-ink);
+  font: 7px/1 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
-.envelope-fold span {
-  height: 8px;
-  border-radius: 3px;
-  background: var(--hl-important);
+.envelope-stamp .brand-mark {
+  width: min(34px, 60%);
+  height: auto;
 }
-.envelope-fold span:nth-child(2) {
-  width: 72%;
-  background: var(--hl-note);
-}
-.envelope-fold span:nth-child(3) {
-  width: 84%;
-  background: var(--hl-ask);
-}
-.envelope-seal {
+.envelope-postmark {
   position: absolute;
-  z-index: 5;
-  left: 44%;
-  top: 44%;
-  width: 12%;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border-radius: 45% 49% 44% 48%;
-  background: var(--fg-brand);
-  color: var(--fg-on-brand);
-  box-shadow:
-    inset 0 0 0 3px color-mix(in srgb, var(--fg-on-brand) 12%, transparent),
-    inset 0 -3px 5px rgb(0 0 0 / 0.2),
-    0 4px 6px rgb(0 0 0 / 0.2);
-  transform: rotate(9deg);
+  top: 11%;
+  right: 19%;
+  width: 30%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--envelope-ink);
+  stroke-width: 1.2;
+  opacity: 0.45;
+  rotate: -9deg;
 }
-.envelope-seal > span {
-  display: grid;
-  place-items: center;
-  width: 76%;
-  aspect-ratio: 1;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 50%;
-  font: italic clamp(22px, 4vw, 34px) / 1 var(--font-serif);
+.envelope-postmark text {
+  fill: var(--envelope-ink);
+  stroke: none;
+  font: 8px var(--font-mono);
+  letter-spacing: 0.08em;
 }
 .envelope-address {
   position: absolute;
-  z-index: 4;
-  left: 6%;
-  right: 29%;
-  bottom: 12%;
+  left: 11%;
+  bottom: 21%;
+  display: grid;
+  gap: 7px;
+  width: 54%;
   text-align: left;
   color: var(--envelope-ink);
-  transform: rotate(-2deg);
 }
-.envelope-address > span:first-child {
-  display: block;
-  font: 10px/1.7 var(--font-mono);
+.envelope-address-to {
+  font: 11px var(--font-mono);
+  opacity: 0.65;
 }
 .envelope-addressee {
   display: -webkit-box;
@@ -292,109 +272,168 @@
   -webkit-line-clamp: 2;
   overflow: clip;
   overflow-wrap: anywhere;
-  font: italic clamp(24px, 4vw, 38px) / 1.05 var(--font-serif);
+  font: italic 400 clamp(30px, 7.4vw, 48px) / 1.02 var(--font-serif);
 }
-.envelope-address[data-long='true'] .envelope-addressee {
-  font-size: clamp(18px, 3vw, 25px);
+.envelope-address[data-long] .envelope-addressee {
+  font-size: clamp(22px, 4.6vw, 32px);
 }
-.envelope-postage {
-  position: absolute;
-  z-index: 4;
-  right: 5%;
-  bottom: 12%;
-  width: 17%;
-  padding: 4px;
-  border: 3px dotted var(--envelope-paper);
-  background: color-mix(in srgb, var(--envelope-paper) 60%, white);
-  box-shadow: 0 0 0 1px var(--envelope-seam);
-  transform: rotate(4deg);
+.envelope-address-line {
+  height: 1px;
+  background: var(--envelope-seam);
 }
-.envelope-postage-inner {
-  display: grid;
-  justify-items: center;
-  gap: 1px;
-  padding: 5px 0;
-  border: 1px solid var(--envelope-seam);
-  color: var(--envelope-ink);
-  font: 7px/1.5 var(--font-mono);
-}
-.envelope-postage .brand-mark {
-  width: min(40px, 80%);
-  height: auto;
-}
-.envelope-postmark {
-  position: absolute;
-  z-index: 4;
-  right: 4%;
-  top: 38%;
-  width: 29%;
-  fill: none;
-  stroke: var(--envelope-ink);
-  stroke-width: 0.8;
-  opacity: 0.5;
-  transform: rotate(-14deg);
-}
-.envelope-postmark text {
-  stroke: none;
-  fill: var(--envelope-ink);
-  font: 5px/1 var(--font-mono);
-  letter-spacing: 0.15px;
+.envelope-address-line--short {
+  width: 62%;
 }
 .envelope-edge {
   position: absolute;
-  z-index: 4;
-  left: 3%;
-  right: 3%;
-  bottom: 4%;
-  height: 5px;
-  border-radius: 1px;
+  inset: auto 0 0;
+  height: 6px;
+  border-radius: 0 0 3px 3px;
   background: repeating-linear-gradient(
     -45deg,
-    var(--fg-brand) 0 12px,
-    var(--envelope-paper) 12px 20px,
-    var(--envelope-rose) 20px 32px,
-    var(--envelope-paper) 32px 40px
+    var(--fg-brand) 0 10px,
+    transparent 10px 20px,
+    var(--envelope-rose) 20px 30px,
+    transparent 30px 40px
   );
+  opacity: 0.8;
 }
+
+/* The back */
+.envelope-inside {
+  z-index: 0;
+  fill: var(--envelope-inside);
+  stroke: var(--envelope-seam);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.envelope-fold {
+  position: absolute;
+  z-index: 2;
+  left: 6%;
+  right: 6%;
+  top: 7%;
+  height: 86%;
+  display: grid;
+  align-content: start;
+  gap: 9%;
+  padding: 6% 7%;
+  border-radius: 4px;
+  background: var(--envelope-sheet);
+  box-shadow: 0 1px 2px var(--envelope-shadow);
+  text-align: left;
+}
+.envelope-fold-date {
+  justify-self: end;
+  color: var(--envelope-rose);
+  font: 10px var(--font-mono);
+}
+.envelope-fold-hand {
+  overflow: hidden;
+  color: var(--envelope-ink);
+  font: italic 400 clamp(18px, 4.4vw, 28px) / 1.1 var(--font-serif);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.envelope-fold-rule {
+  height: 1px;
+  background: var(--envelope-seam);
+}
+.envelope-fold-rule--short {
+  width: 60%;
+}
+.envelope-pocket {
+  z-index: 3;
+}
+.envelope-flap {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  width: 100%;
+  height: 60%;
+  fill: var(--envelope-fold);
+  stroke: var(--envelope-seam);
+  stroke-width: 1;
+  transform-origin: top;
+}
+.envelope-seal {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  display: grid;
+  place-items: center;
+  width: 15%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  z-index: 5;
+  translate: -50% -50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--fg-brand) 65%, white),
+    var(--fg-brand) 58%,
+    color-mix(in srgb, var(--fg-brand) 70%, black)
+  );
+  box-shadow:
+    inset 0 -3px 6px rgb(0 0 0 / 0.25),
+    0 3px 6px rgb(40 30 20 / 0.25);
+  color: white;
+  font: italic 400 clamp(20px, 5vw, 32px) / 1 var(--font-serif);
+}
+
+/* At rest the envelope answers a pointer and a keyboard the same way. */
 @media (hover: hover) {
   .envelope-stage[data-opening='false']:has(.envelope-opener:hover)
-    .envelope-body {
-    transform: translateY(-5px) rotate(-2deg);
+    .envelope-turn {
+    transform: translateY(-6px);
   }
 }
 .envelope-stage[data-opening='false']:has(
     .envelope-opener:focus-visible:not([data-quiet-focus])
   )
-  .envelope-body {
-  transform: translateY(-5px) rotate(-2deg);
+  .envelope-turn {
+  transform: translateY(-6px);
+}
+
+/* Opening: turn over, lift the flap, raise the letter. */
+.envelope-stage[data-opening='true'] .envelope-turn {
+  transform: rotateY(180deg);
 }
 .envelope-stage[data-opening='true'] .envelope-seal {
-  animation: seal-release 220ms ease-in forwards;
+  animation: seal-release 220ms ease-in 520ms forwards;
 }
 .envelope-stage[data-opening='true'] .envelope-flap {
-  animation: flap-open 350ms ease-in-out 130ms forwards;
+  animation: flap-turn 420ms cubic-bezier(0.45, 0, 0.25, 1) 540ms forwards;
 }
 .envelope-stage[data-opening='true'] .envelope-fold {
-  animation: insert-rise 360ms var(--ease-out) 250ms forwards;
+  animation: letter-rise 440ms var(--ease-out) 820ms forwards;
 }
 @keyframes seal-release {
   to {
-    transform: translateY(-12px) rotate(25deg) scale(0.5);
+    scale: 0.4;
     opacity: 0;
   }
 }
-@keyframes flap-open {
-  to {
-    transform: rotateX(165deg);
+/* Hinged on the top edge. Halfway over, edge-on, it drops behind the
+   letter, so the letter rises in front of the open flap. */
+@keyframes flap-turn {
+  0% {
+    transform: perspective(900px) rotateX(0deg);
+    z-index: 4;
+  }
+  50% {
+    z-index: 4;
+  }
+  51% {
+    z-index: 1;
+  }
+  100% {
+    transform: perspective(900px) rotateX(180deg);
+    z-index: 1;
   }
 }
-@keyframes insert-rise {
-  from {
-    visibility: visible;
-  }
+@keyframes letter-rise {
   to {
-    visibility: visible;
-    transform: translateY(-68px) rotate(3deg);
+    transform: translateY(-58%);
   }
 }
 /* The cover is never a wall in server HTML. It only becomes an opening once
@@ -450,12 +489,12 @@
   color: var(--fg-brand-text);
 }
 .reader-address .meta {
-  font-size: 9px;
+  font-size: 10px;
   margin-top: 7px;
 }
 .reader-controls {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   align-self: flex-start;
 }
 .reader-controls .pill {
@@ -484,7 +523,7 @@
 }
 .legend .pill {
   min-height: 30px;
-  font-size: 9px;
+  font-size: 10px;
   padding: 5px 10px;
 }
 .chip {
@@ -555,12 +594,32 @@
   padding: 20px 28px 24px;
   border-top: 1px solid var(--border-subtle);
 }
+/* The sheet and face controls stay in reach on a sheet taller than the
+   screen, instead of waiting at its foot. Sticky inside the deck, which clips
+   rather than scrolls, so it settles at the card's own bottom edge. It never
+   covers a focused line: the page scrolls that far past it. */
+.reader[data-enhanced='true'] .reading-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  border-radius: 0 0 28px 28px;
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+html:has(.reader[data-enhanced='true'][data-open='true']) {
+  scroll-padding-bottom: 96px;
+}
+/* The legend filters the words. On the photograph it has nothing to act on,
+   so it steps aside, keeping its space so the photo does not jump. */
+.reader[data-enhanced='true'][data-face='back'] .legend {
+  visibility: hidden;
+}
 .reading-dock .island {
   box-shadow: none;
   padding: 4px;
 }
 .reading-dock .segment-track > button {
-  font-size: 10px;
+  font-size: 11px;
   padding-inline: 10px;
   min-height: 32px;
 }
@@ -576,12 +635,12 @@
   border-color: transparent;
 }
 .deck-position {
-  font: 9px var(--font-mono);
+  font: 10px var(--font-mono);
   color: var(--fg-muted);
   padding: 0 8px;
 }
 .coda {
-  width: min(680px, 100%);
+  width: min(720px, 100%);
   margin: 36px auto 0;
   text-align: center;
   padding: 32px;
@@ -663,36 +722,10 @@
     padding: 18px 12px;
   }
   .envelope-stage {
-    margin-top: 8px;
-    padding: 10px 12px 24px;
+    min-height: calc(100svh - 48px);
   }
-  .envelope {
-    width: 94%;
-    padding-top: 36px;
-  }
-  .envelope-heading h1 {
-    font-size: 40px;
-  }
-  .envelope-stationery-head {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-  }
-  .envelope-heading .meta {
-    font-size: 9px;
-  }
-  .envelope-seal > span {
-    font-size: 23px;
-  }
-  .envelope-postage {
-    padding: 2px;
-    border-width: 2px;
-  }
-  .envelope-postage-inner {
-    padding: 2px 0;
-    font-size: 5px;
-  }
-  .envelope-address > span:first-child {
-    font-size: 8px;
+  .envelope-opener {
+    gap: 28px;
   }
   .reader-chrome {
     padding: 20px 20px 0;
@@ -707,26 +740,35 @@
     font-size: 26px;
   }
   .reader-address .meta {
-    font-size: 8px;
-  }
-  .reader-controls {
-    gap: 0;
-  }
-  .reader-controls .pill {
-    width: 30px;
-    min-height: 30px;
+    font-size: 10px;
   }
   .paper-sheet {
     padding: 24px 22px;
   }
   .letter-prose {
-    font-size: 14px;
-    line-height: 1.95;
+    font-size: 16px;
+    line-height: 1.8;
   }
+  /* One row on a phone: the dock is sticky, and two rows of controls held
+     over the letter take a fifth of the screen. The face buttons keep their
+     words for a screen reader and show only the icon. */
   .reading-dock {
-    justify-content: center;
-    gap: 10px;
-    padding: 16px 12px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .reading-dock .dock-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .reading-dock .segment-track > button {
+    min-width: 40px;
+    padding-inline: 10px;
   }
   .coda {
     padding: 24px 18px;

@@ -132,7 +132,7 @@ describe('highlight palette', () => {
     }
 
     it(`${mode.name}: every highlight has a visible fill or a contrasting underline`, () => {
-      // The approved pastel fills use saturated, distinct underlines. When a
+      // The pastel fills carry saturated, distinct underlines. When a
       // fill is subtle, its underline must remain visible against both grounds.
       const canvas = mode.canvas
       for (const tag of TAGS) {

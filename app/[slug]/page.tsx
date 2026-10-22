@@ -6,7 +6,7 @@ import { after } from 'next/server'
 import { ScannedPhoto, ScannedTranscription } from 'remark-scanned-page'
 
 import { LetterView } from '@/components/letter/letter-view'
-import { requireAdmin } from '@/lib/auth/admin'
+import { isAdmin } from '@/lib/auth/admin'
 import {
   SESSION_COOKIE,
   deviceFrom,
@@ -16,6 +16,7 @@ import {
   normaliseSource,
 } from '@/lib/analytics/visit'
 import { isPubliclyReadable } from '@/lib/letters/access'
+import { guessLanguage } from '@/lib/letters/language'
 import { getLetterBySlug, recordView } from '@/lib/letters/queries'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { blocksForSheets } from '@/lib/transcription/split'
@@ -68,22 +69,19 @@ export default async function LetterPage({
   const { letter, pages } = found
   const readable = isPubliclyReadable(letter)
 
-  if (!readable) {
-    // A draft or an expired letter is mine to preview and nobody else's to
-    // find. 404 rather than 403: a 403 confirms the slug exists.
-    try {
-      await requireAdmin()
-    } catch {
-      notFound()
-    }
-  }
+  // A draft or an expired letter is mine to preview and nobody else's to
+  // find. 404 rather than 403: a 403 confirms the slug exists.
+  const author = await isAdmin()
+  if (!readable && !author) notFound()
 
   const headerList = await headers()
   const userAgent = headerList.get('user-agent')
 
-  // Only a published letter is counted. Previewing my own draft is not a
-  // reader, and neither is a link-preview fetch.
-  if (readable && !isAutomated(userAgent)) {
+  // Only a published letter is counted, and only for a reader. Previewing my
+  // own draft is not a reader, opening my own published letter to check it
+  // is not one either, and neither is a link-preview fetch.
+  const counted = readable && !author && !isAutomated(userAgent)
+  if (counted) {
     const jar = await cookies()
 
     // `proxy.ts` hands out this cookie before the page renders, because a
@@ -151,12 +149,14 @@ export default async function LetterPage({
     <LetterView
       letterId={letter.id}
       isPreview={!readable}
+      isAuthor={author}
       recipient={letter.recipient}
       sentOn={sentOn(letter.publishedAt)}
       // From the environment, never the repository. Absent hides the button
       // rather than shipping a broken `mailto:`.
       writeBackEmail={process.env.WRITE_BACK_EMAIL || null}
       tags={HIGHLIGHT_TAGS}
+      language={guessLanguage(letter.mdContent)}
       sheets={sheets}
     />
   )
