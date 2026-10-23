@@ -387,3 +387,12 @@ Chosen from four directions built as pages: the envelope alone, the letter peeki
 **The author, a draft preview, a bot and an unpublished letter cannot react, and all answer the same 404** — because a reaction from the author would be counted as the reader's answer, and telling the cases apart would give back what the slug withholds. The author sees the counts, read-only.
 
 **`Write back` (the `mailto:`) went with the coda** — because the reply is a reaction now. `WRITE_BACK_EMAIL` is no longer read anywhere.
+
+---
+
+## Headers on a phone — October 2026
+
+**The home header is one row at every width, and its sections scroll sideways in their own track** — because two rows spent a fifth of a phone screen on a first row that held a small mark and a button, and the links in the second row were cut off below 375px. The track keeps the current section in view and fades only the edges that still have something past them; a fade on an edge already showing would dim the item being read.
+
+**On a phone the letter bar puts the mark and the controls on one row and the name under them** — because three controls and a mark leave the name about 90px at 320px, which set it against the buttons and broke the line under it in three.
+

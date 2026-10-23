@@ -285,22 +285,8 @@
   .home {
     width: min(760px, calc(100% - 40px));
   }
-  .home-navigation {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-    border-radius: 24px;
-  }
   .home-navigation .wordmark {
     font-size: 22px;
-  }
-  .home-navigation .segment-track {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-  .home-navigation .island-divider {
-    margin-left: auto;
   }
   .home-hero {
     gap: 28px;
@@ -325,20 +311,67 @@
     width: calc(100% - 32px);
     padding-top: 12px;
   }
+  /* One row: the mark, the sections, the mode. Two rows spent a fifth of a
+     phone screen on a header whose first row was mostly empty, and the links
+     in the second were cut off below 375px. The sections scroll sideways in
+     their own track instead, with the current one kept in view. */
   .home-navigation {
     top: 10px;
-    gap: 4px;
-    padding: 8px 18px 8px 12px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 8px 6px 6px;
+    border-radius: 999px;
+  }
+  .home-navigation .wordmark {
+    flex: none;
+  }
+  .home-navigation .island-divider {
+    display: none;
   }
   .home-navigation .segment-track {
+    order: 0;
+    flex: 1 1 0;
+    width: auto;
+    justify-content: flex-start;
     gap: 0;
     padding: 3px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    --fade-start: 0px;
+    --fade-end: 0px;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+  }
+  .home-navigation .segment-track::-webkit-scrollbar {
+    display: none;
+  }
+  .home-navigation .segment-track[data-overflow-start] {
+    --fade-start: 20px;
+  }
+  .home-navigation .segment-track[data-overflow-end] {
+    --fade-end: 20px;
   }
   .home-navigation .segment-track > a {
     font-size: 10px;
     letter-spacing: 0;
-    padding: 8px 4px;
-    flex: 1;
+    padding: 8px 10px;
+    /* The track scrolls and clips its children, so a ring drawn outside the
+       link would be cut off. Inside it is always whole. */
+    outline-offset: -2px;
   }
   .home-navigation .wordmark .brand-mark {
     height: 28px;

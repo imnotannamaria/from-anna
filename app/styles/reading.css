@@ -900,6 +900,24 @@ button.reaction:active {
     padding-inline: 10px;
   }
 }
+/* On a narrow phone three controls and a mark leave the name about 90px, so
+   the name sat against the buttons and the line under it broke in three.
+   The mark and the controls take the first row and the name the whole of the
+   second. */
+@media (max-width: 420px) {
+  .reader-bar {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .reader-controls {
+    align-self: center;
+    margin-left: auto;
+  }
+  .reader-address {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .reader[data-enhanced='true'] .letter-prose mark[data-c] {
     background-size: 100% 100%;
