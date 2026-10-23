@@ -1,68 +1,61 @@
 'use client'
 
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+
+import { BrandMark } from '@/components/ui/brand-mark'
+
+import type { ReactNode } from 'react'
+import { HighlightLegend } from './highlight-legend'
+
 type Props = {
-  /** Who it is for, if I said. `null` reads as "you". */
   recipient: string | null
+  sentOn: string | null
+  count: number
   tags: readonly string[]
   filter: string | null
   onFilter: (tag: string | null) => void
   enhanced: boolean
   progress: number
+  children?: ReactNode
 }
-
-/**
- * The bar that stays.
- *
- * Addressed, the way a letter is: *from anna to you*, or to whoever it was
- * written for. That line is the whole centre of the bar and nothing else
- * goes there.
- *
- * At 390px the chips go — filtering by colour is a way of re-reading a letter
- * rather than a way of reading it. The address stays, and it is the only thing
- * that is always here.
- *
- * The photo/transcription toggle used to live here, below 900px only, because
- * a wide screen showed both halves at once. The sheet has two faces now and
- * the control that turns it belongs on the sheet, at every width.
- */
 export function ReaderBar({
   recipient,
+  sentOn,
+  count,
   tags,
   filter,
   onFilter,
   enhanced,
   progress,
+  children,
 }: Props) {
   return (
-    <header className="reader-bar">
-      {/* Decorative: how far down the letter you are. */}
-      <div className="reader-progress" aria-hidden="true">
-        <span style={{ transform: `scaleX(${progress})` }} />
-      </div>
-
-      <p className="reader-name">
-        from anna <em>to {recipient ?? 'you'}</em>
-      </p>
-
-      <div className="reader-controls">
-        {enhanced && (
-          <div className="legend" role="group" aria-label="Highlights">
-            {tags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                className="chip"
-                data-tag={tag}
-                aria-pressed={filter === tag}
-                onClick={() => onFilter(filter === tag ? null : tag)}
-              >
-                <span className="chip-swatch" aria-hidden="true" />
-                {tag}
-              </button>
-            ))}
+    <div className="reader-chrome">
+      <header className="reader-bar">
+        <BrandMark size={44} />
+        <div className="reader-address">
+          {/* h2: the page's h1 is the envelope's "A letter, for …". */}
+          <h2 className="reader-name">
+            for <em>{recipient ?? 'you'}</em>
+          </h2>
+          <p className="meta">
+            from Anna{sentOn ? ` · ${sentOn}` : ''} · {count}{' '}
+            {count === 1 ? 'sheet' : 'sheets'}
+          </p>
+        </div>
+        <div className="reader-controls">
+          <ThemeToggle />
+          {children}
+        </div>
+      </header>
+      {enhanced && (
+        <>
+          <div className="reader-progress" aria-hidden="true">
+            <span style={{ transform: `scaleX(${progress})` }} />
           </div>
-        )}
-      </div>
-    </header>
+          <HighlightLegend tags={tags} filter={filter} onFilter={onFilter} />
+        </>
+      )}
+    </div>
   )
 }

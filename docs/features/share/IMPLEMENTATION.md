@@ -88,12 +88,12 @@ Pages turn one at a time, with a page-turn animation. A three-sheet letter scrol
 
 ## Phase 4 — Analytics
 
-Two marks, which separate the three cases:
+Two things are recorded, and together they separate the three cases:
 
 1. **Open** — recorded server-side when the letter renders, one row per open
-2. **Reached the end** — a single event when the last block enters the viewport, via `IntersectionObserver`
+2. **Reaction** — one row per reader per emoji, from a closed list of six, added from the end of the letter
 
-No open means it was never read. An open with no end means it was abandoned partway. Both means it was read.
+No open means it was never read. An open with no reaction means it was opened and left. Both means it was answered.
 
 `View`:
 
@@ -104,7 +104,6 @@ No open means it was never read. An open with no end means it was abandoned part
 | `referrer` | its own column, a different fact |
 | `country` | Vercel geo header |
 | `device` | user agent |
-| `reachedEnd` | |
 | `viewedAt` | |
 
 **No IP is stored, not even in logs.**
@@ -121,7 +120,8 @@ No percentage scroll depth. No analytics library.
 - [x] An open writes exactly one row
 - [x] A refresh in the same session writes none — deduplicated by a unique index rather than a read-then-write, which two tabs would both pass
 - [x] A known bot or link-preview user agent writes none, and a missing user agent counts as automated
-- [x] Reaching the end updates the existing row rather than inserting a second
+- [x] A reaction is one row per session and emoji: choosing it twice is a no-op, taking it back deletes the row
+- [x] The author, a draft preview, a bot and a letter that is not published cannot react, and every one of them gets the same 404
 - [x] No IP in any column — verified against the live database, not just the schema file
 - [x] A letter still renders when the write fails: the insert is wrapped and swallowed
 - [x] Draft previews are not counted
@@ -130,9 +130,9 @@ No percentage scroll depth. No analytics library.
 
 **Checks**
 
-- **Security** — the end-of-letter endpoint takes a session and a letter, never arbitrary caller-supplied fields, or the table is writable by anyone with the link.
+- **Security** — the reaction endpoint takes a reaction id from a closed list and a boolean, and the reader is the session cookie, never a field in the body, or the table is writable by anyone with the link.
 - **Bugs** — recording inside a cached render either double-counts or never runs. The letter route reads the database, so it is dynamic, not ISR.
-- **Accessibility** — `IntersectionObserver` never fires on a zero-size element. Put it on something with a real box.
+- **Accessibility** — every reaction is a real button with a label that says what it is and how many there are, pressed state is `aria-pressed`, and the result is announced from a live region.
 - **Performance** — the write must not block the response. A slow analytics insert becomes a slow letter.
 
 ---
@@ -141,7 +141,7 @@ No percentage scroll depth. No analytics library.
 
 Clerk. Every admin surface checks authorization in the route and the page, not only in the middleware matcher.
 
-`/admin` lists letters with their status, and per letter: opens, how many reached the end, and the breakdown by `source`.
+`/admin` lists letters with their status, and per letter: opens, how many readers reacted, the reactions themselves, and the breakdown by `source`.
 
 **Done when**
 

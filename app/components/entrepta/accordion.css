@@ -1,0 +1,41 @@
+/* Owned entrepta collapse motion keeps readable text fully opaque. */
+.accordion-trigger.pill {
+  justify-content: flex-start;
+  font-size: 11px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  white-space: normal;
+}
+.accordion-trigger.pill:hover:not(:disabled) {
+  background: transparent;
+}
+.accordion-trigger.pill:active:not(:disabled) {
+  transform: none;
+}
+.motion-collapse {
+  overflow: clip;
+}
+.motion-collapse[data-state='open'] {
+  animation: collapse-open var(--motion-slow) var(--ease-out);
+}
+.motion-collapse[data-state='closed'] {
+  animation: collapse-close var(--motion-base) var(--ease-in-out);
+}
+@keyframes collapse-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--collapse-height);
+  }
+}
+@keyframes collapse-close {
+  from {
+    height: var(--collapse-height);
+  }
+  to {
+    height: 0;
+  }
+}

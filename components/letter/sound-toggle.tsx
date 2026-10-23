@@ -2,12 +2,12 @@
 
 import { usePaperSound } from '@/lib/paper-sounds'
 
-export function SoundToggle() {
+export function SoundToggle({ compact = false }: { compact?: boolean }) {
   const { enabled, toggle } = usePaperSound()
   return (
     <button
       type="button"
-      className="pill paper-sound"
+      className={`pill paper-sound${compact ? ' pill--icon' : ''}`}
       onClick={toggle}
       aria-pressed={enabled}
       aria-label="Paper sounds"
@@ -28,7 +28,7 @@ export function SoundToggle() {
           <path d="m16 9 6 6m0-6-6 6" />
         )}
       </svg>
-      Sound {enabled ? 'on' : 'off'}
+      {!compact && <>Sound {enabled ? 'on' : 'off'}</>}
     </button>
   )
 }

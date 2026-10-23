@@ -6,8 +6,6 @@ You write a letter by hand in a notebook, photograph the pages, and the site tur
 
 The photo is the visual layer. The transcription is the content, which means the letter still works for a screen reader, for search, and for anyone whose images didn't load.
 
-> Early days. The docs are ahead of the code — see [docs/](docs/).
-
 ## Why
 
 I got a notebook and realised it had been a long time since I'd written anything by hand. With AI in the middle of how most things get made now, a handwritten letter means more than it used to. The long version is in [docs/GOAL.md](docs/GOAL.md).
@@ -53,14 +51,18 @@ Its source is in [packages/remark-scanned-page/](packages/remark-scanned-page/),
 
 ## Reading a letter
 
-A letter arrives in an addressed envelope. Open it to tear the seal and unfold
-the paper; use the arrows or keyboard arrow keys to turn the sheets. **View
-original photo** shows the handwriting, and the close control returns the
-letter to its envelope. The same opening appears on the home page.
+A letter arrives in an addressed envelope. Open it to release the seal and
+lift the letter out; turn the sheets with the numbered controls or the arrow
+keys. **Text** and **Photo** switch each sheet between the transcription and
+the handwriting, and the close control returns the letter to its envelope.
 
 The complete transcription is in the server HTML. Without JavaScript every
 sheet and photograph is visible in order. Reduced motion skips the opening and
-page-turn animation. Highlight chips dim fills, never the words.
+page-turn animation. Highlight chips dim fills, never the words. A letter
+written in another language is marked as such, so a screen reader pronounces
+it as written. Light is the default; a dark choice is remembered per browser.
+
+Opening my own published letter while signed in is not counted as a read.
 
 ### Paper sounds
 
@@ -88,7 +90,7 @@ and consumes credits only when explicitly run.
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + entrepta tokens |
-| Design system | entrepta (julia), run in light mode |
+| Design system | entrepta v4 (violet), light by default, optional saved dark mode |
 | Markdown | unified, remark-parse, remark-directive, remark-rehype, rehype-sanitize |
 | Database | Postgres (Neon) via Drizzle ORM |
 | File storage | Vercel Blob |
@@ -126,40 +128,18 @@ It only ever adds: nothing already resolved changes version, and `npm ci` then w
 
 ```bash
 npm install
+cp .env.example .env.local
+npm run db:migrate
 npm run dev
 ```
 
-Then open http://localhost:3000.
-
-### Environment variables
-
-```bash
-# Postgres (Neon)
-DATABASE_URL=
-
-# Vercel Blob, for the page photos
-BLOB_READ_WRITE_TOKEN=
-
-# OpenRouter, for transcription
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=
-
-# Clerk, guards /admin
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-
-# Base URL, used for OG images
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-
-# Where "write back" at the end of a letter goes. Empty hides the button.
-WRITE_BACK_EMAIL=
-```
+Then open http://localhost:3000. Every environment variable is listed, with what it is for, in [`.env.example`](.env.example). The accounts behind them, and the order to set them up in, are in [docs/SETUP.md](docs/SETUP.md).
 
 ### Before your first OpenRouter call
 
-Turn on the account setting that **restricts routing to providers that don't train on your input and output**. Several free models say in their own description that prompts may be used for training, and the thing you're sending is a photograph of a personal letter.
+Turn off every account setting that lets a provider **train on your input and output**. Several free models say in their own description that prompts may be used for training, and the thing you're sending is a photograph of a personal letter. [docs/SETUP.md](docs/SETUP.md) walks through the four switches.
 
-Also set `provider: { allow_fallbacks: false }` on the request. Transcription should be reproducible, and silently landing on a different provider makes it not.
+The request itself also sends `allow_fallbacks: false` and `data_collection: "deny"`. Transcription should be reproducible, and silently landing on a different provider makes it not.
 
 ## Choosing a transcription model
 
@@ -175,6 +155,8 @@ The prompt is deliberately restrictive: plain markdown, keep paragraph breaks, m
 | --- | --- |
 | [docs/README.md](docs/README.md) | Index, and the original board |
 | [docs/GOAL.md](docs/GOAL.md) | Why the project exists |
+| [docs/SETUP.md](docs/SETUP.md) | Accounts, keys and the order to set them up in |
+| [docs/design/](docs/design/) | The reading page, the envelope, the visual system |
 | [docs/features/photo-transcription/](docs/features/photo-transcription/) | Upload, image processing, the model call |
 | [docs/features/markdown-hightlight/](docs/features/markdown-hightlight/) | The directive syntax, the package |
 | [docs/features/share/](docs/features/share/) | Publishing, slugs, the reading page, analytics |

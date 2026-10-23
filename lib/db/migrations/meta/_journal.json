@@ -22,6 +22,20 @@
       "when": 1788996887631,
       "tag": "0002_exotic_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792696593406,
+      "tag": "0003_tan_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792696778024,
+      "tag": "0004_smart_william_stryker",
+      "breakpoints": true
     }
   ]
 }

@@ -26,9 +26,9 @@ The cap was originally raised for the passage zoom, which is gone. This is the r
 
 **The reader is shown their own reading progress** — it says how far through the letter you are, which is useful on its own. It was a thin bar measuring scroll; with the deck it is *sheet n of m*, which is the same fact stated exactly instead of approximately. See *The envelope*.
 
-~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described has not changed: one row per open, deduplicated per session, no IP.
+~~**The privacy line in the coda.**~~ **Removed after the first deploy.** See *After the first deploy*. The measurement it described is one row per open, deduplicated per session, no IP.
 
-**`WRITE BACK` is a `mailto:` for now, with the address in an env var** — because a form is more work than the first version needs. The address is not in the repository, and an address on a public page gets harvested; if that becomes a problem the swap is to a form.
+~~**`WRITE BACK` is a `mailto:` for now, with the address in an env var.**~~ **Removed with the coda.** See *Reactions replace the end of the letter*. The reply is a reaction now, and there is no address on the page to harvest.
 
 **The legend filter is momentary and does not go in the URL** — because it is a way of looking at a letter, not a way of arriving at one.
 
@@ -174,8 +174,7 @@ Read on a real letter, on a real phone, at `from-anna.vercel.app`.
 
 ## The envelope
 
-The second reversal, and a larger one than the first. The order of work is in
-`REFACTOR.md` next door; what follows is why.
+The second reversal, and a larger one than the first. What follows is why.
 
 **The letter is opened, not scrolled** — because the sticky spread answered a
 layout question correctly and the wrong question. Two columns moving past each
@@ -188,11 +187,10 @@ reading model now, not a fallback for the widths where sticky did not fit. It wa
 removed on desktop for a good reason that no longer applies.
 
 **An inactive sheet is `display: none`, never a transform or an opacity** —
-because an element that is merely moved or faded is still laid out, still
-intersecting, and `reachedEnd` is an `IntersectionObserver`. Left laid out, every
-open would record a full read, the table would fill with plausible rows and
-nothing would error. The measurement is the reason the `View` table exists; a
-quietly wrong one is worse than none.
+because an element that is merely moved or faded is still laid out and still
+intersecting, and the passage reveal is an `IntersectionObserver`. Left laid out,
+every passage on every sheet would measure as already on screen and spend its
+entrance before anyone saw it, and nothing would error.
 
 **The photograph is the back of the sheet** — because it is the back of the
 sheet. The front is what you can read and the back is what was written, and it is
@@ -211,8 +209,8 @@ project stays a pill. The arrows keep a real accessible name and the sheet chang
 is announced, because a control with no text is exactly the one that needs both.
 
 **Opening the envelope is not measured** — because it would need a column and a
-write, and `View` has five fields on purpose. *Opened the link* against *reached
-the end* is the distinction that was missing, and it already exists.
+write, and `View` has few fields on purpose. *Opened the link* against *answered
+it* is the distinction that was missing, and reactions already give it.
 
 **No sound (superseded by Tactile refinement below)** — because audio needs files in the repository, a control that
 persists, nothing playing before an interaction, and `prefers-reduced-motion`
@@ -326,3 +324,75 @@ how every page on this site was set in Times New Roman for a full deploy.
 - The save bar and the mark toolbar are one sticky block whose height is measured, because two bars stuck at guessed offsets let the text show through between them and hid the top of the reference photograph behind the toolbar.
 - On a phone the save bar is one line and the mark toolbar scrolls sideways, because the two sticky bars took about 40% of a 667px screen; the save bar's warning appears only when there is something unsaved.
 - Choosing a reference sheet is a row of numbered pills, not a native `<select>`, because a letter has two or three sheets and a menu hides a three-way choice behind a click in the browser's style.
+
+## The visual system — October 2026
+
+- The UI moved to entrepta v4's violet preset because its separate brand-fill, on-brand and brand-text roles let one accent pass contrast as a fill, under text and as text; the preset's monochrome sibling, taylor, was tried and took the colour out of every action.
+- Three faces: Newsreader for headings, Inter for reading and JetBrains Mono for controls, because a transcription set in the display serif read as a headline and one set in mono read as code.
+- Light is the first visit and the no-script fallback, and a dark choice is remembered per browser, because readers choose their chrome; photographs keep their colours either way.
+- The saved mode is restored by a plain inline script in `<head>` because `next/script`, even `beforeInteractive`, queues inline code until the runtime has loaded, which is after first paint, and every page flashed light for anyone who had chosen dark.
+- `ModeSync` restores the mode after mount because a 404 thrown from inside `/[slug]` renders the root layout again on the client, with the server's `data-mode="light"`.
+- Floating menus share one capsule — outer border, inset track, a selection that slides between choices — because the home navigation, the footer, the reading dock and the editor's steps are the same kind of choice.
+- Dark canvas, card and overlay match entrepta v4's near-black hierarchy (`#09090b`, `#0b0b0e`, `#0e0e10`) because a lighter grey uplift flattened the difference between a page and what sits on it.
+- Large areas use the card and overlay roles, never zinc-900, because the registry reserves the surface grey for small fills.
+- Highlight fills are soft and each tag keeps a saturated underline in its own style, because a subtle fill needs a visible non-colour signal, and the contrast test now checks the underline as well as the fill.
+- ~~The sealed letter is a paper envelope seen from its back, with the address beside the seal under a visible title.~~ Replaced by *The sealed letter, front-on* below.
+- ~~The envelope keeps a fixed paper and ink pair in both modes.~~ Reversed: a light envelope on the dark page glared. In dark mode it is the same near-black as the home's cards (`#0b0b0e`), with its edges doing the separating, never a grey stock.
+- The envelope artwork and its call to action are one link, because the paper should answer a tap without adding a second keyboard stop or losing the no-script jump to the first sheet.
+- Opening releases the seal, folds the flap and lifts the insert, and readable text only ever moves, never fades, because the transition should explain where the letter came from without dropping its contrast.
+- Disclosures use entrepta's Accordion, exclusive choices its native-radio SegmentedControl, and page states its EmptyState, because three hand-made versions of each had already drifted apart.
+- Photo intake uses entrepta's FileDropzone while the uploader keeps required descriptions, ordering and per-photo recovery, because the dropzone owns the input and the app owns the letter.
+- Link previews use local fonts and generic artwork because a preview cache must never keep a recipient, a photograph or a word of a letter.
+- The favicon sits on an opaque ink tile because a transparent miniature disappears in a light browser toolbar.
+- Reactions and an in-app reply were designed and not built, because nothing behind them exists yet and a control that pretends to send is worse than none.
+
+## A review pass — October 2026
+
+- The author's own visits to a published letter are not counted, on the page or at the end-of-letter endpoint, because checking a letter before sending it is not a reader, any more than previewing a draft is.
+- A write to `/api/` that another site started is refused in `proxy.ts`, because the routes read JSON without checking its content type, and a cross-site `text/plain` POST is shaped like a real request; the session check stays the gate.
+- A letter's transcription carries `lang` when its language is clearly not English, because a screen reader reads Portuguese with English pronunciation otherwise; the guess answers only when one language wins by a wide margin, since a wrong `lang` is worse than none.
+- The transcription is set at 17px, 16px on a phone, and no working label is smaller than 10px, because the 15px and 8px inherited from the design study were sized for a mock-up rather than for reading a letter.
+- The reading dock is sticky inside the card and a single row on a phone, because on a sheet taller than the screen the controls to turn it waited at its foot.
+- The highlight legend steps aside on the photograph, keeping its space, because it filters words and the photograph has none.
+
+## The sealed letter, front-on — October 2026
+
+Chosen from four directions built as pages: the envelope alone, the letter peeking out of an open envelope, an editorial split, and the seal as the button.
+
+- The page before opening is the envelope seen from the front — address, stamp, postmark — and nothing else but the button and one line, because the old page said the recipient's name twice and wrapped six layers of text around a small object.
+- The visible title is gone and the page's `h1` is for a screen reader, because the envelope already carries the name where a real one does, and the envelope is decoration hidden from assistive technology.
+- Opening turns the envelope over, folds the flap and raises the letter, because a front and a back are two faces of one object; the old envelope showed the address on the same side as the seal, which a real one never does.
+- The opening takes about 1.1s before the real sheet takes over, longer than before, because a turn, a flap and a rise cannot share 620ms without looking hurried.
+- The header and footer show the mark without the name, because the name now lives on the envelope and the mark alone is enough to say whose site it is.
+- The envelope has an inside, drawn behind the letter, because without it the space the rising letter left and the corners the turning flap uncovered were holes onto the page.
+- The flap is one piece hinged on the top edge and drops behind the letter halfway over, because two separate flaps, one shrinking and one growing, looked like the envelope came apart.
+- The page leaves room above the envelope for the open flap, because the stage clips so decoration never reaches the letter, and the flap's tip was being cut off.
+- Every piece of the envelope — front, inside, pocket and flap — shares one corner radius, because a rounded inside under a square-cornered flap left a transparent wedge at each top corner once the flap opened.
+- A disabled button has no fill, only muted ink and a quieter edge, because a translucent white over near-black reads as a grey slab in dark mode.
+
+---
+
+## Reactions replace the end of the letter — October 2026
+
+**A reader answers with a reaction, and the end-of-letter measurement is gone** — because scrolling to the bottom is something a page does to a reader and a reaction is something the reader does. The scroll signal also needed an `IntersectionObserver` that failed silently when the envelope was laid out but closed, and it could not tell a read from a skim. The coda, its closing lines, `Read it again`, the `reached-end` endpoint and the `reached_end` column went with it.
+
+**The reply is a row of reactions and a button to add one, like a message in a chat app** — because the smallest reply a letter can ask for is an emoji, and a reader who has just finished a letter should not have to compose anything. Pills show what the letter has been answered with; the button opens the list.
+
+**Six reactions, fixed, stored by id** — because the table must never hold a string a visitor typed, and because the emoji is only how an id is drawn. The set is `lib/letters/reactions.ts`.
+
+**A reader's reactions are rows keyed by their session, not a counter** — because a unique index on (letter, session, reaction) makes a double click or a retried request a no-op, and the page can show a reader their own picks after a reload. The session is the cookie `views` already uses; nothing about the person is stored.
+
+**There is no rate limit on the reaction endpoint** — because one would have to be keyed on something about the caller. A session holds at most six rows and the endpoint is only reachable with the letter's unguessable address.
+
+**The author, a draft preview, a bot and an unpublished letter cannot react, and all answer the same 404** — because a reaction from the author would be counted as the reader's answer, and telling the cases apart would give back what the slug withholds. The author sees the counts, read-only.
+
+**`Write back` (the `mailto:`) went with the coda** — because the reply is a reaction now. `WRITE_BACK_EMAIL` is no longer read anywhere.
+
+---
+
+## Headers on a phone — October 2026
+
+**The home header is one row at every width, and its sections scroll sideways in their own track** — because two rows spent a fifth of a phone screen on a first row that held a small mark and a button, and the links in the second row were cut off below 375px. The track keeps the current section in view and fades only the edges that still have something past them; a fade on an edge already showing would dim the item being read.
+
+**On a phone the letter bar puts the mark and the controls on one row and the name under them** — because three controls and a mark leave the name about 90px at 320px, which set it against the buttons and broke the line under it in three.
+

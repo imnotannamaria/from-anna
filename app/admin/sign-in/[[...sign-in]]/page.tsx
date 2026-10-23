@@ -1,7 +1,13 @@
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { BrandMark } from '@/components/ui/brand-mark'
 import { SignIn, SignOutButton } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
 
-import { currentUserId, isAdminAllowed, readAdminContext } from '@/lib/auth/admin'
+import {
+  currentUserId,
+  isAdminAllowed,
+  readAdminContext,
+} from '@/lib/auth/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,8 +42,10 @@ export default async function AdminSignInPage() {
 
   if (userId) {
     return (
-      <main className="state state--admin">
+      <main id="main-content" className="state state--admin">
         <div className="state-inner">
+          <ThemeToggle />
+          <BrandMark size={90} className="state-brand" />
           <p className="meta state-eyebrow">The desk</p>
           <h1 className="display state-title">
             This account <em>can&rsquo;t write here.</em>
@@ -59,8 +67,10 @@ export default async function AdminSignInPage() {
   }
 
   return (
-    <main className="state state--admin">
+    <main id="main-content" className="state state--admin">
       <div className="state-inner">
+        <ThemeToggle />
+        <BrandMark size={90} className="state-brand" />
         <p className="meta state-eyebrow">The desk</p>
         <h1 className="display state-title">
           Sign in to <em>write.</em>
@@ -80,12 +90,16 @@ export default async function AdminSignInPage() {
             // one person sees a handful of times is not worth the upkeep.
             appearance={{
               variables: {
-                colorPrimary: '#b8305f',
-                borderRadius: '8px',
+                colorPrimary: 'var(--fg-brand)',
+                colorBackground: 'var(--bg-card)',
+                colorForeground: 'var(--fg-primary)',
+                colorInput: 'var(--bg-field)',
+                colorInputForeground: 'var(--fg-primary)',
+                borderRadius: '16px',
                 // The token, not the name: `next/font` serves Newsreader
                 // under a generated family name, so "Newsreader" matches
                 // nothing.
-                fontFamily: 'var(--font-serif)',
+                fontFamily: 'var(--font-body)',
               },
             }}
           />

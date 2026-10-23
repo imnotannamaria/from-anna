@@ -1,5 +1,8 @@
 'use client'
 
+import { FileDropzone } from '@/app/components/entrepta/file-dropzone'
+import { Skeleton } from '@/app/components/entrepta/skeleton'
+
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -57,10 +60,8 @@ export function PageUploader({
   const [processing, setProcessing] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
   const busyRef = useRef(false)
-  const [dragging, setDragging] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   // Previews hold the processed blobs open. Five of them is real memory on a
@@ -87,7 +88,7 @@ export function PageUploader({
   const remaining = MAX_PAGES_PER_LETTER - existingPageCount
 
   const onSelect = useCallback(
-    async (fileList: FileList | null) => {
+    async (fileList: FileList | readonly File[] | null) => {
       if (!fileList || fileList.length === 0 || busyRef.current) return
 
       if (
@@ -172,7 +173,6 @@ export function PageUploader({
     setItems([])
     setMessage('')
     setFailed(false)
-    if (inputRef.current) inputRef.current.value = ''
   }
 
   /** Upload one card. Returns what went wrong, or null when it went up. */
@@ -255,7 +255,6 @@ export function PageUploader({
       previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
       previewUrls.current = []
       setItems([])
-      if (inputRef.current) inputRef.current.value = ''
       setMessage(`Uploaded ${done.size} photo${done.size === 1 ? '' : 's'}.`)
     }
 
@@ -274,43 +273,20 @@ export function PageUploader({
 
   return (
     <div className="upload">
-      <label
-        className="upload-drop"
-        data-dragging={dragging ? 'true' : 'false'}
-        onDragOver={(event) => {
-          event.preventDefault()
-          setDragging(true)
+      <FileDropzone
+        id="pages"
+        accept="image/*,.heic,.heif"
+        multiple
+        disabled={uploading || processing}
+        onFiles={(files) => {
+          void onSelect(files)
         }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault()
-          setDragging(false)
-          if (!busyRef.current) onSelect(event.dataTransfer.files)
+        labels={{
+          title: 'Drop photos here, or choose them',
+          drop: 'Drop to add photos',
         }}
-      >
-        {/*
-          Visually hidden, not `display: none`: it stays focusable, so the box
-          is reachable by keyboard and a screen reader announces a file input.
-          Dropping is the fast route and never the only one.
-        */}
-        <input
-          ref={inputRef}
-          id="pages"
-          type="file"
-          multiple
-          // `.heic` spelled out: desktop Chrome does not count it as image/*.
-          accept="image/*,.heic,.heif"
-          disabled={uploading || processing}
-          onChange={(event) => onSelect(event.target.files)}
-          className="sr-only"
-        />
-        <span className="upload-drop-title">
-          Drop photos here, or <u>choose them</u>
-        </span>
-        <span className="upload-drop-hint">
-          Up to {remaining} more · straight off the phone is fine, HEIC included
-        </span>
-      </label>
+        hint={`Up to ${remaining} more · straight off the phone is fine, HEIC included`}
+      />
 
       {items.length > 0 && (
         <ol className="upload-grid">
@@ -342,9 +318,9 @@ export function PageUploader({
                     height={item.image?.height}
                   />
                 ) : (
-                  <span
-                    className="skeleton upload-card-skeleton"
-                    aria-hidden="true"
+                  <Skeleton
+                    className="upload-card-skeleton"
+                    delay={index * 0.06}
                   />
                 )}
               </div>
@@ -431,7 +407,6 @@ export function PageUploader({
                   disabled={uploading || processing}
                   aria-label={`Remove photo ${index + 1}`}
                   onClick={() => {
-                    if (inputRef.current) inputRef.current.value = ''
                     if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
                     setItems((current) =>
                       current.filter((other) => other.key !== item.key),

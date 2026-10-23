@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { DeckControls } from './deck-controls'
@@ -8,8 +10,13 @@ import { SoundToggle } from './sound-toggle'
 import { useEnvelope } from './use-envelope'
 import { PhotoFrame } from '@/components/ui/photo-frame'
 import { playPaperSound } from '@/lib/paper-sounds'
-import { LetterCoda } from './letter-coda'
+import { Reactions } from './reactions'
 import { ReaderBar } from './reader-bar'
+import { BrandMark } from '@/components/ui/brand-mark'
+import { SegmentTrack } from '@/components/ui/segment-track'
+import { Icon } from '@/components/ui/icon'
+import type { ReactionCounts, ReactionId } from '@/lib/letters/reactions'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 export type SheetProps = {
   key: string
@@ -24,13 +31,23 @@ export type SheetProps = {
 type Props = {
   letterId: string
   isPreview: boolean
+  /**
+   * The author is reading. Nothing is measured: opening my own letter to
+   * check it is not a reader. A draft is always the author's.
+   */
+  isAuthor: boolean
   /** Who it is for, if I said. The bar reads "to you" when this is null. */
   recipient: string | null
   /** Formatted on the server, in UTC, so it cannot disagree with itself. */
   sentOn: string | null
-  /** From an env var, never the repository. Null hides the button. */
-  writeBackEmail: string | null
+  /** What the letter has been answered with so far. */
+  reactions: { counts: ReactionCounts; mine: ReactionId[] }
   tags: readonly string[]
+  /**
+   * The letter's language when it is clearly not the page's English, so a
+   * screen reader pronounces it as written. Null leaves the page's `lang`.
+   */
+  language: string | null
   sheets: SheetProps[]
 }
 
@@ -63,15 +80,15 @@ type Props = {
 export function LetterView({
   letterId,
   isPreview,
+  isAuthor,
   recipient,
   sentOn,
-  writeBackEmail,
+  reactions,
   tags,
+  language,
   sheets,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const codaRef = useRef<HTMLElement>(null)
-  const reported = useRef(false)
 
   const [filter, setFilter] = useState<string | null>(null)
   // Which face of the sheet is up. The transcription is the front and the
@@ -86,7 +103,8 @@ export function LetterView({
   const [progress, setProgress] = useState(0)
   const envelope = useEnvelope()
   const { attachContent } = envelope
-  const { open, enhanced, reducedMotion } = envelope
+  const { open, enhanced } = envelope
+  const reducedMotion = useReducedMotion()
   const [sheet, setSheet] = useState(0)
   const [turning, setTurning] = useState(false)
   const turnLock = useRef(false)
@@ -99,6 +117,10 @@ export function LetterView({
       activeAnimation.current?.cancel()
     }
   }, [])
+
+  useEffect(() => {
+    if (reducedMotion) activeAnimation.current?.finish()
+  }, [reducedMotion])
 
   /* ---- passages -----------------------------------------------------
      The transcription arrives as finished HTML, so the passages are
@@ -229,49 +251,6 @@ export function LetterView({
     }
   }, [sheet, sheets.length, open])
 
-  /* ---- reached the end ----------------------------------------------- */
-  useEffect(() => {
-    if (isPreview || reported.current) return
-
-    // The same trap as the reveal above, and this one is the expensive one.
-    // A coda that is laid out but unreached still intersects, so an observer
-    // attached while the envelope is closed fires immediately and every open
-    // is recorded as a full read. `display: none` gives it no box to
-    // intersect, and this guard means it is never asked in the first place.
-    if (!open || envelope.phase !== 'open') return
-
-    const target = codaRef.current
-    if (!target) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return
-        if (reported.current) return
-        reported.current = true
-        observer.disconnect()
-
-        // Fire and forget: a failed measurement must never disturb reading.
-        fetch(`/api/letters/${letterId}/reached-end`, {
-          method: 'POST',
-          keepalive: true,
-        }).catch(() => {})
-      },
-      { threshold: 0.6 },
-    )
-
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [letterId, isPreview, enhanced, open, envelope.phase])
-
-  const readAgain = useCallback(() => {
-    // Back to the first sheet, not to the top of the last one. Never a reload:
-    // the letter has already been counted as opened, and reading it twice is
-    // not two readers.
-    setSheet(0)
-    setFace('front')
-    window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [])
-
   /* ---- turning a sheet ------------------------------------------------ */
 
   const turnTo = useCallback(
@@ -290,7 +269,7 @@ export function LetterView({
           [
             { transform: 'none' },
             {
-              transform: `translateX(${direction * 45}px) rotate(${direction * 4}deg) rotateY(${direction * 12}deg)`,
+              transform: `translateX(${direction * 18}px) rotateY(${direction * 2}deg)`,
             },
           ],
           { duration: 180, easing: 'ease-in', fill: 'forwards' },
@@ -310,11 +289,15 @@ export function LetterView({
           const incoming = rootRef.current?.querySelector<HTMLElement>(
             '.sheet[data-active="true"] .paper-sheet',
           )
-          if (incoming && !reducedMotion) {
+          if (
+            incoming &&
+            !reducedMotion &&
+            !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ) {
             const animation = incoming.animate(
               [
                 {
-                  transform: `translateX(${-direction * 34}px) rotate(${-direction * 2}deg) rotateY(${-direction * 8}deg)`,
+                  transform: `translateX(${-direction * 18}px) rotateY(${-direction * 2}deg)`,
                 },
                 { transform: 'none' },
               ],
@@ -373,165 +356,156 @@ export function LetterView({
       data-sheet-active={sheet}
       data-phase={envelope.phase}
       data-turning={turning || undefined}
-      // The coda is the end of the letter, so it is only in the layout once
-      // the last sheet is. It is also what `reachedEnd` observes, and an
-      // observer given a coda that is laid out from the start fires on
-      // arrival and turns every open into a full read.
       data-at-end={sheet === sheets.length - 1 ? 'true' : 'false'}
-      // Set on mount, never on the server. It is what lets the envelope cover
-      // the letter: until it is here, the envelope is only a header and every
-      // sheet below it is visible and reachable by scrolling.
       data-enhanced={enhanced ? 'true' : undefined}
-      style={{
-        ['--progress' as string]: `${(progress * 100).toFixed(2)}%`,
-      }}
     >
-      <ReaderBar
-        recipient={recipient}
-        tags={tags}
-        filter={filter}
-        onFilter={setFilter}
-        enhanced={enhanced && open}
-        progress={progress}
-      />
-
-      <main className="reader-main">
-        {isPreview && (
+      <main id="main-content" className="reader-main">
+        {isPreview ? (
           <p className="preview-banner">
-            <span className="meta">Preview</span> Not published, so nobody else
-            can open it and nothing is being counted.
+            <span className="meta">Preview</span> Not published. No reading
+            activity is counted.
           </p>
+        ) : (
+          isAuthor && (
+            <p className="preview-banner">
+              <span className="meta">Published</span> You are signed in as the
+              author, so this visit is not counted.
+            </p>
+          )
         )}
-
         <EnvelopeStage
           envelope={envelope}
           recipient={recipient}
           sentOn={sentOn}
           target="#sheet-0"
           label="Open the letter"
-          caption={`${sheets.length === 1 ? 'One sheet' : `${sheets.length} sheets`}${sentOn ? ` · ${sentOn}` : ''}`}
+          caption={`${sheets.length === 1 ? 'One sheet' : `${sheets.length} sheets`} · written by hand${sentOn ? ` · ${sentOn}` : ''}`}
         />
-
         <div
-          className="letter-deck paper-content"
+          className="letter-deck surface paper-content"
           ref={attachContent}
           tabIndex={-1}
         >
+          <ReaderBar
+            recipient={recipient}
+            sentOn={sentOn}
+            count={sheets.length}
+            tags={tags}
+            filter={filter}
+            onFilter={setFilter}
+            enhanced={enhanced && open}
+            progress={progress}
+          >
+            {enhanced && (
+              <>
+                <SoundToggle compact />
+                <button
+                  type="button"
+                  className="pill pill--icon"
+                  aria-label={
+                    envelope.phase === 'closing'
+                      ? 'Closing the letter'
+                      : 'Close the letter'
+                  }
+                  aria-disabled={turning || envelope.busy}
+                  aria-busy={envelope.phase === 'closing'}
+                  data-busy={envelope.phase === 'closing' || undefined}
+                  onClick={(event) => {
+                    if (!turnLock.current) {
+                      window.scrollTo({ top: 0, behavior: 'instant' })
+                      envelope.closeLetter({ keyboard: event.detail === 0 })
+                    }
+                  }}
+                >
+                  <Icon name="close" />
+                </button>
+              </>
+            )}
+          </ReaderBar>
           {sheets.map((item, i) => (
             <section
               key={item.key}
               id={`sheet-${i}`}
               className="sheet"
               data-sheet={i}
-              // The one on top of the deck. Everything else is `display: none`,
-              // which is the whole reason the observers above can be trusted.
               data-active={i === sheet ? 'true' : 'false'}
               aria-label={`Sheet ${i + 1} of ${sheets.length}`}
               style={{ ['--sheet-ratio' as string]: String(item.ratio) }}
             >
               <div className="paper-sheet">
-                <div className="sheet-head">
-                  <p className="meta">
-                    Sheet {i + 1} of {sheets.length}
-                  </p>
-
-                  {/*
-                Only where it governs something. With no script both faces are
-                already on the page, one under the other, so a control that
-                turns the sheet over would be a control that does nothing.
-              */}
-                  {enhanced && (
-                    <div className="sheet-actions">
-                      <button
-                        type="button"
-                        className="pill sheet-turn"
-                        aria-pressed={face === 'back'}
-                        onClick={turnFace}
-                        aria-disabled={turning || envelope.busy}
-                      >
-                        {face === 'back'
-                          ? 'Read the letter'
-                          : 'View original photo'}
-                      </button>
-                      <button
-                        type="button"
-                        className="pill pill--icon paper-close"
-                        aria-label="Close the letter"
-                        aria-disabled={turning || envelope.busy}
-                        data-busy={envelope.phase === 'closing' || undefined}
-                        aria-busy={envelope.phase === 'closing'}
-                        onClick={(event) => {
-                          if (!turnLock.current) {
-                            window.scrollTo({ top: 0, behavior: 'instant' })
-                            // `detail` is 0 when Enter or Space made the click.
-                            envelope.closeLetter({
-                              keyboard: event.detail === 0,
-                            })
-                          }
-                        }}
-                      >
-                        <span aria-hidden="true">×</span>
-                        <span className="sr-only">
-                          {envelope.phase === 'closing'
-                            ? 'Closing the letter'
-                            : 'Close the letter'}
-                        </span>
-                      </button>
-                    </div>
-                  )}
+                <div
+                  className="sheet-face sheet-face--front"
+                  lang={language ?? undefined}
+                >
+                  {item.prose}
                 </div>
-
-                {/*
-              Two faces of one sheet: the front is what you can read, the back
-              is what was written. Both are in the DOM and the front is what
-              the server renders.
-            */}
-                <div className="sheet-face sheet-face--front">{item.prose}</div>
-
                 <div className="sheet-face sheet-face--back">
                   <PhotoFrame
                     className="sheet-frame"
-                    // The sheet on top, once the letter is open: its photo
-                    // downloads while the words are being read, so turning
-                    // the sheet over is not a wait. Never all of them — each
-                    // one is large enough to zoom into.
                     warm={enhanced && envelope.phase === 'open' && i === sheet}
                   >
                     {item.photo}
                   </PhotoFrame>
                 </div>
-                <span className="paper-fold-line" aria-hidden="true" />
               </div>
             </section>
           ))}
-
-          {/*
-          Rendered only where it governs something. With no script every sheet
-          is already on the page, so a control that turns one would be a
-          control that appears to do nothing.
-        */}
-          {enhanced && sheets.length > 1 && (
-            <DeckControls
-              sheet={sheet}
-              count={sheets.length}
-              onSheet={turnTo}
-              busy={turning || envelope.busy}
-            />
+          {enhanced && (
+            <div className="reading-dock">
+              {sheets.length > 1 && (
+                <DeckControls
+                  sheet={sheet}
+                  count={sheets.length}
+                  onSheet={turnTo}
+                  busy={turning || envelope.busy}
+                />
+              )}
+              <div className="island">
+                <SegmentTrack label="View the letter">
+                  <button
+                    type="button"
+                    className="pill"
+                    aria-pressed={face === 'front'}
+                    aria-disabled={turning || envelope.busy}
+                    onClick={() => {
+                      if (face !== 'front') turnFace()
+                    }}
+                  >
+                    <Icon name="text" />
+                    <span className="dock-label">Text</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="pill"
+                    aria-pressed={face === 'back'}
+                    aria-disabled={turning || envelope.busy}
+                    onClick={() => {
+                      if (face !== 'back') turnFace()
+                    }}
+                  >
+                    <Icon name="photo" />
+                    <span className="dock-label">Photo</span>
+                  </button>
+                </SegmentTrack>
+              </div>
+            </div>
           )}
         </div>
-        {enhanced && (
-          <div className="reader-sound">
-            <SoundToggle />
-          </div>
-        )}
       </main>
-
-      <LetterCoda
-        ref={codaRef}
-        writeBackEmail={writeBackEmail}
-        onReadAgain={readAgain}
+      <Reactions
+        letterId={letterId}
+        counts={reactions.counts}
+        mine={reactions.mine}
+        // Previewing a draft and checking my own letter are not readers.
+        readOnly={isPreview || isAuthor}
         enhanced={enhanced}
       />
+      <footer className="reader-footer meta">
+        written by hand ·{' '}
+        <Link href="/" className="wordmark wordmark--mark" aria-label="from anna">
+          <BrandMark size={30} />
+        </Link>
+      </footer>
     </div>
   )
 }

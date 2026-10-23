@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm'
 import {
-  boolean,
   integer,
   pgEnum,
   pgTable,
@@ -114,11 +113,10 @@ export const pages = pgTable(
  * One row per opening of a published letter.
  *
  * This is the table the project exists for. A letter you send either gets
- * opened or it doesn't, and without this you never find out which — nor
- * whether someone opened it and stopped at the first paragraph.
+ * opened or it doesn't, and without this you never find out which.
  *
- * `reachedEnd` is what separates those two: no row means never opened, a row
- * without it means abandoned partway, a row with it means read.
+ * No row means never opened. A row with no `reactions` for its session means
+ * opened and left; a row with one means it was answered.
  *
  * There is no IP column, and no IP in any log line. `country` comes from the
  * platform's geo header and `device` from the user agent, and between them
@@ -137,11 +135,9 @@ export const views = pgTable(
     referrer: text('referrer'),
     country: text('country'),
     device: text('device'),
-    /** Set when the last block of the letter enters the viewport. */
-    reachedEnd: boolean('reached_end').notNull().default(false),
     /**
      * Opaque per-session value from a cookie, used to avoid counting the same
-     * reader twice and to let the end-of-letter event find its own row. Not
+     * reader twice and to tie a reaction to the opening it came from. Not
      * derived from anything about the person.
      */
     sessionId: text('session_id').notNull(),
@@ -158,6 +154,44 @@ export const views = pgTable(
   ],
 )
 
+/**
+ * What a reader answered a letter with.
+ *
+ * The smallest reply there is, and the only one this project asks for. One
+ * row per reader per reaction, so choosing the same one twice is a no-op and
+ * taking it back is a delete — the count is whatever is there, never a number
+ * that can drift from it.
+ *
+ * `sessionId` is the same opaque cookie value as on `views`: it ties a
+ * reaction to one browser and to nothing about the person, and it is what
+ * lets the reading page show a reader their own picks. `reaction` is an id
+ * from `lib/letters/reactions.ts`, a closed list, which is why it is text and
+ * not an enum: changing the list should not need a migration.
+ */
+export const reactions = pgTable(
+  'reactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    letterId: uuid('letter_id')
+      .notNull()
+      .references(() => letters.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id').notNull(),
+    reaction: text('reaction').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // One of each per reader. Leading with the letter also serves the only
+    // reads there are: every reaction on a letter, and one reader's picks.
+    uniqueIndex('reactions_letter_session_reaction_idx').on(
+      table.letterId,
+      table.sessionId,
+      table.reaction,
+    ),
+  ],
+)
+
 export { MAX_PAGES_PER_LETTER } from '../letters/limits'
 
 export type Letter = typeof letters.$inferSelect
@@ -166,5 +200,6 @@ export type Page = typeof pages.$inferSelect
 export type NewPage = typeof pages.$inferInsert
 export type View = typeof views.$inferSelect
 export type NewView = typeof views.$inferInsert
+export type Reaction = typeof reactions.$inferSelect
 
 export { sql }

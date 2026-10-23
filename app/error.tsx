@@ -1,5 +1,13 @@
 'use client'
 
+import { EmptyState } from '@/app/components/entrepta/empty-state'
+
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+
+import { RetryButton } from '@/components/ui/retry-button'
+
+import { BrandMark } from '@/components/ui/brand-mark'
+
 import { useEffect } from 'react'
 
 /**
@@ -23,33 +31,30 @@ export default function Error({
     // The digest is the server's own reference for this failure. It is safe
     // to show and useless to anyone else, which is exactly the trade a public
     // error page wants.
-    console.error('letter render failed', error.digest ?? error.message)
+    console.error('letter render failed', error.digest ?? 'unavailable')
   }, [error])
 
   return (
-    <main className="state">
+    <main id="main-content" className="state">
       <div className="state-inner">
-        <div className="state-sheet state-sheet--spoiled" aria-hidden="true">
-          <span className="state-sheet-rules" />
-          <span className="state-blot" />
-        </div>
-
-        <p className="meta state-eyebrow">Something went wrong</p>
-
-        <h1 className="display state-title">
-          The ink <em>smudged.</em>
-        </h1>
-
-        <p className="state-lede">
-          This is the site failing, not the letter. Nothing changed and
-          nothing was lost. The same link will work again in a moment.
-        </p>
-
-        <p className="state-actions">
-          <button type="button" onClick={reset} className="pill">
-            Try again
-          </button>
-        </p>
+        <ThemeToggle />
+        <EmptyState
+          size="page"
+          illustration={<BrandMark size={90} />}
+          eyebrow={<>Something went wrong</>}
+          title={
+            <>
+              The ink <em>smudged.</em>
+            </>
+          }
+          description={
+            <>
+              This is the site failing, not the letter. Nothing changed and
+              nothing was lost. Please try opening the same link again.
+            </>
+          }
+          action={<RetryButton retry={reset} />}
+        />
 
         {error.digest && (
           <p className="meta state-digest">reference {error.digest}</p>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { Icon } from '@/components/ui/icon'
+import { SegmentTrack } from '@/components/ui/segment-track'
 
 type Props = {
   sheet: number
@@ -8,28 +10,19 @@ type Props = {
   onSheet: (index: number) => void
   busy?: boolean
 }
-
-/** Arrow controls retain focus during a turn and announce its settled position. */
+/** Remains mounted across turns, so the originating keyboard control keeps focus. */
 export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
   const backRef = useRef<HTMLButtonElement>(null)
   const nextRef = useRef<HTMLButtonElement>(null)
-
-  const atStart = sheet === 0
-  const atEnd = sheet === count - 1
-
+  const atStart = sheet === 0,
+    atEnd = sheet === count - 1
   useEffect(() => {
     const active = document.activeElement
-    // Only ever moves focus that is already on one of these two arrows, and
-    // only when that arrow has just become unusable. Focus anywhere else on
-    // the page is none of this component's business.
-    if (active !== backRef.current && active !== nextRef.current) return
-
     if (active === backRef.current && atStart) nextRef.current?.focus()
     else if (active === nextRef.current && atEnd) backRef.current?.focus()
   }, [atStart, atEnd])
-
   return (
-    <nav className="deck-controls" aria-label="Sheets" aria-busy={busy}>
+    <nav className="island deck-controls" aria-label="Sheets" aria-busy={busy}>
       <button
         ref={backRef}
         type="button"
@@ -40,15 +33,27 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atStart || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the page' : 'Previous sheet'}
+        aria-label={busy ? 'Turning the sheet' : 'Previous sheet'}
       >
-        <span aria-hidden="true">←</span>
+        <Icon name="left" />
       </button>
-
-      <p className="deck-count meta" aria-hidden="true">
-        {sheet + 1} / {count}
-      </p>
-
+      <SegmentTrack label="Choose a sheet">
+        {Array.from({ length: count }, (_, index) => (
+          <button
+            key={index}
+            type="button"
+            className="pill pill--icon"
+            aria-current={sheet === index ? 'page' : undefined}
+            aria-disabled={busy}
+            aria-label={`Sheet ${index + 1} of ${count}`}
+            onClick={() => {
+              if (!busy) onSheet(index)
+            }}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </SegmentTrack>
       <button
         ref={nextRef}
         type="button"
@@ -59,19 +64,12 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atEnd || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the page' : 'Next sheet'}
+        aria-label={busy ? 'Turning the sheet' : 'Next sheet'}
       >
-        <span aria-hidden="true">→</span>
+        <Icon name="right" />
       </button>
-
-      {/*
-        The count above is `aria-hidden` and this says the same thing, because
-        the two have different jobs: one is a label that is always on screen,
-        the other only speaks when the number changes. Announcing both would
-        read the position twice on every turn.
-      */}
       <p className="sr-only" aria-live="polite">
-        {busy ? 'Turning the page' : `Sheet ${sheet + 1} of ${count}`}
+        {busy ? 'Turning the sheet' : `Sheet ${sheet + 1} of ${count}`}
       </p>
     </nav>
   )

@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       that fits in someone else's iframe can have that button clicked through
       a decoy laid over it.
     - `nosniff`, so a photograph served through a route is only ever an image.
+    - No camera, microphone, location or payment, for anything.
     - Only the origin leaves as a referrer. A letter's address carries its
       title, and a link inside a letter should not hand that to wherever it
       points.
@@ -26,6 +27,12 @@ const nextConfig: NextConfig = {
           { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Nothing here uses a camera, a microphone or a location, so
+          // nothing embedded in a letter can ask for one either.
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=()',
+          },
         ],
       },
     ];

@@ -1,138 +1,118 @@
-import { useId } from 'react'
+import { BrandMark } from '@/components/ui/brand-mark'
 
 type Props = { recipient: string | null; sentOn?: string | null }
 
-const W = 324
-const H = 200
-const edge = Array.from({ length: 55 }, (_, i) => {
-  const x = (W / 54) * i
-  const y = 25 + Math.sin(i * 2.399) * 2.1 + Math.sin(i * 1.13) * 1.4
-  return `${x.toFixed(1)},${y.toFixed(1)}`
-}).join(' ')
-
-/** Independent paper layers: the insert never inherits the envelope's exit. */
+/**
+ * The sealed letter: an envelope with two faces.
+ *
+ * The front is what arrives — the address, a stamp and a postmark — and it is
+ * the whole page until the letter is opened. Opening turns it over to the
+ * back, where the flap lifts and the letter rises out. The front and the back
+ * are separate faces of one card, so the address is never on the same side
+ * as the seal, the way a real envelope is.
+ *
+ * Decoration only. The name of the page is a heading and the control is the
+ * link around this, both in `EnvelopeStage`; nothing here is read out.
+ */
 export function Envelope({ recipient, sentOn = null }: Props) {
-  const id = useId().replaceAll(':', '')
+  const address = recipient?.trim() || 'you'
+  const [month, year] = (sentOn ?? '').split(' ')
+
   return (
     <div className="envelope" aria-hidden="true">
-      <div className="envelope-body">
-        <div className="envelope-pocket" />
-        <div className="envelope-fold">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="envelope-front">
+      <div className="envelope-turn">
+        <div className="envelope-face envelope-face--front">
           <svg
             className="envelope-art"
-            viewBox={`0 0 ${W} ${H}`}
+            viewBox="0 0 400 260"
+            preserveAspectRatio="none"
             focusable="false"
           >
-            <defs>
-              <linearGradient id={`${id}-paper`} x1="0" y1="0" x2="0.7" y2="1">
-                <stop className="envelope-paper-light" />
-                <stop offset="1" className="envelope-paper-dark" />
-              </linearGradient>
-              <pattern
-                id={`${id}-fiber`}
-                width="5"
-                height="7"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M1 1h.5M3 4h.7"
-                  stroke="currentColor"
-                  strokeWidth=".4"
-                  opacity=".1"
-                />
-              </pattern>
-              <mask id={`${id}-stamp`}>
-                <rect x="247" y="40" width="48" height="59" fill="white" />
-                {Array.from({ length: 9 }, (_, i) => (
-                  <g key={i} fill="black">
-                    <circle cx={247 + i * 6} cy="40" r="2" />
-                    <circle cx={247 + i * 6} cy="99" r="2" />
-                    <circle cx="247" cy={40 + i * 7.4} r="2" />
-                    <circle cx="295" cy={40 + i * 7.4} r="2" />
-                  </g>
-                ))}
-              </mask>
-            </defs>
-            <polygon
-              points={`0,200 ${edge} 324,200`}
-              fill={`url(#${id}-paper)`}
-            />
-            <polygon
-              points={`0,200 ${edge} 324,200`}
-              fill={`url(#${id}-fiber)`}
-            />
-            <path
-              d="M0 200 122 133M324 200 222 140"
-              className="envelope-seam"
-            />
-            <path d="M0 199 162 151 324 199" className="envelope-seam" />
-            <g transform="rotate(7 271 70)" mask={`url(#${id}-stamp)`}>
-              <rect
-                x="247"
-                y="40"
-                width="48"
-                height="59"
-                className="envelope-stamp"
-              />
-              <rect
-                x="252"
-                y="45"
-                width="38"
-                height="49"
-                className="envelope-stamp-inner"
-              />
-              <g className="envelope-flower">
-                <path d="M271 85V64m0 12c-12 0-14-8-14-8 12-1 14 8 14 8Zm0 5c11-1 13-9 13-9-11 0-13 9-13 9Z" />
-                <path d="M271 66c-13-1-11-12-6-10-2-11 10-11 9-1 8-5 11 8-3 11Z" />
-              </g>
-              <text
-                x="271"
-                y="92"
-                className="envelope-stamp-type"
-                textAnchor="middle"
-              >
-                a · post
-              </text>
-            </g>
-            <g className="envelope-postmark" transform="rotate(-12 235 77)">
-              <circle cx="235" cy="77" r="23" />
-              <circle cx="235" cy="77" r="19" />
-              <path d="M246 67q8-5 17 0t18 0t18 0M245 73q9-5 18 0t18 0t18 0M245 79q9-5 18 0t18 0t18 0M246 85q8-5 17 0t18 0t18 0" />
-              <text x="235" y="73" textAnchor="middle">
-                SENT WITH
-              </text>
-              <text x="235" y="83" textAnchor="middle">
-                care
-              </text>
-            </g>
+            <rect x="0.5" y="0.5" width="399" height="259" rx="3" className="envelope-paper" />
+            {/* The folds of the back, faintly through the paper. */}
+            <path d="M2 258 200 150 398 258M2 2l168 136M398 2 230 138" className="envelope-crease" />
           </svg>
-          <div
+
+          <span className="envelope-stamp">
+            <span className="envelope-stamp-inner">
+              <BrandMark size={34} />
+              <span>by hand</span>
+            </span>
+          </span>
+
+          <svg className="envelope-postmark" viewBox="0 0 150 64" focusable="false">
+            <circle cx="32" cy="32" r="27" />
+            <circle cx="32" cy="32" r="22" />
+            <path d="M62 20c13-10 25 10 38 0s25 10 38 0M62 32c13-10 25 10 38 0s25 10 38 0M62 44c13-10 25 10 38 0s25 10 38 0" />
+            <text x="32" y="30" textAnchor="middle">
+              {month ? month.slice(0, 3).toUpperCase() : 'BY'}
+            </text>
+            <text x="32" y="40" textAnchor="middle">
+              {year ?? 'HAND'}
+            </text>
+          </svg>
+
+          <span
             className="envelope-address"
-            data-name-length={
-              (recipient?.length ?? 0) > 50
-                ? 'long'
-                : (recipient?.length ?? 0) > 24
-                  ? 'medium'
-                  : 'short'
-            }
+            data-long={address.length > 22 || undefined}
           >
-            <p className="envelope-to">to {recipient ?? 'you'}</p>
-            {sentOn && <p className="envelope-date">{sentOn}</p>}
-          </div>
-          <span className="envelope-sender">from anna</span>
+            <span className="envelope-address-to">to</span>
+            <span className="envelope-addressee">{address}</span>
+            <span className="envelope-address-line" />
+            <span className="envelope-address-line envelope-address-line--short" />
+          </span>
+
+          <span className="envelope-edge" />
         </div>
-        <svg className="envelope-tear" viewBox="0 0 324 32" focusable="false">
-          <polygon
-            points={`0,0 324,0 ${edge.split(' ').reverse().join(' ')}`}
-            className="envelope-face"
-          />
-          <path d="M8 18H316" className="envelope-perforation" />
-        </svg>
+
+        <div className="envelope-face envelope-face--back">
+          {/*
+            The inside of the envelope. Without it the space the letter leaves
+            as it rises, and the corners the flap uncovers as it turns, were
+            holes onto the page behind.
+          */}
+          <svg
+            className="envelope-art envelope-inside"
+            viewBox="0 0 400 260"
+            preserveAspectRatio="none"
+            focusable="false"
+          >
+            <rect x="0.5" y="0.5" width="399" height="259" rx="3" />
+          </svg>
+
+          <div className="envelope-fold">
+            <span className="envelope-fold-date">{sentOn ?? ''}</span>
+            <span className="envelope-fold-hand">for {address}</span>
+            <span className="envelope-fold-rule" />
+            <span className="envelope-fold-rule" />
+            <span className="envelope-fold-rule envelope-fold-rule--short" />
+          </div>
+
+          <svg
+            className="envelope-art envelope-pocket"
+            viewBox="0 0 400 260"
+            preserveAspectRatio="none"
+            focusable="false"
+          >
+            <path d="M0 3V257q0 3 3 3h394q3 0 3-3V3L200 150Z" className="envelope-paper" />
+            <path d="M0 3 172 132M400 3 228 132M4 256 200 146 396 256" className="envelope-crease" />
+          </svg>
+
+          {/* One flap, hinged on the top edge: it turns over rather than
+              vanishing on one side and reappearing on the other. */}
+          <svg
+            className="envelope-flap"
+            viewBox="0 0 400 160"
+            preserveAspectRatio="none"
+            focusable="false"
+          >
+            <path d="M3 0H397Q400 0 400 3L212 150Q200 158 188 150L0 3Q0 0 3 0Z" />
+          </svg>
+
+          <span className="envelope-seal">
+            <span>a</span>
+          </span>
+        </div>
       </div>
     </div>
   )

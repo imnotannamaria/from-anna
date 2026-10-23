@@ -1,5 +1,12 @@
 'use client'
 
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/entrepta/accordion'
+
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -286,95 +293,100 @@ export function LetterControls({
         </div>
       </div>
 
-      <details className="writing-extras">
-        <summary>Expiry & deletion</summary>
-        <div className="admin-controls-row">
-          <div className="admin-controls-expiry">
-            <label htmlFor="expiry" className="meta field-label">
-              Stops opening after{' '}
-              <span className="admin-new-optional">optional</span>
-            </label>
-            <div className="editor-bar">
-              <input
-                id="expiry"
-                type="date"
-                className="field admin-controls-date"
-                value={expiry}
-                onChange={(event) => setExpiry(event.target.value)}
-              />
-              <button
-                type="button"
-                className="pill"
-                disabled={
-                  busy !== null || expiry === (expiresAt?.slice(0, 10) ?? '')
-                }
-                data-busy={busy === 'expiry' ? 'true' : 'false'}
-                aria-busy={busy === 'expiry'}
-                onClick={() => saveExpiry(expiry)}
-              >
-                {busy === 'expiry' ? 'Saving…' : 'Save date'}
-              </button>
-              {expiresAt && (
-                <button
-                  type="button"
-                  className="pill"
-                  disabled={busy !== null}
-                  onClick={() => {
-                    setExpiry('')
-                    saveExpiry('')
-                  }}
-                >
-                  Never expire
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="admin-controls-danger">
-            {!confirming ? (
-              <button
-                type="button"
-                className="pill pill--danger"
-                disabled={busy !== null}
-                onClick={() => setConfirming(true)}
-              >
-                Delete letter
-              </button>
-            ) : (
-              <div
-                className="admin-confirm"
-                role="group"
-                aria-label="Confirm delete"
-              >
-                <p className="editor-hint">
-                  This deletes the letter, its photographs and its numbers.
-                  There is no undo.
-                </p>
+      <Accordion type="single" collapsible className="writing-extras">
+        <AccordionItem value="expiry">
+          <AccordionTrigger>Expiry & deletion</AccordionTrigger>
+          <AccordionContent>
+            <div className="admin-controls-row">
+              <div className="admin-controls-expiry">
+                <label htmlFor="expiry" className="meta field-label">
+                  Stops opening after{' '}
+                  <span className="admin-new-optional">optional</span>
+                </label>
                 <div className="editor-bar">
-                  <button
-                    type="button"
-                    className="pill pill--danger-solid"
-                    disabled={busy !== null}
-                    data-busy={busy === 'delete' ? 'true' : 'false'}
-                    aria-busy={busy === 'delete'}
-                    onClick={remove}
-                  >
-                    {busy === 'delete' ? 'Deleting…' : 'Delete for good'}
-                  </button>
+                  <input
+                    id="expiry"
+                    type="date"
+                    className="field admin-controls-date"
+                    value={expiry}
+                    onChange={(event) => setExpiry(event.target.value)}
+                  />
                   <button
                     type="button"
                     className="pill"
-                    disabled={busy === 'delete'}
-                    onClick={() => setConfirming(false)}
+                    disabled={
+                      busy !== null ||
+                      expiry === (expiresAt?.slice(0, 10) ?? '')
+                    }
+                    data-busy={busy === 'expiry' ? 'true' : 'false'}
+                    aria-busy={busy === 'expiry'}
+                    onClick={() => saveExpiry(expiry)}
                   >
-                    Keep it
+                    {busy === 'expiry' ? 'Saving…' : 'Save date'}
                   </button>
+                  {expiresAt && (
+                    <button
+                      type="button"
+                      className="pill"
+                      disabled={busy !== null}
+                      onClick={() => {
+                        setExpiry('')
+                        saveExpiry('')
+                      }}
+                    >
+                      Never expire
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      </details>
+
+              <div className="admin-controls-danger">
+                {!confirming ? (
+                  <button
+                    type="button"
+                    className="pill pill--danger"
+                    disabled={busy !== null}
+                    onClick={() => setConfirming(true)}
+                  >
+                    Delete letter
+                  </button>
+                ) : (
+                  <div
+                    className="admin-confirm"
+                    role="group"
+                    aria-label="Confirm delete"
+                  >
+                    <p className="editor-hint">
+                      This deletes the letter, its photographs and its numbers.
+                      There is no undo.
+                    </p>
+                    <div className="editor-bar">
+                      <button
+                        type="button"
+                        className="pill pill--danger-solid"
+                        disabled={busy !== null}
+                        data-busy={busy === 'delete' ? 'true' : 'false'}
+                        aria-busy={busy === 'delete'}
+                        onClick={remove}
+                      >
+                        {busy === 'delete' ? 'Deleting…' : 'Delete for good'}
+                      </button>
+                      <button
+                        type="button"
+                        className="pill"
+                        disabled={busy === 'delete'}
+                        onClick={() => setConfirming(false)}
+                      >
+                        Keep it
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       <p
         role="status"
         aria-live="polite"

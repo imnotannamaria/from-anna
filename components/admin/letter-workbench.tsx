@@ -1,7 +1,19 @@
 'use client'
 
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/entrepta/accordion'
+
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { SegmentTrack } from '@/components/ui/segment-track'
+import { BrandMark } from '@/components/ui/brand-mark'
 import { LetterControls } from './letter-controls'
 import { TranscriptionEditor } from '@/components/editor/transcription-editor'
 import { PageUploader } from '@/components/upload/page-uploader'
@@ -25,6 +37,17 @@ const steps = ['Photographs', 'Write & mark', 'Share']
 
 export function LetterWorkbench(props: Props) {
   const [step, setStep] = useState(props.initialMdContent.trim() ? 1 : 0)
+  const root = useRef<HTMLElement>(null)
+  const reducedMotion = useReducedMotion()
+  useEffect(() => {
+    if (reducedMotion) return
+    const panel = root.current?.querySelector<HTMLElement>(`#workbench-${step}`)
+    const animation = panel?.animate(
+      [{ transform: 'translateY(12px)' }, { transform: 'none' }],
+      { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' },
+    )
+    return () => animation?.cancel()
+  }, [step, reducedMotion])
   const [detailsDirty, setDetailsDirty] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [pendingPhotos, setPendingPhotos] = useState(false)
@@ -37,7 +60,11 @@ export function LetterWorkbench(props: Props) {
   const ready = props.photos.length > 0 && savedContent.trim().length > 0
   const blocked = dirty || pendingPhotos
   return (
-    <main className="admin-shell admin-shell--wide writing-desk">
+    <main
+      id="main-content"
+      ref={root}
+      className="admin-shell admin-shell--wide writing-desk surface"
+    >
       <header className="desk-header">
         <Link
           href="/admin"
@@ -55,8 +82,10 @@ export function LetterWorkbench(props: Props) {
           ← All letters
         </Link>
         <span className="desk-wordmark">
+          <BrandMark size={34} />
           from anna <span> / the writing desk</span>
         </span>
+        <ThemeToggle />
       </header>
       <div className="desk-title-row">
         <div>
@@ -76,37 +105,39 @@ export function LetterWorkbench(props: Props) {
               : 'Draft'}
         </span>
       </div>
-      <nav className="workbench-steps" aria-label="Make your letter">
-        {steps.map((name, index) => (
-          <button
-            key={name}
-            type="button"
-            className="pill workbench-step"
-            aria-current={step === index ? 'step' : undefined}
-            aria-controls={`workbench-${index}`}
-            onClick={() => setStep(index)}
-          >
-            <span className="step-number" aria-hidden="true">
-              0{index + 1}
-            </span>
-            <span>
-              {name}
-              <small>
-                {index === 0
-                  ? `${props.photos.length} ${props.photos.length === 1 ? 'sheet' : 'sheets'} added`
-                  : index === 1
-                    ? dirty
-                      ? 'Unsaved changes'
-                      : savedContent.trim()
-                        ? 'Ready to review'
-                        : 'Correct & highlight'
-                    : props.live
-                      ? 'Your link is live'
-                      : 'Preview & publish'}
-              </small>
-            </span>
-          </button>
-        ))}
+      <nav className="workbench-steps island" aria-label="Make your letter">
+        <SegmentTrack label="Make your letter">
+          {steps.map((name, index) => (
+            <button
+              key={name}
+              type="button"
+              className="pill workbench-step"
+              aria-current={step === index ? 'step' : undefined}
+              aria-controls={`workbench-${index}`}
+              onClick={() => setStep(index)}
+            >
+              <span className="step-number" aria-hidden="true">
+                0{index + 1}
+              </span>
+              <span>
+                {name}
+                <small>
+                  {index === 0
+                    ? `${props.photos.length} ${props.photos.length === 1 ? 'sheet' : 'sheets'} added`
+                    : index === 1
+                      ? dirty
+                        ? 'Unsaved changes'
+                        : savedContent.trim()
+                          ? 'Ready to review'
+                          : 'Correct & highlight'
+                      : props.live
+                        ? 'Your link is live'
+                        : 'Preview & publish'}
+                </small>
+              </span>
+            </button>
+          ))}
+        </SegmentTrack>
       </nav>
       <section
         id="workbench-0"
@@ -184,14 +215,22 @@ export function LetterWorkbench(props: Props) {
           onSaved={setSavedContent}
         />
         {props.rawTranscription && (
-          <details className="writing-extras">
-            <summary>Original machine transcription</summary>
-            <p className="editor-hint">
-              Kept separately from your edits. Copy a passage from here if you
-              need to recover it.
-            </p>
-            <pre className="raw-transcription">{props.rawTranscription}</pre>
-          </details>
+          <Accordion type="single" collapsible className="writing-extras">
+            <AccordionItem value="original">
+              <AccordionTrigger>
+                Original machine transcription
+              </AccordionTrigger>
+              <AccordionContent className="writing-tools-content">
+                <p className="editor-hint">
+                  Kept separately from your edits. Copy a passage from here if
+                  you need to recover it.
+                </p>
+                <pre className="raw-transcription">
+                  {props.rawTranscription}
+                </pre>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
         <div className="step-footer">
           <span className="editor-hint">

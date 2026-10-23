@@ -4,9 +4,11 @@ import type { NextRequest } from 'next/server'
 
 import { SESSION_COOKIE, isAutomated } from '@/lib/analytics/visit'
 import { isAdminAllowed, readAdminContext } from '@/lib/auth/admin'
+import { isCrossSiteWrite } from '@/lib/security/origin'
 
 /**
- * Two jobs, and they are unrelated on purpose.
+ * Two jobs, and they are unrelated on purpose, plus one guard: a write to
+ * `/api/` that another site started is refused first.
  *
  * **Clerk's session runs here** because `auth()` has nothing to read in a
  * Server Component or a route handler unless the middleware has already
@@ -84,6 +86,21 @@ function refusesAdmin(request: NextRequest, userId: string | null): boolean {
 }
 
 export const proxy = clerkMiddleware(async (auth, request) => {
+  // A write another site started is refused before anything reads it. See
+  // `lib/security/origin.ts`: this is defence in depth, not the admin gate.
+  if (
+    request.nextUrl.pathname.startsWith('/api/') &&
+    isCrossSiteWrite({
+      method: request.method,
+      host: request.headers.get('host'),
+      origin: request.headers.get('origin'),
+      fetchSite: request.headers.get('sec-fetch-site'),
+    })
+  ) {
+    // 404 like every other refusal here: nothing about the path is confirmed.
+    return new NextResponse(null, { status: 404 })
+  }
+
   const { userId } = await auth()
 
   if (refusesAdmin(request, userId)) {

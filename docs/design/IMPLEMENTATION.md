@@ -6,7 +6,7 @@ Each phase has a **Done when** list and a **Checks** block. The checks are promp
 
 Phase 2 was the one worth building first: it carried most of the gain and depended on none of the region work. That judgement held for as long as the spread did, and phase 4 is the one that came back out first.
 
-**Five of the six were built. Phase 4 was reversed, and phase 2 has since been replaced** by the envelope refactor in `REFACTOR.md`, which is where the reading view is described now. This file is the history of how it got there, and phases 1, 3, 5 and 6 are still live. What each phase actually cost is in `DECISIONS.md`, under *Decided while building it*, *Reversed after building it* and *The envelope*.
+**Five of the six were built. Phase 4 was reversed, and phase 2 has since been replaced** by the envelope refactor, recorded under *The envelope* in `DECISIONS.md` and then restyled in phase 9. This file is the history of how it got there, and phases 1, 3, 5 and 6 are still live. What each phase actually cost is in `DECISIONS.md`, under *Decided while building it*, *Reversed after building it* and *The envelope*.
 
 A seventh piece was added afterwards and is not a phase, because it was not planned: the 404, the error page, the skeletons and the typed loading line. It is in `DECISIONS.md` under *Waiting, and going wrong*.
 
@@ -36,7 +36,7 @@ The letter is named by the three words of its slug, without the token: `AUTUMN �
 ## Phase 2 — The sticky spread · **replaced**
 
 Built as specified, deployed, read on a real letter, and replaced by the envelope
-refactor. **`REFACTOR.md` is what the reading view is now**; what follows is what
+refactor (*The envelope* in `DECISIONS.md`); what follows is what
 it was, kept because phases 3, 5 and 6 still refer to it.
 
 It answered a layout question correctly and the wrong question: two columns
@@ -105,31 +105,15 @@ number in the gutter — which was the useful half. The reasoning is in
 
 ---
 
-## Phase 5 — The coda
+## Phase 5 — The coda (replaced)
 
-The blush band, the closing lines, `WRITE BACK →` and `READ IT AGAIN`, and the privacy line.
-
-`WRITE BACK` is a `mailto:` whose address comes from an env var, not the repository.
-
-The line *read to the end · counted once · nothing else is stored* is literal and has to stay true.
-
-**Done when**
-
-- [x] The privacy sentence matches exactly what the `View` table stores
-- [x] The end-of-letter event fires in this section, and is still fired once
-- [x] `READ IT AGAIN` returns to the top without reloading and without counting a new open
-- [x] The `mailto:` arrives with a subject already filled in
-
-**Checks**
-
-- **Privacy** — it is the one sentence in the product that promises anything. It is the check.
-- **Accessibility** — the blush band changes the background, so the text and buttons are a different contrast pair. Measure against the blush, not the paper.
+The closing lines, `WRITE BACK →`, `READ IT AGAIN` and the end-of-letter measurement were built here and removed in Phase 11. Nothing from this phase remains; the reasons are in `DECISIONS.md`, *Reactions replace the end of the letter*.
 
 ---
 
 ## Phase 6 — Mobile
 
-**Its premise moved.** Mobile is no longer the width where the letter is read differently: the deck and the two-faced sheet are the same at every width, so there is far less to switch off. The 390px checks below are the part that outlives it, and they are repeated in `REFACTOR.md` phase 7.
+**Its premise moved.** Mobile is no longer the width where the letter is read differently: the deck and the two-faced sheet are the same at every width, so there is far less to switch off. The 390px checks below are the part that outlives it.
 
 Not a port. It shrank a lot once mobile kept what already works: photo first, one tap to the transcription, no sticky and no zoom.
 
@@ -168,7 +152,6 @@ So the phase is: do not break what exists, and switch off what does not apply.
 
 - **390px was checked in a device viewport, not on a phone.** That is the assumption the whole reading view rests on and it is the one check that cannot be automated.
 - **Nothing multi-sheet has been read end to end.** The stacked sticky sections and the sheet navigation are built and neither has had two real sheets through it.
-- **`WRITE_BACK_EMAIL` is unset.** Until it is, the coda renders without the button rather than with a broken `mailto:`.
 
 ## Phase 7 — Tactile envelope and paper deck
 
@@ -185,7 +168,7 @@ a close/reopen control, and a photograph toggle on the paper.
 - [x] Page turns animate in the navigation direction; the photograph stays accessible on each sheet.
 - [x] Home and letter use the same opening and sound implementation.
 - [x] Tear and page sounds are generated once with ElevenLabs, stored in `public/sounds`, played only on user interaction, and have a persistent mute control.
-- [x] Server HTML and no-script reading remain complete; inactive sheets and the unreached coda remain out of layout.
+- [x] Server HTML and no-script reading remain complete; inactive sheets remain out of layout.
 - [x] Desktop and 375px, reduced motion, keyboard navigation, no-script fallback, lint, typecheck and the existing tests are checked.
 
 
@@ -195,8 +178,7 @@ Local Chromium at 1440px and 375px: open, original-photo view, next/previous,
 arrow keys, close/reopen, persistent mute, one and three sheets, long content,
 long recipient, failed audio, and changing reduced-motion preferences while
 opening. No-script checks confirmed every sheet, transcription and image stays
-visible. Reached-end requests were intercepted: none before the last sheet,
-one on reaching the coda, none on reopening. Sample letters were temporary and
+visible. Sample letters were temporary and
 removed after the checks; no production analytics or letters were written.
 
 The animation was captured and inspected frame by frame. A real phone and the
@@ -237,3 +219,67 @@ text. Still open, because the desk sits behind sign-in: /admin and
 /admin/letters/[id] at 1440px and 375px — step switching with unsaved edits,
 photo reorder/remove and failed upload recovery, selection/recolour/remove,
 keyboard undo/save, metadata refresh, sharing, and heading wrapping.
+
+## Phase 9 — The visual system
+
+Move every surface to entrepta v4 (violet) with an optional, remembered dark
+mode, without touching the behaviour the earlier phases built: the complete
+server-rendered transcription, the no-script reading path, the analytics
+guards, private photographs and the admin checks. See *The visual system* in
+`DECISIONS.md`.
+
+**Done when**
+
+- [x] entrepta v4 tokens and type scale; Newsreader, Inter and JetBrains Mono through `next/font`.
+- [x] Owned entrepta components in `app/components/entrepta`: Accordion, EmptyState, FileDropzone, SegmentedControl, Skeleton.
+- [x] Home, the sealed letter, the reader, 404, error, sign-in, the admin list and the writing desk share one surface and capsule language.
+- [x] Light by default and without script; a dark choice restored before first paint and kept in sync across tabs.
+- [x] Both palettes measured in `palette.test.ts`, including the highlight underlines.
+- [x] Link previews and icons use generic brand artwork only.
+- [x] Desktop and 375px checked, with no horizontal overflow; a page with scripts blocked shows every sheet and photograph.
+
+## Phase 10 — Review pass
+
+A full review of the redesign: security, privacy, accessibility and the
+polish a reader notices. See *A review pass* in `DECISIONS.md`.
+
+**Done when**
+
+- [x] The author's own visits are not counted, on the page or at the reaction endpoint.
+- [x] Cross-site writes to `/api/` are refused before a route reads them; `Permissions-Policy` denies camera, microphone, location and payment.
+- [x] The saved dark mode is applied before first paint, and the browser's `theme-color` follows it.
+- [x] A letter's transcription carries `lang` when its language is clear.
+- [x] The transcription and the working labels are set at sizes meant for reading; the reading dock stays in reach.
+- [x] One `<h1>` on a letter; scroll-spy navigation uses `aria-current="true"`; "sheet" everywhere a reader sees it.
+- [x] The sealed letter is the envelope front-on, turned over to open; the brand mark stands alone in headers and footers.
+- [ ] A screen-reader pass on a real letter in Portuguese, on a phone.
+- [ ] Reduced motion switched on in the operating system during the opening.
+
+**Checks**
+
+- **Privacy** — no IP anywhere; the author bypass reads the same allowlist as the admin gate, and a signed-out reader is always counted.
+- **Accessibility** — a wrong `lang` is worse than none, so the guess abstains on short or mixed letters.
+- **Bugs** — a sticky dock must never cover a focused line: `scroll-padding-bottom` keeps the page scrolling past it.
+
+## Phase 11 — Reactions
+
+The reply to a letter is a reaction. Replaces the coda and the end-of-letter measurement. See *Reactions replace the end of the letter* in `DECISIONS.md`.
+
+**Done when**
+
+- [x] A `reactions` table: one row per reader per reaction, unique on (letter, session, reaction), cascading with the letter.
+- [x] A closed list of six in `lib/letters/reactions.ts`, with the parsing and counting covered by tests.
+- [x] `POST /api/letters/[id]/react` takes a reaction id and a boolean, reads the reader from the session cookie, and answers one 404 for every case that may not react.
+- [x] The end of the letter shows the pills and an add button; a reaction moves at once and rolls back, with a message, if it did not save.
+- [x] The reader's own picks come from the server, so they survive a reload.
+- [x] The author and a draft preview see the counts and cannot add to them.
+- [x] The admin shows, per letter: opens, readers who reacted, the reactions, and reactions by `?from=` source.
+- [x] The coda, `Read it again`, the `reached-end` endpoint, the `reached_end` column and `WRITE_BACK_EMAIL` are gone.
+- [ ] Migrations `0003` and `0004` applied to the production database (`0004` drops `views.reached_end` and its history).
+
+**Checks**
+
+- **Security** — the endpoint takes nothing from the caller but an id from a closed list and a boolean.
+- **Privacy** — no IP and no identity: the session is the same opaque cookie as on `views`.
+- **Accessibility** — real buttons with `aria-pressed` and a count in the label, a labelled group for the list, Escape returns focus, and the result is announced.
+

@@ -6,7 +6,7 @@ import { after } from 'next/server'
 import { ScannedPhoto, ScannedTranscription } from 'remark-scanned-page'
 
 import { LetterView } from '@/components/letter/letter-view'
-import { requireAdmin } from '@/lib/auth/admin'
+import { isAdmin } from '@/lib/auth/admin'
 import {
   SESSION_COOKIE,
   deviceFrom,
@@ -16,7 +16,9 @@ import {
   normaliseSource,
 } from '@/lib/analytics/visit'
 import { isPubliclyReadable } from '@/lib/letters/access'
-import { getLetterBySlug, recordView } from '@/lib/letters/queries'
+import { guessLanguage } from '@/lib/letters/language'
+import { getLetterBySlug, getReactions, recordView } from '@/lib/letters/queries'
+import { emptyCounts } from '@/lib/letters/reactions'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 import { blocksForSheets } from '@/lib/transcription/split'
 
@@ -68,36 +70,33 @@ export default async function LetterPage({
   const { letter, pages } = found
   const readable = isPubliclyReadable(letter)
 
-  if (!readable) {
-    // A draft or an expired letter is mine to preview and nobody else's to
-    // find. 404 rather than 403: a 403 confirms the slug exists.
-    try {
-      await requireAdmin()
-    } catch {
-      notFound()
-    }
-  }
+  // A draft or an expired letter is mine to preview and nobody else's to
+  // find. 404 rather than 403: a 403 confirms the slug exists.
+  const author = await isAdmin()
+  if (!readable && !author) notFound()
 
   const headerList = await headers()
   const userAgent = headerList.get('user-agent')
 
-  // Only a published letter is counted. Previewing my own draft is not a
-  // reader, and neither is a link-preview fetch.
-  if (readable && !isAutomated(userAgent)) {
-    const jar = await cookies()
+  // Only a published letter is counted, and only for a reader. Previewing my
+  // own draft is not a reader, opening my own published letter to check it
+  // is not one either, and neither is a link-preview fetch.
+  const counted = readable && !author && !isAutomated(userAgent)
 
-    // `proxy.ts` hands out this cookie before the page renders, because a
-    // Server Component can read cookies but not set them. Without that, every
-    // request would arrive with no session and a refresh would count as a new
-    // reader — the exact thing the deduplication exists to prevent.
-    const sessionId = jar.get(SESSION_COOKIE)?.value ?? newSessionId()
+  // `proxy.ts` hands out this cookie before the page renders, because a
+  // Server Component can read cookies but not set them. Without that, every
+  // request would arrive with no session and a refresh would count as a new
+  // reader — the exact thing the deduplication exists to prevent.
+  const jar = await cookies()
+  const cookieSession = jar.get(SESSION_COOKIE)?.value ?? null
 
+  if (counted) {
     // Read now, written after the response. A slow insert must never be the
     // thing that holds a letter up, and `after` cannot read headers or
     // cookies itself from a page.
     const view = {
       letterId: letter.id,
-      sessionId,
+      sessionId: cookieSession ?? newSessionId(),
       source: normaliseSource(from),
       referrer: normaliseReferrer(headerList.get('referer')),
       country: headerList.get('x-vercel-ip-country'),
@@ -105,6 +104,12 @@ export default async function LetterPage({
     }
     after(() => recordView(view))
   }
+
+  // What the letter has been answered with, and which of those are this
+  // reader's own. A draft has no readers to have answered it.
+  const reactions = readable
+    ? await getReactions(letter.id, counted ? cookieSession : null)
+    : { counts: emptyCounts(), mine: [] }
 
   // One markdown document, split on `---` into a block per sheet. A sheet
   // whose block is missing still shows its photo, and a `---` the letter
@@ -151,12 +156,12 @@ export default async function LetterPage({
     <LetterView
       letterId={letter.id}
       isPreview={!readable}
+      isAuthor={author}
       recipient={letter.recipient}
       sentOn={sentOn(letter.publishedAt)}
-      // From the environment, never the repository. Absent hides the button
-      // rather than shipping a broken `mailto:`.
-      writeBackEmail={process.env.WRITE_BACK_EMAIL || null}
+      reactions={reactions}
       tags={HIGHLIGHT_TAGS}
+      language={guessLanguage(letter.mdContent)}
       sheets={sheets}
     />
   )
