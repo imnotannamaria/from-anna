@@ -396,3 +396,11 @@ Chosen from four directions built as pages: the envelope alone, the letter peeki
 
 **On a phone the letter bar puts the mark and the controls on one row and the name under them** — because three controls and a mark leave the name about 90px at 320px, which set it against the buttons and broke the line under it in three.
 
+---
+
+## The back of the envelope — October 2026
+
+**The back of the envelope is hidden with `visibility`, and the two faces trade places at the quarter turn** — because `backface-visibility` alone is lost when WebKit flattens a 3D scene, and the seal on the back showed through the front when the colour mode was changed on a phone. Half of the 520ms of a symmetric easing is exactly the edge-on moment.
+
+**The colour mode changes with no animation on a touch screen** — because a view transition photographs the page and the 3D envelope did not survive it. The curtain stays for a mouse.
+

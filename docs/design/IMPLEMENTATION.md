@@ -283,3 +283,9 @@ The reply to a letter is a reaction. Replaces the coda and the end-of-letter mea
 - **Privacy** — no IP and no identity: the session is the same opaque cookie as on `views`.
 - **Accessibility** — real buttons with `aria-pressed` and a count in the label, a labelled group for the list, Escape returns focus, and the result is announced.
 
+## Phase 12 — Phone fixes
+
+- [x] The back of the envelope can no longer show through the front when the colour mode changes on WebKit.
+- [x] The colour mode changes with no animation on a touch screen.
+- [ ] Confirmed on the browser where it was reported (Arc on iOS). It could not be reproduced in Safari on the iOS 26.3 simulator, so the cause is inferred and both ends of it are closed.
+

@@ -11,7 +11,19 @@ let activeTransition: ViewTransition | undefined
 let switchVersion = 0
 let requestedMode: 'dark' | 'light' | undefined
 
-/** A downward view-transition curtain, with an instant fallback. */
+/**
+ * A downward view-transition curtain on a pointer that hovers, an instant
+ * switch everywhere else.
+ *
+ * A view transition photographs the page, and WebKit flattens a 3D scene to do
+ * it: on a phone the sealed envelope came out of that with the back of it, the
+ * seal, in the middle of the front. A curtain is a nicety for a mouse; a phone
+ * gets the mode with no animation at all, which is also the cheaper switch.
+ */
+const canCurtain = () =>
+  typeof document.startViewTransition === 'function' &&
+  window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
 function changeMode(mode: 'dark' | 'light', reduced: boolean) {
   const root = document.documentElement
   const version = ++switchVersion
@@ -37,7 +49,7 @@ function changeMode(mode: 'dark' | 'light', reduced: boolean) {
     activeTransition = undefined
     requestedMode = undefined
   }
-  if (!reduced && document.startViewTransition) {
+  if (!reduced && canCurtain()) {
     const transition = document.startViewTransition(apply)
     activeTransition = transition
     transition.ready.catch(() => {})
