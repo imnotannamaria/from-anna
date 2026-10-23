@@ -121,6 +121,7 @@ Three tags in the app — `important`, `note`, `ask`. The **package** defines no
 ## Conventions
 
 - **The app starts in light mode and offers an explicit saved dark choice.** `data-mode="light"` is the server fallback on `<html>`. A plain inline script in `<head>` restores only the saved color preference before first paint; it never hides or constructs letter content. Not `next/script`: even `beforeInteractive` queues inline code until the runtime loads, after first paint. Both palettes live in `globals.css`, and contrast checks cover both modes. Photographs retain their original colors.
+- **Hide the back of the envelope with `visibility`, not `backface-visibility` alone,** and don't use a view transition on a touch screen. WebKit flattens a 3D scene when it snapshots the page, and the seal on the back came through the front when the mode was changed on a phone.
 - **A reaction is a row per reader, from a closed list.** The six live in `lib/letters/reactions.ts` and are stored by id; the endpoint takes an id and a boolean, reads the reader from the session cookie, and answers one 404 for everyone who may not react. Never a free-text emoji, never a counter that can drift from its rows.
 - **The author is never a reader.** Opening a published letter while signed in as the author records no view, and cannot react, on the page and at the endpoint. Analytics that count the person checking the letter measure the wrong thing.
 - **Accents derive from tokens, never a hardcoded hex,** so a theme switch moves everything at once.

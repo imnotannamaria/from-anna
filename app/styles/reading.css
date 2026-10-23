@@ -178,6 +178,11 @@
 }
 .envelope-face--back {
   transform: rotateY(180deg);
+  /* The back is hidden outright, not left to `backface-visibility`. WebKit
+     loses that property when it flattens a 3D scene — a view transition's
+     snapshot does — and the seal on the back showed through the front when
+     the colour mode was changed on a phone. */
+  visibility: hidden;
 }
 .envelope-art {
   position: absolute;
@@ -397,6 +402,30 @@
 /* Opening: turn over, lift the flap, raise the letter. */
 .envelope-stage[data-opening='true'] .envelope-turn {
   transform: rotateY(180deg);
+}
+/* The faces trade places at the edge-on moment of the turn: half of the 520ms
+   of a symmetric easing is exactly a quarter turn. */
+.envelope-stage[data-opening='true'] .envelope-face--front {
+  animation: face-away 1ms linear 260ms forwards;
+}
+.envelope-stage[data-opening='true'] .envelope-face--back {
+  animation: face-toward 1ms linear 260ms forwards;
+}
+@keyframes face-away {
+  from {
+    visibility: visible;
+  }
+  to {
+    visibility: hidden;
+  }
+}
+@keyframes face-toward {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
 }
 .envelope-stage[data-opening='true'] .envelope-seal {
   animation: seal-release 220ms ease-in 520ms forwards;
