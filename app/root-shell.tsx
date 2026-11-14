@@ -1,29 +1,16 @@
 import { ClerkProvider } from '@clerk/nextjs'
-import type { Metadata, Viewport } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { Inter, JetBrains_Mono, Newsreader } from 'next/font/google'
 
 import { SiteAnalytics } from '@/components/site-analytics'
 import { ModeSync } from '@/components/ui/mode-sync'
-import { MODE_SCRIPT, THEME_COLOR } from '@/lib/theme/mode'
+import { HTML_LANG, type Locale } from '@/lib/i18n/locales'
+import { MODE_SCRIPT } from '@/lib/theme/mode'
 
 import 'remark-scanned-page/styles/scanned-page.css'
 
 import './globals.css'
-
-export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-  ),
-  title: 'from anna',
-  description: 'Handwritten letters, published on the web.',
-  twitter: { card: 'summary_large_image' },
-}
-
-// The light canvas. The head script swaps it for the dark one when that is
-// the saved choice, so the browser chrome matches the page either way.
-export const viewport: Viewport = {
-  themeColor: THEME_COLOR.light,
-}
 
 // Newsreader for headings, Inter for reading and JetBrains Mono for controls.
 // next/font downloads them at build time; no browser request to Google Fonts.
@@ -53,19 +40,36 @@ const fontVariables = [newsreader, inter, jetbrainsMono]
   .map((font) => font.variable)
   .join(' ')
 
-// Server HTML is complete in light mode. The head script only restores an
-// explicit color choice; it never gates rendering or changes letter content.
-// `suppressHydrationWarning` covers exactly that: the script changes
-// `data-mode` on <html> before React hydrates.
-//
-// A 404 thrown from inside `/[slug]` makes Next render this layout again on
-// the client, and React 19 logs "Encountered a script tag" in development
-// when it does. That warning is dev-only and harmless; `ModeSync` puts the
-// saved mode back on that path.
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+/**
+ * The document every page is drawn in: the language, the fonts, the mode
+ * script and the providers. There are two root layouts, the site's (one per
+ * language, `app/[locale]/layout.tsx`) and the desk's (`app/admin/layout.tsx`,
+ * always English), and both are this.
+ *
+ * Server HTML is complete in light mode. The head script only restores an
+ * explicit color choice; it never gates rendering or changes letter content.
+ * `suppressHydrationWarning` covers exactly that: the script changes
+ * `data-mode` on <html> before React hydrates.
+ *
+ * A 404 thrown from inside `/[slug]` makes Next render this layout again on
+ * the client, and React 19 logs "Encountered a script tag" in development
+ * when it does. That warning is dev-only and harmless; `ModeSync` puts the
+ * saved mode back on that path.
+ */
+export async function RootShell({
+  locale,
+  children,
+}: {
+  locale: Locale
+  children: React.ReactNode
+}) {
+  const t = await getTranslations({ locale, namespace: 'frame' })
+  // Every client component reads its words from here.
+  const messages = await getMessages({ locale })
+
   return (
     <html
-      lang="en"
+      lang={HTML_LANG[locale]}
       data-mode="light"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
@@ -77,9 +81,13 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       </head>
       <body className="flex min-h-full flex-col">
         <a className="skip-link" href="#main-content">
-          Skip to content
+          {t('skip')}
         </a>
-        <ClerkProvider>{children}</ClerkProvider>
+        <ClerkProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </ClerkProvider>
         <ModeSync />
         <SiteAnalytics />
       </body>

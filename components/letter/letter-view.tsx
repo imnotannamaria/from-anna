@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { DeckControls } from './deck-controls'
+import type { Postmark } from './envelope'
 import { EnvelopeStage } from './envelope-stage'
 import { SoundToggle } from './sound-toggle'
 import { useEnvelope } from './use-envelope'
@@ -16,6 +18,7 @@ import { BrandMark } from '@/components/ui/brand-mark'
 import { SegmentTrack } from '@/components/ui/segment-track'
 import { Icon } from '@/components/ui/icon'
 import type { ReactionCounts, ReactionId } from '@/lib/letters/reactions'
+import { isLocale, localePath } from '@/lib/i18n/locales'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 export type SheetProps = {
@@ -30,6 +33,8 @@ export type SheetProps = {
 
 type Props = {
   letterId: string
+  /** The letter's address without its language: `/a-letter`. */
+  path: string
   isPreview: boolean
   /**
    * The author is reading. Nothing is measured: opening my own letter to
@@ -40,6 +45,8 @@ type Props = {
   recipient: string | null
   /** Formatted on the server, in UTC, so it cannot disagree with itself. */
   sentOn: string | null
+  /** The month and year of the same date, for the postmark. */
+  postmark: Postmark | null
   /** What the letter has been answered with so far. */
   reactions: { counts: ReactionCounts; mine: ReactionId[] }
   tags: readonly string[]
@@ -79,15 +86,19 @@ type Props = {
  */
 export function LetterView({
   letterId,
+  path,
   isPreview,
   isAuthor,
   recipient,
   sentOn,
+  postmark,
   reactions,
   tags,
   language,
   sheets,
 }: Props) {
+  const t = useTranslations('letter')
+  const locale = useLocale()
   const rootRef = useRef<HTMLDivElement>(null)
 
   const [filter, setFilter] = useState<string | null>(null)
@@ -101,6 +112,9 @@ export function LetterView({
   // now, so the toggle belongs on the sheet and applies everywhere.
   const [face, setFace] = useState<'front' | 'back'>('front')
   const [progress, setProgress] = useState(0)
+  // Whether the photograph has been looked at. Until it has, the Photo button
+  // keeps catching the eye: a lot of readers never found out there was one.
+  const [seenPhoto, setSeenPhoto] = useState(false)
   const envelope = useEnvelope()
   const { attachContent } = envelope
   const { open, enhanced } = envelope
@@ -319,6 +333,7 @@ export function LetterView({
   const turnFace = () => {
     if (turnLock.current || envelope.busy) return
     playPaperSound('turn')
+    if (face === 'front') setSeenPhoto(true)
     setFace(face === 'back' ? 'front' : 'back')
   }
 
@@ -356,20 +371,21 @@ export function LetterView({
       data-sheet-active={sheet}
       data-phase={envelope.phase}
       data-turning={turning || undefined}
+      data-seen-photo={seenPhoto || undefined}
       data-at-end={sheet === sheets.length - 1 ? 'true' : 'false'}
       data-enhanced={enhanced ? 'true' : undefined}
     >
       <main id="main-content" className="reader-main">
         {isPreview ? (
           <p className="preview-banner">
-            <span className="meta">Preview</span> Not published. No reading
-            activity is counted.
+            <span className="meta">{t('banner.previewLabel')}</span>{' '}
+            {t('banner.preview')}
           </p>
         ) : (
           isAuthor && (
             <p className="preview-banner">
-              <span className="meta">Published</span> You are signed in as the
-              author, so this visit is not counted.
+              <span className="meta">{t('banner.authorLabel')}</span>{' '}
+              {t('banner.author')}
             </p>
           )
         )}
@@ -377,9 +393,14 @@ export function LetterView({
           envelope={envelope}
           recipient={recipient}
           sentOn={sentOn}
+          postmark={postmark}
+          path={path}
           target="#sheet-0"
-          label="Open the letter"
-          caption={`${sheets.length === 1 ? 'One sheet' : `${sheets.length} sheets`} · written by hand${sentOn ? ` · ${sentOn}` : ''}`}
+          caption={
+            sentOn
+              ? t('stage.captionDated', { count: sheets.length, date: sentOn })
+              : t('stage.caption', { count: sheets.length })
+          }
         />
         <div
           className="letter-deck surface paper-content"
@@ -395,6 +416,7 @@ export function LetterView({
             onFilter={setFilter}
             enhanced={enhanced && open}
             progress={progress}
+            path={path}
           >
             {enhanced && (
               <>
@@ -404,8 +426,8 @@ export function LetterView({
                   className="pill pill--icon"
                   aria-label={
                     envelope.phase === 'closing'
-                      ? 'Closing the letter'
-                      : 'Close the letter'
+                      ? t('closing')
+                      : t('close')
                   }
                   aria-disabled={turning || envelope.busy}
                   aria-busy={envelope.phase === 'closing'}
@@ -429,7 +451,7 @@ export function LetterView({
               className="sheet"
               data-sheet={i}
               data-active={i === sheet ? 'true' : 'false'}
-              aria-label={`Sheet ${i + 1} of ${sheets.length}`}
+              aria-label={t('deck.sheetOf', { n: i + 1, count: sheets.length })}
               style={{ ['--sheet-ratio' as string]: String(item.ratio) }}
             >
               <div className="paper-sheet">
@@ -461,7 +483,7 @@ export function LetterView({
                 />
               )}
               <div className="island">
-                <SegmentTrack label="View the letter">
+                <SegmentTrack label={t('dock.label')}>
                   <button
                     type="button"
                     className="pill"
@@ -472,11 +494,11 @@ export function LetterView({
                     }}
                   >
                     <Icon name="text" />
-                    <span className="dock-label">Text</span>
+                    <span className="dock-label">{t('dock.text')}</span>
                   </button>
                   <button
                     type="button"
-                    className="pill"
+                    className="pill dock-photo"
                     aria-pressed={face === 'back'}
                     aria-disabled={turning || envelope.busy}
                     onClick={() => {
@@ -484,7 +506,7 @@ export function LetterView({
                     }}
                   >
                     <Icon name="photo" />
-                    <span className="dock-label">Photo</span>
+                    <span className="dock-label">{t('dock.photo')}</span>
                   </button>
                 </SegmentTrack>
               </div>
@@ -501,8 +523,12 @@ export function LetterView({
         enhanced={enhanced}
       />
       <footer className="reader-footer meta">
-        written by hand ·{' '}
-        <Link href="/" className="wordmark wordmark--mark" aria-label="from anna">
+        {t('footer.line')} ·{' '}
+        <Link
+          href={localePath(isLocale(locale) ? locale : 'en', '/')}
+          className="wordmark wordmark--mark"
+          aria-label="from anna"
+        >
           <BrandMark size={30} />
         </Link>
       </footer>

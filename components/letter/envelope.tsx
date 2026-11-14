@@ -1,6 +1,15 @@
+import { useTranslations } from 'next-intl'
+
 import { BrandMark } from '@/components/ui/brand-mark'
 
-type Props = { recipient: string | null; sentOn?: string | null }
+/** The month and year the postmark shows, written for the letter's language. */
+export type Postmark = { month: string; year: string }
+
+type Props = {
+  recipient: string | null
+  sentOn?: string | null
+  postmark?: Postmark | null
+}
 
 /**
  * The sealed letter: an envelope with two faces.
@@ -14,9 +23,9 @@ type Props = { recipient: string | null; sentOn?: string | null }
  * Decoration only. The name of the page is a heading and the control is the
  * link around this, both in `EnvelopeStage`; nothing here is read out.
  */
-export function Envelope({ recipient, sentOn = null }: Props) {
-  const address = recipient?.trim() || 'you'
-  const [month, year] = (sentOn ?? '').split(' ')
+export function Envelope({ recipient, sentOn = null, postmark = null }: Props) {
+  const t = useTranslations('letter.envelope')
+  const address = recipient?.trim() || t('anyone')
 
   return (
     <div className="envelope" aria-hidden="true">
@@ -36,7 +45,7 @@ export function Envelope({ recipient, sentOn = null }: Props) {
           <span className="envelope-stamp">
             <span className="envelope-stamp-inner">
               <BrandMark size={34} />
-              <span>by hand</span>
+              <span>{t('byHand')}</span>
             </span>
           </span>
 
@@ -45,10 +54,10 @@ export function Envelope({ recipient, sentOn = null }: Props) {
             <circle cx="32" cy="32" r="22" />
             <path d="M62 20c13-10 25 10 38 0s25 10 38 0M62 32c13-10 25 10 38 0s25 10 38 0M62 44c13-10 25 10 38 0s25 10 38 0" />
             <text x="32" y="30" textAnchor="middle">
-              {month ? month.slice(0, 3).toUpperCase() : 'BY'}
+              {postmark ? postmark.month : t('stampTop')}
             </text>
             <text x="32" y="40" textAnchor="middle">
-              {year ?? 'HAND'}
+              {postmark ? postmark.year : t('stampBottom')}
             </text>
           </svg>
 
@@ -56,7 +65,7 @@ export function Envelope({ recipient, sentOn = null }: Props) {
             className="envelope-address"
             data-long={address.length > 22 || undefined}
           >
-            <span className="envelope-address-to">to</span>
+            <span className="envelope-address-to">{t('to')}</span>
             <span className="envelope-addressee">{address}</span>
             <span className="envelope-address-line" />
             <span className="envelope-address-line envelope-address-line--short" />
@@ -82,7 +91,7 @@ export function Envelope({ recipient, sentOn = null }: Props) {
 
           <div className="envelope-fold">
             <span className="envelope-fold-date">{sentOn ?? ''}</span>
-            <span className="envelope-fold-hand">for {address}</span>
+            <span className="envelope-fold-hand">{t('for', { name: address })}</span>
             <span className="envelope-fold-rule" />
             <span className="envelope-fold-rule" />
             <span className="envelope-fold-rule envelope-fold-rule--short" />

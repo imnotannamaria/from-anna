@@ -16,8 +16,11 @@
  * I typed myself is refused, because silently changing it is worse.
  */
 
-/** Paths that belong to the app. A letter at `/admin` would be unreachable. */
-export const RESERVED_SLUGS = new Set(['admin', 'api'])
+/**
+ * Paths that belong to the app. A letter at `/admin` would be unreachable, and
+ * one at `/pt` would be the Portuguese front page.
+ */
+export const RESERVED_SLUGS = new Set(['admin', 'api', 'en', 'pt'])
 
 export const MAX_SLUG_LENGTH = 80
 

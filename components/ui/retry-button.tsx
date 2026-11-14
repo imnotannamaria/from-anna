@@ -1,9 +1,11 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
 import { Icon } from './icon'
 
 export function RetryButton({ retry }: { retry: () => void }) {
+  const t = useTranslations('states.error')
   const [pending, startTransition] = useTransition()
   return (
     <button
@@ -15,7 +17,7 @@ export function RetryButton({ retry }: { retry: () => void }) {
       onClick={() => startTransition(retry)}
     >
       <Icon name="refresh" />
-      {pending ? 'Trying again…' : 'Try again'}
+      {pending ? t('retrying') : t('retry')}
     </button>
   )
 }

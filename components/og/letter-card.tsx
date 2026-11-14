@@ -9,7 +9,15 @@ const fontData = Promise.all([
 ])
 
 /** Literal sizes/colors: Satori cannot resolve the app's CSS custom properties. */
-export async function letterCard(kind: 'site' | 'letter') {
+/** The words on the card, in the language of the address it is for. */
+export type CardCopy = {
+  line1: string
+  line2: string
+  line3: string
+  tagline: string
+}
+
+export async function letterCard(copy: CardCopy) {
   const [regular, italic] = await fontData
   const mark = `data:image/png;base64,${(await readFile(join(process.cwd(), 'public/from-anna.png'))).toString('base64')}`
   return new ImageResponse(
@@ -67,16 +75,14 @@ export async function letterCard(kind: 'site' | 'letter') {
               marginBottom: 12,
             }}
           >
-            <span>{kind === 'site' ? 'Letters I write' : 'A handwritten'}</span>
-            <span>{kind === 'site' ? 'by hand.' : 'letter,'}</span>
+            <span>{copy.line1}</span>
+            <span>{copy.line2}</span>
             <span style={{ color: '#5a4cd6', fontStyle: 'italic' }}>
-              {kind === 'site' ? 'For one person each.' : 'just for you.'}
+              {copy.line3}
             </span>
           </div>
           <div style={{ display: 'flex', color: '#52525b', fontSize: 23 }}>
-            {kind === 'site'
-              ? 'Ink, paper, a phone camera. Open source.'
-              : 'A little ink. A little paper. Something to keep.'}
+            {copy.tagline}
           </div>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders a PNG, not browser HTML. */}

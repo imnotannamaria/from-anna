@@ -464,3 +464,11 @@
 .home-navigation .wordmark--mark {
   padding-inline: 2px;
 }
+/* The language link carries a flag, not a word. A thin edge keeps the white
+   of the US flag from dissolving into a light page. */
+.language-switch .flag {
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+

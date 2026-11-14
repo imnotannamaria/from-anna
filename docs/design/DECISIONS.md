@@ -404,3 +404,33 @@ Chosen from four directions built as pages: the envelope alone, the letter peeki
 
 **The colour mode changes with no animation on a touch screen** — because a view transition photographs the page and the 3D envelope did not survive it. The curtain stays for a mouse.
 
+---
+
+## Two languages — October 2026
+
+**English is at the root and Portuguese is under `/pt`** — because a letter is written for one person in the language that person reads, and the link is the only thing that reaches them. Each language has its own address, so a link opens in the language of whoever sent it and both are indexable.
+
+**Inside the app every page is under `[locale]`, and `proxy.ts` carries it out** — because next-intl needs the language in the route to render a page without reading the request, which is what keeps the front page static. `/pt/…` is served as it is, `/en/…` is redirected to the same address without the prefix, and anything else is English, served from `/en/…` under its own address. The rule is a pure function in `lib/i18n/locales.ts`, so it is tested without a request.
+
+**Only the front page chooses a language for the visitor** — because a letter's link is its language. A reader whose browser prefers Portuguese and who was sent an English link was sent it on purpose; redirecting them would translate the frame of a letter whose words are English. The front page follows the visitor's saved choice, then their browser's, and a click on the language link remembers the choice in a cookie that is read only for that.
+
+**The language is switched by a flag, on every page, as a link** — because a link is an address a person can open in a new tab or share, and it works with no script. The flag shows the language the page is in, the way the portfolio does; its label says it in words ("Language: English. Switch to Português"). It is an SVG, since Windows does not draw flag emoji. On a letter it goes to the same letter in the other language, and that is a choice the reader makes; the site still never makes it for them.
+
+**The desk stays in English and outside `[locale]`** — because it is a tool for one person, and translating it would be work with no reader. It has its own root layout, drawn by the same shell, and its 404 is the site's, so it never confirms it is there.
+
+**The words are in `messages/en.json` and `messages/pt.json`, and a test fails when they drift** — because a missing key or an English sentence left in the Portuguese file is invisible until someone reads that page. The test compares the keys, the tags (`<em>`) and the values each sentence is given, and flags a sentence that is identical in both.
+
+**The markdown samples on the front page are read with `t.raw`** — because ICU, the format of the messages, reads `{c=important}` as an argument. They are letters in the page's language, and the directive syntax is the same in both.
+
+**Dates are formatted on the server, in UTC, with the language of the address** — `outubro de 2026` and `October 2026` — and the postmark is built from the same date as three letters and a year, because splitting the long form on a space only works in English.
+
+**`en` and `pt` are reserved slugs** — because a letter called `pt` would be the Portuguese front page.
+
+**An address with a file extension is never a page** — because the proxy's matcher leaves only some extensions out, and the paper sounds (`.mp3`) were being sent to `/en/sounds/…` and answering 404 with no error anywhere. A slug never has a dot in it. `isPagePath` in `lib/i18n/locales.ts` is tested for it.
+
+## Two buttons nobody should miss — November 2026
+
+**The photo button is called "Original" and keeps its word on a phone** — because as an icon alone, readers did not know there was a photograph of the sheet at all, and the photograph is half of what makes this a letter.
+
+**Opening the letter and seeing the original share one cue, a band of light that crosses them now and then** — because a different animation for each would be two new things to learn. It is a transform on a layer of its own, so the label never repaints and its contrast never drops; the photo button stops once the photograph has been seen, and both stop for reduced motion. It is not a tooltip over the letter, because decoration never paints over the words.
+

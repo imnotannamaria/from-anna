@@ -1,8 +1,11 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { usePaperSound } from '@/lib/paper-sounds'
 
 export function SoundToggle({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations('letter.sound')
   const { enabled, toggle } = usePaperSound()
   return (
     <button
@@ -10,7 +13,7 @@ export function SoundToggle({ compact = false }: { compact?: boolean }) {
       className={`pill paper-sound${compact ? ' pill--icon' : ''}`}
       onClick={toggle}
       aria-pressed={enabled}
-      aria-label="Paper sounds"
+      aria-label={t('label')}
     >
       <svg
         width="15"
@@ -28,7 +31,7 @@ export function SoundToggle({ compact = false }: { compact?: boolean }) {
           <path d="m16 9 6 6m0-6-6 6" />
         )}
       </svg>
-      {!compact && <>Sound {enabled ? 'on' : 'off'}</>}
+      {!compact && <>{enabled ? t('on') : t('off')}</>}
     </button>
   )
 }

@@ -4,10 +4,16 @@ import type { NextRequest } from 'next/server'
 
 import { SESSION_COOKIE, isAutomated } from '@/lib/analytics/visit'
 import { isAdminAllowed, readAdminContext } from '@/lib/auth/admin'
+import {
+  LOCALE_COOKIE,
+  isPagePath,
+  routePage,
+  stripLocale,
+} from '@/lib/i18n/locales'
 import { isCrossSiteWrite } from '@/lib/security/origin'
 
 /**
- * Two jobs, and they are unrelated on purpose, plus one guard: a write to
+ * Three jobs, and they are unrelated on purpose, plus one guard: a write to
  * `/api/` that another site started is refused first.
  *
  * **Clerk's session runs here** because `auth()` has nothing to read in a
@@ -21,6 +27,10 @@ import { isCrossSiteWrite } from '@/lib/security/origin'
  * arrive with no session, the page would invent a new id each time, and the
  * per-session deduplication would count a refresh as a new reader — the
  * exact thing it was added to prevent.
+ *
+ * **The language of a page is chosen here.** English is at the root and
+ * Portuguese under `/pt`, and inside the app both live under `[locale]`.
+ * `lib/i18n/locales.ts` holds the rule; this only carries it out.
  */
 function issueReadingSession(request: NextRequest, response: NextResponse) {
   if (request.cookies.has(SESSION_COOKIE)) return
@@ -31,7 +41,8 @@ function issueReadingSession(request: NextRequest, response: NextResponse) {
   // made by someone who already has one, and Clerk's handshake is not a
   // reader at all. Neither is Vercel Analytics reporting a visit to the
   // front page, which would otherwise hand the cookie out after all.
-  const path = request.nextUrl.pathname
+  // The front page is `/` and `/pt`, whichever language it is read in.
+  const path = stripLocale(request.nextUrl.pathname)
   if (
     path === '/' ||
     path.startsWith('/admin') ||
@@ -111,12 +122,35 @@ export const proxy = clerkMiddleware(async (auth, request) => {
     // right status and an empty body, so a browser painted a blank white
     // page. Rewriting to a path that does not exist makes Next render the
     // real `not-found.tsx`, with the 404 it already carries.
-    return NextResponse.rewrite(new URL('/__nothing-here', request.url), {
+    //
+    // Two segments deep, so it lands on the catch-all and not on a letter's
+    // route, which would look the made-up slug up in the database.
+    return NextResponse.rewrite(new URL('/en/__nothing/here', request.url), {
       status: 404,
     })
   }
 
-  const response = NextResponse.next()
+  // A page has a language; the desk, the API and a file do not.
+  const pathname = request.nextUrl.pathname
+  const isPage = isPagePath(pathname)
+
+  let response = NextResponse.next()
+  if (isPage) {
+    const routing = routePage(
+      pathname,
+      request.cookies.get(LOCALE_COOKIE)?.value,
+      request.headers.get('accept-language'),
+    )
+    if (routing.kind !== 'serve') {
+      const url = request.nextUrl.clone()
+      url.pathname = routing.to
+      response =
+        routing.kind === 'rewrite'
+          ? NextResponse.rewrite(url)
+          : NextResponse.redirect(url, routing.permanent ? 308 : 307)
+    }
+  }
+
   issueReadingSession(request, response)
   return response
 })

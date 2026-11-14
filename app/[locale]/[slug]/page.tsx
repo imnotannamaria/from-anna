@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { after } from 'next/server'
+import { getTranslations } from 'next-intl/server'
 
 import { ScannedPhoto, ScannedTranscription } from 'remark-scanned-page'
 
+import type { Postmark } from '@/components/letter/envelope'
 import { LetterView } from '@/components/letter/letter-view'
 import { isAdmin } from '@/lib/auth/admin'
 import {
@@ -15,6 +17,8 @@ import {
   normaliseReferrer,
   normaliseSource,
 } from '@/lib/analytics/visit'
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/locales'
+import { pageLocale } from '@/lib/i18n/page'
 import { isPubliclyReadable } from '@/lib/letters/access'
 import { guessLanguage } from '@/lib/letters/language'
 import { getLetterBySlug, getReactions, recordView } from '@/lib/letters/queries'
@@ -30,13 +34,28 @@ export const dynamic = 'force-dynamic'
  *
  * The slug is unguessable and the route is `noindex`, but metadata is also
  * what a link preview reads and caches, and a cached preview outlives
- * unpublishing. The title is deliberately generic.
+ * unpublishing. The title is deliberately generic, in the language the link is
+ * written in.
  */
-export const metadata: Metadata = {
-  title: 'A letter',
-  description: 'A handwritten letter.',
-  robots: { index: false, follow: false, nocache: true },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>
+}): Promise<Metadata> {
+  const { locale: raw } = await params
+  const t = await getTranslations({
+    locale: isLocale(raw) ? raw : DEFAULT_LOCALE,
+    namespace: 'meta.letter',
+  })
+  return {
+    title: t('title'),
+    description: t('description'),
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
+
+/** The tag Intl needs for each language: the Portuguese is Brazilian. */
+const INTL_TAG: Record<Locale, string> = { en: 'en-GB', pt: 'pt-BR' }
 
 /**
  * The month a letter was sent, formatted on the server and in UTC.
@@ -45,22 +64,36 @@ export const metadata: Metadata = {
  * and the browser another, which React reports as a hydration mismatch and a
  * reader across a date line sees as the wrong month.
  */
-function sentOn(date: Date | null): string | null {
+function sentOn(date: Date | null, locale: Locale): string | null {
   if (!date) return null
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(INTL_TAG[locale], {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',
   }).format(date)
 }
 
+/** The same date for the postmark: three letters of the month, and the year. */
+function postmarkOf(date: Date | null, locale: Locale): Postmark | null {
+  if (!date) return null
+  const month = new Intl.DateTimeFormat(INTL_TAG[locale], {
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date)
+  return {
+    month: month.replace('.', '').slice(0, 3).toUpperCase(),
+    year: String(date.getUTCFullYear()),
+  }
+}
+
 export default async function LetterPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ locale: string; slug: string }>
   searchParams: Promise<{ from?: string }>
 }) {
+  const locale = await pageLocale(params)
   const { slug } = await params
   const { from } = await searchParams
 
@@ -155,10 +188,12 @@ export default async function LetterPage({
   return (
     <LetterView
       letterId={letter.id}
+      path={`/${slug}`}
       isPreview={!readable}
       isAuthor={author}
       recipient={letter.recipient}
-      sentOn={sentOn(letter.publishedAt)}
+      sentOn={sentOn(letter.publishedAt, locale)}
+      postmark={postmarkOf(letter.publishedAt, locale)}
       reactions={reactions}
       tags={HIGHLIGHT_TAGS}
       language={guessLanguage(letter.mdContent)}

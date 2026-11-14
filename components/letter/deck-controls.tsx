@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useEffect, useRef } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { SegmentTrack } from '@/components/ui/segment-track'
@@ -12,6 +13,7 @@ type Props = {
 }
 /** Remains mounted across turns, so the originating keyboard control keeps focus. */
 export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
+  const t = useTranslations('letter.deck')
   const backRef = useRef<HTMLButtonElement>(null)
   const nextRef = useRef<HTMLButtonElement>(null)
   const atStart = sheet === 0,
@@ -22,7 +24,7 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
     else if (active === nextRef.current && atEnd) backRef.current?.focus()
   }, [atStart, atEnd])
   return (
-    <nav className="island deck-controls" aria-label="Sheets" aria-busy={busy}>
+    <nav className="island deck-controls" aria-label={t('nav')} aria-busy={busy}>
       <button
         ref={backRef}
         type="button"
@@ -33,11 +35,11 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atStart || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the sheet' : 'Previous sheet'}
+        aria-label={busy ? t('turning') : t('previous')}
       >
         <Icon name="left" />
       </button>
-      <SegmentTrack label="Choose a sheet">
+      <SegmentTrack label={t('choose')}>
         {Array.from({ length: count }, (_, index) => (
           <button
             key={index}
@@ -45,7 +47,7 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
             className="pill pill--icon"
             aria-current={sheet === index ? 'page' : undefined}
             aria-disabled={busy}
-            aria-label={`Sheet ${index + 1} of ${count}`}
+            aria-label={t('sheetOf', { n: index + 1, count })}
             onClick={() => {
               if (!busy) onSheet(index)
             }}
@@ -54,6 +56,12 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
           </button>
         ))}
       </SegmentTrack>
+      {/* On a phone the numbers give way to this, so the dock keeps one row
+          and the photo button keeps its word. The live line below is what a
+          screen reader hears either way. */}
+      <span className="deck-position" aria-hidden="true">
+        {sheet + 1}/{count}
+      </span>
       <button
         ref={nextRef}
         type="button"
@@ -64,12 +72,12 @@ export function DeckControls({ sheet, count, onSheet, busy = false }: Props) {
         aria-disabled={atEnd || busy}
         aria-busy={busy}
         data-busy={busy || undefined}
-        aria-label={busy ? 'Turning the sheet' : 'Next sheet'}
+        aria-label={busy ? t('turning') : t('next')}
       >
         <Icon name="right" />
       </button>
       <p className="sr-only" aria-live="polite">
-        {busy ? 'Turning the sheet' : `Sheet ${sheet + 1} of ${count}`}
+        {busy ? t('turning') : t('sheetOf', { n: sheet + 1, count })}
       </p>
     </nav>
   )
