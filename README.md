@@ -53,8 +53,8 @@ Its source is in [packages/remark-scanned-page/](packages/remark-scanned-page/),
 
 A letter arrives in an addressed envelope. Open it to release the seal and
 lift the letter out; turn the sheets with the numbered controls or the arrow
-keys. **Text** and **Photo** switch each sheet between the transcription and
-the handwriting, and the close control returns the letter to its envelope.
+keys. **Text** and **Original** switch each sheet between the transcription and
+the photo of the handwriting, and the close control returns the letter to its envelope.
 
 The complete transcription is in the server HTML. Without JavaScript every
 sheet and photograph is visible in order. Reduced motion skips the opening and
@@ -63,6 +63,22 @@ written in another language is marked as such, so a screen reader pronounces
 it as written. Light is the default; a dark choice is remembered per browser.
 
 Opening my own published letter while signed in is not counted as a read.
+
+### Two languages
+
+English is at the root and Portuguese is under `/pt`. Same letter, two
+addresses: `/a-letter` and `/pt/a-letter`. I send each person the link in the
+language they read, so the letter opens in it.
+
+Only the front page guesses. It follows the choice you made last time, then
+your browser. A letter never redirects, on purpose: if I sent you the English
+link, that's the one I meant. The flag in the header switches by hand, on every
+page.
+
+The words are in [`messages/en.json`](messages/en.json) and
+[`messages/pt.json`](messages/pt.json), read with
+[next-intl](https://next-intl.dev). A test fails when the two drift apart. The
+desk stays in English, since I'm the only one who uses it.
 
 ### Paper sounds
 
@@ -96,6 +112,7 @@ and consumes credits only when explicitly run.
 | File storage | Vercel Blob |
 | Transcription | OpenRouter, vision model |
 | Auth | Clerk |
+| Languages | next-intl (English, Portuguese) |
 | OG images | `next/og` |
 | Deploy | Vercel |
 

@@ -8,6 +8,7 @@ import { RetryButton } from '@/components/ui/retry-button'
 
 import { BrandMark } from '@/components/ui/brand-mark'
 
+import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 
 /**
@@ -27,6 +28,7 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations('states.error')
   useEffect(() => {
     // The digest is the server's own reference for this failure. It is safe
     // to show and useless to anyone else, which is exactly the trade a public
@@ -41,23 +43,16 @@ export default function Error({
         <EmptyState
           size="page"
           illustration={<BrandMark size={90} />}
-          eyebrow={<>Something went wrong</>}
-          title={
-            <>
-              The ink <em>smudged.</em>
-            </>
-          }
-          description={
-            <>
-              This is the site failing, not the letter. Nothing changed and
-              nothing was lost. Please try opening the same link again.
-            </>
-          }
+          eyebrow={t('eyebrow')}
+          title={t.rich('title', { em: (chunks) => <em>{chunks}</em> })}
+          description={t('body')}
           action={<RetryButton retry={reset} />}
         />
 
         {error.digest && (
-          <p className="meta state-digest">reference {error.digest}</p>
+          <p className="meta state-digest">
+            {t('reference', { digest: error.digest })}
+          </p>
         )}
       </div>
     </main>

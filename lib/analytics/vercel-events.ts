@@ -13,10 +13,12 @@
  * the front page, from where, on what.
  */
 
+import { localeOfPath, localePath, stripLocale } from '../i18n/locales'
+
 /** The shape of an event, as `@vercel/analytics` hands it to `beforeSend`. */
 type Event = { type: string; url: string }
 
-/** Every letter is reported as this path. */
+/** Every letter is reported as this path, or this one under `/pt`. */
 export const LETTER_PATH = '/letter'
 
 export function scrubEvent<T extends Event>(event: T): T | null {
@@ -28,8 +30,14 @@ export function scrubEvent<T extends Event>(event: T): T | null {
 
   url.search = ''
   url.hash = ''
-  // The front page is the only public route that is not a letter.
-  if (url.pathname !== '/') url.pathname = LETTER_PATH
+  // The front page is the only public route that is not a letter, in either
+  // language: `/` and `/pt`. A letter keeps its language and loses its title.
+  if (stripLocale(url.pathname) !== '/') {
+    url.pathname = localePath(
+      localeOfPath(url.pathname) === 'pt' ? 'pt' : 'en',
+      LETTER_PATH,
+    )
+  }
 
   return { ...event, url: url.toString() }
 }

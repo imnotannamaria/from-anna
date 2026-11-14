@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useEffect, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
 import { MODE_KEY, syncThemeColor } from '@/lib/theme/mode'
@@ -78,6 +79,7 @@ const getServerSnapshot = () => false
 
 /** Light on first visit; an explicit choice persists without gating content. */
 export function ThemeToggle() {
+  const t = useTranslations('theme')
   const dark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const reducedMotion = useReducedMotion()
   useEffect(() => {
@@ -87,7 +89,7 @@ export function ThemeToggle() {
     <button
       type="button"
       className="pill pill--icon theme-toggle"
-      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={dark ? t('toLight') : t('toDark')}
       aria-pressed={dark}
       onClick={() => {
         const mode = requestedMode ?? (getSnapshot() ? 'dark' : 'light')

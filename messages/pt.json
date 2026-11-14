@@ -1,0 +1,244 @@
+{
+  "frame": {
+    "skip": "Pular para o conteúdo"
+  },
+  "theme": {
+    "toLight": "Mudar para o modo claro",
+    "toDark": "Mudar para o modo escuro"
+  },
+  "ui": {
+    "newTab": "(abre em uma nova aba)"
+  },
+  "lang": {
+    "switch": "Idioma: {current}. Trocar para {next}"
+  },
+  "meta": {
+    "site": {
+      "title": "from anna",
+      "description": "Cartas escritas à mão, publicadas na web."
+    },
+    "home": {
+      "title": "from anna · cartas escritas à mão, publicadas",
+      "description": "Cartas escritas à mão, fotografadas e publicadas com uma transcrição acessível. Um projeto pessoal, código aberto sob MIT.",
+      "ogTitle": "from anna",
+      "ogDescription": "Tinta, papel, uma câmera de celular. Cartas escritas à mão, publicadas."
+    },
+    "letter": {
+      "title": "Uma carta",
+      "description": "Uma carta escrita à mão."
+    }
+  },
+  "og": {
+    "siteLine1": "Cartas que escrevo",
+    "siteLine2": "à mão.",
+    "siteLine3": "Uma para cada pessoa.",
+    "letterLine1": "Uma carta",
+    "letterLine2": "escrita à mão,",
+    "letterLine3": "só para você.",
+    "siteAlt": "from anna · cartas que escrevo à mão, uma para cada pessoa",
+    "letterAlt": "from anna · uma carta escrita à mão, só para você",
+    "siteTagline": "Tinta, papel, uma câmera de celular. Código aberto.",
+    "letterTagline": "Um pouco de tinta. Um pouco de papel. Algo para guardar."
+  },
+  "home": {
+    "nav": {
+      "label": "Principal",
+      "sections": "Nesta página",
+      "top": "from anna, topo da página",
+      "letter": "carta",
+      "how": "como funciona",
+      "syntax": "sintaxe",
+      "package": "pacote",
+      "run": "rode o seu"
+    },
+    "hero": {
+      "badge": "código aberto · escrito à mão",
+      "title": "Cartas que escrevo à mão, <em>uma para cada pessoa.</em>",
+      "lede": "Escrevo num caderno e fotografo as páginas. Um modelo lê a minha letra. Eu corrijo o que ele errou, marco o que importa e mando um link.",
+      "run": "Rode o seu",
+      "package": "Ver o pacote"
+    },
+    "demo": {
+      "label": "Um bilhete de demonstração da Anna",
+      "for": "para <em>você</em>, visitante",
+      "meta": "um bilhete de demonstração · uma página",
+      "tag": "demo",
+      "explore": "Explorar a demonstração",
+      "syntax": "A sintaxe",
+      "package": "O pacote",
+      "sign": "Anna",
+      "opening": "Oi :) Você achou o lugar onde as minhas cartas moram. Você não vai ver nenhuma delas aqui, de propósito. :mark[Cada uma tem um link só, e eu mando para uma pessoa só.]{c=important}\n\nA foto é a minha letra. :mark[O texto também funciona com leitor de tela.]{c=note}\n\nTesta os botões ali em cima. Eles funcionam como numa carta de verdade. :mark[Quer mandar cartas assim?]{c=ask} O código tá logo abaixo."
+    },
+    "how": {
+      "title": "Quatro passos, <em>um caderno.</em>",
+      "photo": {
+        "title": "Escreva e fotografe",
+        "body": "Várias páginas, à mão. Uma foto de celular basta, uma para cada folha."
+      },
+      "scan": {
+        "title": "Um modelo lê",
+        "body": "Um modelo de visão transforma a letra em texto. Eu confiro cada palavra com a foto original."
+      },
+      "pen": {
+        "title": "Marque o que ler primeiro",
+        "body": "Corrija a transcrição e marque o que importa em três tipos: importante, nota e pergunta."
+      },
+      "send": {
+        "title": "Publique e fique sabendo",
+        "body": "Mande o link. Eu consigo ver se ele foi aberto e se alguém reagiu, sem guardar o IP de ninguém."
+      }
+    },
+    "syntax": {
+      "title": "Markdown entra, <em>texto marcado sai.</em>",
+      "source": "Fonte · letter.md",
+      "rendered": "Resultado",
+      "sourceLabel": "Fonte em Markdown",
+      "note": "As marcas ficam dentro do markdown, então corrigir uma vírgula não tira elas do lugar. Cada tipo tem uma cor e um sublinhado próprio, então a diferença continua em preto e branco.",
+      "sample": ":::theme{label=\"sobre a mudança\"}\nEmbalei os livros primeiro.\n:mark[Foram a parte mais difícil.]{c=important}\n\n:mark[Fiquei com a caneca azul.]{c=note}\n:mark[Você ainda tem a sua?]{c=ask}\n:::"
+    },
+    "package": {
+      "body": "A metade reutilizável: um plugin remark, um schema de sanitização, uma folha de estilo e um componente React. Serve para diários, sketchbooks, anotações de aula ou cartas. Ele não escolhe as suas tags por você, de propósito.",
+      "npm": "No npm",
+      "source": "Código"
+    },
+    "privacy": {
+      "title": "O que eu conto, <em>e o que não.</em>",
+      "opened": "Abriu, reagiu, de onde veio",
+      "device": "País e tipo de dispositivo",
+      "never": "Sem IPs, contas públicas ou prévias de carta",
+      "body": "A carta fica fora dos buscadores e das imagens de preview de link. Não tem uma lista pública para olhar."
+    },
+    "run": {
+      "title": "Clone. <em>É seu.</em>",
+      "setup": "O que você configura",
+      "db": {
+        "title": "Banco de dados",
+        "body": "Um Postgres para as cartas, as aberturas e as reações"
+      },
+      "photos": {
+        "title": "Armazenamento de fotos",
+        "body": "Um Vercel Blob privado para as páginas"
+      },
+      "model": {
+        "title": "Chave do modelo",
+        "body": "OpenRouter, para ler a letra"
+      },
+      "auth": {
+        "title": "Autenticação",
+        "body": "Chaves do Clerk e uma lista explícita de autores"
+      },
+      "note": "Antes de transcrever, restrinja o roteamento do modelo a provedores que não treinam com os seus dados. A configuração e as variáveis de ambiente estão no <readme>README</readme>.",
+      "personal": "Aqui não tem cadastro. <em>Esse aqui é só meu.</em> O código é livre para clonar.",
+      "cta": "Pegar o código"
+    },
+    "foot": {
+      "top": "from anna, voltar ao topo",
+      "line": "escrito à mão, lido numa tela",
+      "nav": "Rodapé",
+      "links": "Links do projeto",
+      "source": "Código",
+      "package": "Pacote"
+    }
+  },
+  "letter": {
+    "envelope": {
+      "to": "para",
+      "byHand": "à mão",
+      "for": "para {name}",
+      "anyone": "você",
+      "stampTop": "À",
+      "stampBottom": "MÃO"
+    },
+    "stage": {
+      "label": "Abertura",
+      "heading": "Uma carta para {recipient}, da Anna",
+      "headingDated": "Uma carta para {recipient}, da Anna, {date}",
+      "open": "Abrir a carta",
+      "opening": "Abrindo a sua carta…",
+      "announce": "Abrindo a carta",
+      "caption": "{count, plural, one {Uma folha} other {# folhas}} · escrita à mão",
+      "captionDated": "{count, plural, one {Uma folha} other {# folhas}} · escrita à mão · {date}"
+    },
+    "bar": {
+      "for": "para <em>{recipient}</em>",
+      "meta": "da Anna · {count, plural, one {# folha} other {# folhas}}",
+      "metaDated": "da Anna · {date} · {count, plural, one {# folha} other {# folhas}}"
+    },
+    "banner": {
+      "previewLabel": "Prévia",
+      "preview": "Ainda não publicada. Nada aqui é contado.",
+      "authorLabel": "Publicada",
+      "author": "Essa carta é sua, então essa visita não conta."
+    },
+    "close": "Fechar a carta",
+    "closing": "Fechando a carta",
+    "dock": {
+      "label": "Ver a carta",
+      "text": "Texto",
+      "photo": "Original"
+    },
+    "deck": {
+      "nav": "Folhas",
+      "previous": "Folha anterior",
+      "next": "Próxima folha",
+      "turning": "Virando a folha",
+      "choose": "Escolher uma folha",
+      "sheetOf": "Folha {n} de {count}"
+    },
+    "legend": {
+      "group": "Mostrar destaques",
+      "all": "Todos",
+      "important": "importante",
+      "note": "nota",
+      "ask": "pergunta"
+    },
+    "sound": {
+      "label": "Sons de papel",
+      "on": "Som ligado",
+      "off": "Som desligado"
+    },
+    "photo": {
+      "loading": "Carregando a fotografia…",
+      "failed": "A fotografia não carregou.",
+      "retry": "Tentar de novo"
+    },
+    "reactions": {
+      "label": "Reações a esta carta",
+      "add": "Adicionar uma reação",
+      "choose": "Escolher uma reação",
+      "react": "Reagir",
+      "hint": "Quem lê reage aqui",
+      "reacted": "Você reagiu: {reaction}",
+      "removed": "Reação removida: {reaction}",
+      "failed": "Essa reação não salvou. Tenta de novo?",
+      "count": "{label}: {count}",
+      "names": {
+        "heart": "Amei",
+        "touched": "Emocionou",
+        "laugh": "Me fez rir",
+        "clap": "Palmas",
+        "sparkles": "Encantou",
+        "thanks": "Gratidão"
+      }
+    },
+    "footer": {
+      "line": "escrito à mão"
+    }
+  },
+  "states": {
+    "notFound": {
+      "eyebrow": "404 · nada escrito aqui",
+      "title": "Esta página está <em>em branco.</em>",
+      "body": "Ou o link está errado, ou a carta que ele abria não está mais sendo compartilhada. Cada carta aqui é para uma pessoa só, então não tem lista para procurar. Se alguém te mandou uma, o link que você recebeu é o único caminho.",
+      "action": "O que é isto"
+    },
+    "error": {
+      "eyebrow": "Algo deu errado",
+      "title": "A tinta <em>borrou.</em>",
+      "body": "Quem falhou foi o site, não a carta. Nada mudou e nada se perdeu. Tenta abrir o mesmo link de novo.",
+      "reference": "referência {digest}",
+      "retry": "Tentar de novo",
+      "retrying": "Tentando de novo…"
+    }
+  }
+}

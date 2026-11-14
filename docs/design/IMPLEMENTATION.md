@@ -289,3 +289,34 @@ The reply to a letter is a reaction. Replaces the coda and the end-of-letter mea
 - [x] The colour mode changes with no animation on a touch screen.
 - [ ] Confirmed on the browser where it was reported (Arc on iOS). It could not be reproduced in Safari on the iOS 26.3 simulator, so the cause is inferred and both ends of it are closed.
 
+## Phase 13 — Two languages
+
+English at the root, Portuguese under `/pt`. See *Two languages* in `DECISIONS.md`.
+
+**Done when**
+
+- [x] Every page of the site is under `app/[locale]`; `/en/…` redirects to the address without it, and `/pt/…` is served.
+- [x] The front page and a letter exist in both languages: `/`, `/pt`, `/a-letter`, `/pt/a-letter`.
+- [x] The front page follows a saved choice, then the browser; a letter never does.
+- [x] A flag on every page switches to the same page in the other language, and remembers the choice for the front page.
+- [x] Every word a reader sees is in `messages/en.json` or `messages/pt.json`, and a test fails when they drift.
+- [x] `<html lang>`, the title, `hreflang` and the preview card follow the address; the letter's month and postmark are written in the language.
+- [x] The 404 reads the same in both languages and for the desk; the desk is English.
+- [x] The reading cookie is still handed out only to a letter: not on `/` and not on `/pt`.
+- [x] `en` and `pt` cannot be a letter's slug.
+- [ ] The Portuguese read through by a native reader, on a phone.
+- [ ] A screen-reader pass on `/pt` and on a Portuguese letter.
+
+**Checks**
+
+- **Privacy** — the language cookie is a preference read only to decide where `/` goes; it carries nothing about the reader.
+- **SEO** — each language has its own canonical and `hreflang`; letters stay `noindex` in both.
+- **Accessibility** — `lang` on `<html>` and on the language link; the letter's own `lang` is still guessed from its words.
+- **Bugs** — a preview image advertised under `/en/…` is served there, not redirected, for a scraper that will not follow one.
+
+## Phase 14 — The original, in plain sight
+
+- [x] The photo button reads "Original", at every width.
+- [x] Opening the letter and the photo button share a sheen; the photo's stops once the photograph has been seen; neither moves with reduced motion.
+- [ ] Watched on a real phone, with a letter of three sheets.
+

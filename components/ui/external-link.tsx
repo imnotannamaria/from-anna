@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl'
+
 type Props = {
   href: string
   className?: string
@@ -23,10 +25,11 @@ type Props = {
  * way of finding out it happened.
  */
 export function ExternalLink({ href, className, children }: Props) {
+  const t = useTranslations('ui')
   return (
     <a href={href} className={className} target="_blank" rel="noopener">
       {children}
-      <span className="sr-only"> (opens in a new tab)</span>
+      <span className="sr-only"> {t('newTab')}</span>
     </a>
   )
 }

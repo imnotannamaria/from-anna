@@ -1,0 +1,244 @@
+{
+  "frame": {
+    "skip": "Skip to content"
+  },
+  "theme": {
+    "toLight": "Switch to light mode",
+    "toDark": "Switch to dark mode"
+  },
+  "ui": {
+    "newTab": "(opens in a new tab)"
+  },
+  "lang": {
+    "switch": "Language: {current}. Switch to {next}"
+  },
+  "meta": {
+    "site": {
+      "title": "from anna",
+      "description": "Handwritten letters, published on the web."
+    },
+    "home": {
+      "title": "from anna · handwritten letters, published",
+      "description": "Handwritten letters, photographed and published with an accessible transcription. A personal project, open source under MIT.",
+      "ogTitle": "from anna",
+      "ogDescription": "Ink, paper, a phone camera. Handwritten letters, published."
+    },
+    "letter": {
+      "title": "A letter",
+      "description": "A handwritten letter."
+    }
+  },
+  "og": {
+    "siteLine1": "Letters I write",
+    "siteLine2": "by hand.",
+    "siteLine3": "For one person each.",
+    "letterLine1": "A handwritten",
+    "letterLine2": "letter,",
+    "letterLine3": "just for you.",
+    "siteAlt": "from anna · letters I write by hand, for one person each",
+    "letterAlt": "from anna · a handwritten letter, just for you",
+    "siteTagline": "Ink, paper, a phone camera. Open source.",
+    "letterTagline": "A little ink. A little paper. Something to keep."
+  },
+  "home": {
+    "nav": {
+      "label": "Main",
+      "sections": "On this page",
+      "top": "from anna, top of the page",
+      "letter": "letter",
+      "how": "how it works",
+      "syntax": "syntax",
+      "package": "package",
+      "run": "run your own"
+    },
+    "hero": {
+      "badge": "open source · handwritten",
+      "title": "Letters I write by hand, <em>for one person each.</em>",
+      "lede": "I write in a notebook and photograph the pages. A model reads my handwriting. I fix what it got wrong, mark what matters and send one link.",
+      "run": "Run your own",
+      "package": "See the package"
+    },
+    "demo": {
+      "label": "A demonstration note from Anna",
+      "for": "for <em>you</em>, visitor",
+      "meta": "a demo note · one page",
+      "tag": "demo",
+      "explore": "Explore the demonstration",
+      "syntax": "The syntax",
+      "package": "The package",
+      "sign": "Anna",
+      "opening": "Hi :) You found the place where my letters live. You won't see any of them here, on purpose. :mark[Each one has a single link, and I send it to a single person.]{c=important}\n\nThe photo is my handwriting. :mark[The text is there for screen readers too.]{c=note}\n\nTry the chips above. They work like in a real letter. :mark[Want to send letters like this?]{c=ask} The code is below."
+    },
+    "how": {
+      "title": "Four steps, <em>one notebook.</em>",
+      "photo": {
+        "title": "Write and photograph",
+        "body": "Several pages, by hand. A phone photo is enough, one for each sheet."
+      },
+      "scan": {
+        "title": "A model reads it",
+        "body": "A vision model turns the handwriting into text. I check the words against the original photograph."
+      },
+      "pen": {
+        "title": "Mark what to read first",
+        "body": "Fix the transcription, then highlight what matters in three kinds: important, note and question."
+      },
+      "send": {
+        "title": "Publish, then know",
+        "body": "Send the link. I can see if it was opened and answered with a reaction, without storing anyone’s IP."
+      }
+    },
+    "syntax": {
+      "title": "Markdown in, <em>marked text out.</em>",
+      "source": "Source · letter.md",
+      "rendered": "Rendered",
+      "sourceLabel": "Markdown source",
+      "note": "The marks live in the markdown, so fixing a comma can't move them away from the words. Every kind has a color and its own underline, so the difference survives in black and white too.",
+      "sample": ":::theme{label=\"about the move\"}\nI packed the books first.\n:mark[They were the hardest part.]{c=important}\n\n:mark[I kept the blue mug.]{c=note}\n:mark[Do you still have yours?]{c=ask}\n:::"
+    },
+    "package": {
+      "body": "The reusable half: a remark plugin, a sanitize schema, a stylesheet and a React component. For journals, sketchbooks, class notes or letters. It doesn't choose your tags for you, on purpose.",
+      "npm": "On npm",
+      "source": "Source"
+    },
+    "privacy": {
+      "title": "What I count, <em>and what I don’t.</em>",
+      "opened": "Opened, reacted to, where it came from",
+      "device": "Country and device type",
+      "never": "No IPs, public accounts or letter previews",
+      "body": "The letter stays out of search engines and link-preview images. There is no public list to browse."
+    },
+    "run": {
+      "title": "Clone it. <em>It’s yours.</em>",
+      "setup": "What you configure",
+      "db": {
+        "title": "Database",
+        "body": "A Postgres database for letters, opens and reactions"
+      },
+      "photos": {
+        "title": "Photo storage",
+        "body": "A private Vercel Blob store for the pages"
+      },
+      "model": {
+        "title": "Model key",
+        "body": "OpenRouter, for reading the handwriting"
+      },
+      "auth": {
+        "title": "Auth",
+        "body": "Clerk keys and an explicit author allowlist"
+      },
+      "note": "Before transcribing, restrict model routing to providers that don't train on your data. Setup and environment variables are in the <readme>README</readme>.",
+      "personal": "There is no sign up here. <em>This one is mine.</em> The code is free to clone.",
+      "cta": "Get the code"
+    },
+    "foot": {
+      "top": "from anna, back to top",
+      "line": "written by hand, read on a screen",
+      "nav": "Footer",
+      "links": "Project links",
+      "source": "Source",
+      "package": "Package"
+    }
+  },
+  "letter": {
+    "envelope": {
+      "to": "to",
+      "byHand": "by hand",
+      "for": "for {name}",
+      "anyone": "you",
+      "stampTop": "BY",
+      "stampBottom": "HAND"
+    },
+    "stage": {
+      "label": "Opening",
+      "heading": "A letter for {recipient}, from Anna",
+      "headingDated": "A letter for {recipient}, from Anna, {date}",
+      "open": "Open the letter",
+      "opening": "Opening your letter…",
+      "announce": "Opening the letter",
+      "caption": "{count, plural, one {One sheet} other {# sheets}} · written by hand",
+      "captionDated": "{count, plural, one {One sheet} other {# sheets}} · written by hand · {date}"
+    },
+    "bar": {
+      "for": "for <em>{recipient}</em>",
+      "meta": "from Anna · {count, plural, one {# sheet} other {# sheets}}",
+      "metaDated": "from Anna · {date} · {count, plural, one {# sheet} other {# sheets}}"
+    },
+    "banner": {
+      "previewLabel": "Preview",
+      "preview": "Not published yet. Nothing here is counted.",
+      "authorLabel": "Published",
+      "author": "This is your own letter, so this visit doesn't count."
+    },
+    "close": "Close the letter",
+    "closing": "Closing the letter",
+    "dock": {
+      "label": "View the letter",
+      "text": "Text",
+      "photo": "Original"
+    },
+    "deck": {
+      "nav": "Sheets",
+      "previous": "Previous sheet",
+      "next": "Next sheet",
+      "turning": "Turning the sheet",
+      "choose": "Choose a sheet",
+      "sheetOf": "Sheet {n} of {count}"
+    },
+    "legend": {
+      "group": "Show highlights",
+      "all": "All",
+      "important": "important",
+      "note": "note",
+      "ask": "question"
+    },
+    "sound": {
+      "label": "Paper sounds",
+      "on": "Sound on",
+      "off": "Sound off"
+    },
+    "photo": {
+      "loading": "Loading the photograph…",
+      "failed": "The photograph didn’t load.",
+      "retry": "Try again"
+    },
+    "reactions": {
+      "label": "Reactions to this letter",
+      "add": "Add a reaction",
+      "choose": "Choose a reaction",
+      "react": "React",
+      "hint": "Readers react here",
+      "reacted": "Reacted: {reaction}",
+      "removed": "Removed: {reaction}",
+      "failed": "That reaction didn't save. Try again?",
+      "count": "{label}: {count}",
+      "names": {
+        "heart": "Love",
+        "touched": "Touched",
+        "laugh": "Made me laugh",
+        "clap": "Bravo",
+        "sparkles": "Lovely",
+        "thanks": "Thank you"
+      }
+    },
+    "footer": {
+      "line": "written by hand"
+    }
+  },
+  "states": {
+    "notFound": {
+      "eyebrow": "404 · nothing written here",
+      "title": "This page is <em>blank.</em>",
+      "body": "Either the link is wrong, or the letter it pointed to isn’t being shared anymore. Every letter here is for one person, so there’s no list to look through. If one was sent to you, the link you got is the only way in.",
+      "action": "What this is"
+    },
+    "error": {
+      "eyebrow": "Something went wrong",
+      "title": "The ink <em>smudged.</em>",
+      "body": "This is the site failing, not the letter. Nothing changed and nothing was lost. Try opening the same link again.",
+      "reference": "reference {digest}",
+      "retry": "Try again",
+      "retrying": "Trying again…"
+    }
+  }
+}

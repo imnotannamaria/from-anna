@@ -2,6 +2,7 @@
 
 import { Skeleton } from '@/app/components/entrepta/skeleton'
 
+import { useTranslations } from 'next-intl'
 import { useEffect, useRef } from 'react'
 
 type Props = {
@@ -29,6 +30,7 @@ type Props = {
  * a script to go away would be the kind of wall this project does not build.
  */
 export function PhotoFrame({ children, className, warm = false }: Props) {
+  const t = useTranslations('letter.photo')
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -99,12 +101,12 @@ export function PhotoFrame({ children, className, warm = false }: Props) {
           reader gets. */}
       <div className="photo-frame-status" data-for="loading" aria-hidden="true">
         <Skeleton className="photo-loading-skeleton" />
-        <span className="meta">Loading the photograph…</span>
+        <span className="meta">{t('loading')}</span>
       </div>
       <div className="photo-frame-status" data-for="failed">
-        <p>The photograph didn’t load.</p>
+        <p>{t('failed')}</p>
         <button type="button" className="pill" onClick={retry}>
-          Try again
+          {t('retry')}
         </button>
       </div>
     </div>

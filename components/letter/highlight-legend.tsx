@@ -1,6 +1,9 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { Icon } from '@/components/ui/icon'
+import type { HighlightTag } from '@/lib/theme/highlight-tags'
 
 type Props = {
   tags: readonly string[]
@@ -8,15 +11,16 @@ type Props = {
   onFilter: (tag: string | null) => void
 }
 export function HighlightLegend({ tags, filter, onFilter }: Props) {
+  const t = useTranslations('letter.legend')
   return (
-    <div className="legend" role="group" aria-label="Show highlights">
+    <div className="legend" role="group" aria-label={t('group')}>
       <button
         type="button"
         className="pill chip"
         aria-pressed={filter === null}
         onClick={() => onFilter(null)}
       >
-        All
+        {t('all')}
       </button>
       {tags.map((tag) => (
         <button
@@ -30,7 +34,7 @@ export function HighlightLegend({ tags, filter, onFilter }: Props) {
           <Icon
             name={tag === 'important' ? 'star' : tag === 'ask' ? 'ask' : 'pen'}
           />
-          {tag === 'ask' ? 'question' : tag}
+          {t(tag as HighlightTag)}
         </button>
       ))}
     </div>

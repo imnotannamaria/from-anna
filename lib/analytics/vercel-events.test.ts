@@ -31,6 +31,20 @@ describe('scrubEvent', () => {
     )
   })
 
+  it('keeps the Portuguese front page, and does not report it as a letter', () => {
+    expect(scrubEvent(view('https://from-anna.vercel.app/pt?utm_source=x'))).toEqual(
+      view('https://from-anna.vercel.app/pt'),
+    )
+  })
+
+  it('reports a Portuguese letter as one, without its title', () => {
+    expect(
+      scrubEvent(
+        view('https://from-anna.vercel.app/pt/carta-pro-joao-2026-09-10?from=joao'),
+      )?.url,
+    ).toBe('https://from-anna.vercel.app/pt/letter')
+  })
+
   it('does not mistake a slug that starts with "admin" for the desk', () => {
     expect(
       scrubEvent(view('https://from-anna.vercel.app/administrative-note'))?.url,

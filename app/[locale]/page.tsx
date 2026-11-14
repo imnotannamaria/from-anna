@@ -1,66 +1,62 @@
-import { BrandMark } from '@/components/ui/brand-mark'
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { ScannedTranscription } from 'remark-scanned-page'
 
 import { HomeLetter } from '@/components/home/home-letter'
 import { HomeNavigation } from '@/components/home/home-navigation'
+import { BrandMark } from '@/components/ui/brand-mark'
 import { ExternalLink } from '@/components/ui/external-link'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { Reveal } from '@/components/ui/reveal'
 import { SegmentTrack } from '@/components/ui/segment-track'
+import { HTML_LANG, isLocale, localePath } from '@/lib/i18n/locales'
+import { pageLocale, type LocaleParams } from '@/lib/i18n/page'
 import { HIGHLIGHT_TAGS } from '@/lib/theme/highlight-tags'
 
 const REPO = 'https://github.com/imnotannamaria/from-anna'
 const PACKAGE = 'https://www.npmjs.com/package/remark-scanned-page'
-export const metadata: Metadata = {
-  title: 'from anna · handwritten letters, published',
-  description:
-    'Handwritten letters, photographed and published with an accessible transcription. A personal project, open source under MIT.',
-  openGraph: {
-    title: 'from anna',
-    description: 'Ink, paper, a phone camera. Handwritten letters, published.',
-  },
+
+/**
+ * The front page in the language of its address, and a pointer to the other
+ * one: `hreflang` is how a crawler that sends no language finds Portuguese.
+ */
+export async function generateMetadata({
+  params,
+}: LocaleParams): Promise<Metadata> {
+  const { locale: raw } = await params
+  const locale = isLocale(raw) ? raw : 'en'
+  const t = await getTranslations({ locale, namespace: 'meta.home' })
+  return {
+    title: { absolute: t('title') },
+    description: t('description'),
+    openGraph: {
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+      locale: locale === 'pt' ? 'pt_BR' : 'en_US',
+    },
+    alternates: {
+      canonical: localePath(locale, '/'),
+      languages: {
+        [HTML_LANG.en]: localePath('en', '/'),
+        [HTML_LANG.pt]: localePath('pt', '/'),
+        'x-default': localePath('en', '/'),
+      },
+    },
+  }
 }
-const OPENING = `Hi. You found the place where my letters live. You will not see any of them here. :mark[Each one has a single link, and I send it to a single person.]{c=important}
 
-The photo is my handwriting. :mark[The text is available to screen readers too.]{c=note}
-
-Try the chips above. They work like in a real letter. :mark[Want to send letters like this?]{c=ask} The code is below.`
-const DEMO = `:::theme{label="about the move"}
-I packed the books first.
-:mark[They were the hardest part.]{c=important}
-
-:mark[I kept the blue mug.]{c=note}
-:mark[Do you still have yours?]{c=ask}
-:::`
-const STEPS: { icon: IconName; tone: string; title: string; body: string }[] = [
-  {
-    icon: 'photo',
-    tone: 'brand',
-    title: 'Write and photograph',
-    body: 'Several pages, by hand. A phone photo is enough. Upload one photograph for each sheet.',
-  },
-  {
-    icon: 'scan',
-    tone: 'ask',
-    title: 'A model reads it',
-    body: 'A vision model turns the handwriting into text. I check the words against the original photograph.',
-  },
-  {
-    icon: 'pen',
-    tone: 'note',
-    title: 'Mark what to read first',
-    body: 'Correct the transcription, then add highlights in three kinds: important, note and question.',
-  },
-  {
-    icon: 'send',
-    tone: 'good',
-    title: 'Publish, then know',
-    body: 'Send the link. I can see if it was opened and answered with a reaction, without storing anyone’s IP.',
-  },
+const STEPS: { key: 'photo' | 'scan' | 'pen' | 'send'; icon: IconName; tone: string }[] = [
+  { key: 'photo', icon: 'photo', tone: 'brand' },
+  { key: 'scan', icon: 'scan', tone: 'ask' },
+  { key: 'pen', icon: 'pen', tone: 'note' },
+  { key: 'send', icon: 'send', tone: 'good' },
 ]
 
-export default function Home() {
+export default async function Home({ params }: LocaleParams) {
+  const locale = await pageLocale(params)
+  const t = await getTranslations({ locale, namespace: 'home' })
+  const em = (chunks: React.ReactNode) => <em>{chunks}</em>
+
   return (
     <main className="home" id="main-content">
       <HomeNavigation />
@@ -68,35 +64,33 @@ export default function Home() {
         <Reveal className="home-intro">
           <p className="home-badge">
             <Icon name="pen" />
-            open source · handwritten
+            {t('hero.badge')}
           </p>
           <h1 className="display home-title">
-            Letters I write by hand, <em>for one person each.</em>
+            {t.rich('hero.title', { em })}
           </h1>
           <p className="home-lede">
-            I write in a notebook and photograph the pages. A model reads my
-            handwriting. I fix what it got wrong, mark what matters and send one
-            link.
+            {t('hero.lede')}
           </p>
           <div className="home-actions">
             <a className="pill pill--solid" href="#run">
               <Icon name="code" />
-              Run your own
+              {t('hero.run')}
             </a>
             <a className="pill" href="#package">
               <Icon name="package" />
-              See the package
+              {t('hero.package')}
             </a>
           </div>
         </Reveal>
         <Reveal>
           <HomeLetter>
             <ScannedTranscription
-              markdown={OPENING}
+              markdown={t.raw('demo.opening')}
               className="letter-prose"
               knownTags={HIGHLIGHT_TAGS}
             />
-            <p className="home-sign">Anna</p>
+            <p className="home-sign">{t('demo.sign')}</p>
           </HomeLetter>
         </Reveal>
       </section>
@@ -104,11 +98,11 @@ export default function Home() {
       <Reveal className="home-section">
         <section id="how" aria-labelledby="how-title">
           <h2 className="display home-h2" id="how-title">
-            Four steps, <em>one notebook.</em>
+            {t.rich('how.title', { em })}
           </h2>
           <ol className="home-steps">
             {STEPS.map((step, index) => (
-              <li className="surface" key={step.title}>
+              <li className="surface" key={step.key}>
                 <div className="home-step-top">
                   <span className="icon-tile" data-tone={step.tone}>
                     <Icon name={step.icon} />
@@ -117,8 +111,8 @@ export default function Home() {
                     0{index + 1}
                   </span>
                 </div>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
+                <h3>{t(`how.${step.key}.title`)}</h3>
+                <p>{t(`how.${step.key}.body`)}</p>
               </li>
             ))}
           </ol>
@@ -128,20 +122,20 @@ export default function Home() {
       <Reveal className="home-section">
         <section id="syntax" aria-labelledby="syntax-title">
           <h2 className="display home-h2" id="syntax-title">
-            Markdown in, <em>marked text out.</em>
+            {t.rich('syntax.title', { em })}
           </h2>
           <div className="home-demo">
             <div>
-              <p className="meta code-caption">Source · letter.md</p>
-              <pre className="home-code" aria-label="Markdown source">
-                <code>{DEMO}</code>
+              <p className="meta code-caption">{t('syntax.source')}</p>
+              <pre className="home-code" aria-label={t('syntax.sourceLabel')}>
+                <code>{t.raw('syntax.sample')}</code>
               </pre>
             </div>
             <div>
-              <p className="meta code-caption">Rendered</p>
+              <p className="meta code-caption">{t('syntax.rendered')}</p>
               <div className="home-render" data-revealed="true">
                 <ScannedTranscription
-                  markdown={DEMO}
+                  markdown={t.raw('syntax.sample')}
                   className="letter-prose"
                   knownTags={HIGHLIGHT_TAGS}
                 />
@@ -149,9 +143,7 @@ export default function Home() {
             </div>
           </div>
           <p className="home-body home-body--quiet">
-            The marks live in the markdown, so fixing a comma cannot shift them
-            away from the words. Every kind has a color and its own underline
-            style. The distinction survives in black and white, too.
+            {t('syntax.note')}
           </p>
         </section>
       </Reveal>
@@ -169,23 +161,21 @@ export default function Home() {
             remark-scanned-page
           </h2>
           <p className="home-body">
-            The reusable half: a remark plugin, a sanitize schema, a stylesheet
-            and a React component. For journals, sketchbooks, class notes or
-            letters. It does not choose your tags for you.
+            {t('package.body')}
           </p>
           <pre className="home-code">
             <code>npm install remark-scanned-page</code>
           </pre>
           <div className="home-actions">
             <ExternalLink href={PACKAGE} className="pill pill--solid">
-              On npm
+              {t('package.npm')}
               <Icon name="external" />
             </ExternalLink>
             <ExternalLink
               href={`${REPO}/tree/main/packages/remark-scanned-page`}
               className="pill"
             >
-              Source
+              {t('package.source')}
             </ExternalLink>
           </div>
         </section>
@@ -197,25 +187,24 @@ export default function Home() {
             <Icon name="check" />
           </span>
           <h2 className="display home-h2" id="privacy-title">
-            What I count, <em>and what I don’t.</em>
+            {t.rich('privacy.title', { em })}
           </h2>
           <ul className="privacy-list">
             <li>
               <Icon name="check" />
-              Opened, reacted to, where it came from
+              {t('privacy.opened')}
             </li>
             <li>
               <Icon name="check" />
-              Country and device type
+              {t('privacy.device')}
             </li>
             <li>
               <Icon name="check" />
-              No IPs, public accounts or letter previews
+              {t('privacy.never')}
             </li>
           </ul>
           <p className="home-body">
-            The letter stays out of search engines and link-preview images.
-            There is no public list to browse.
+            {t('privacy.body')}
           </p>
         </section>
       </Reveal>
@@ -223,7 +212,7 @@ export default function Home() {
       <Reveal className="home-section">
         <section id="run" aria-labelledby="run-title">
           <h2 className="display home-h2" id="run-title">
-            Clone it. <em>It’s yours.</em>
+            {t.rich('run.title', { em })}
           </h2>
           <div className="home-demo home-demo--run">
             <pre className="home-code">
@@ -235,53 +224,54 @@ npm run db:migrate
 npm run dev`}</code>
             </pre>
             <div className="home-setup">
-              <h3>What you configure</h3>
+              <h3>{t('run.setup')}</h3>
               <ul>
                 <li>
                   <Icon name="code" />
                   <div>
-                    Database
-                    <span>A Postgres database for letters and read events</span>
+                    {t('run.db.title')}
+                    <span>{t('run.db.body')}</span>
                   </div>
                 </li>
                 <li>
                   <Icon name="photo" />
                   <div>
-                    Photo storage
-                    <span>A private Vercel Blob store for the pages</span>
+                    {t('run.photos.title')}
+                    <span>{t('run.photos.body')}</span>
                   </div>
                 </li>
                 <li>
                   <Icon name="scan" />
                   <div>
-                    Model key
-                    <span>OpenRouter, for reading the handwriting</span>
+                    {t('run.model.title')}
+                    <span>{t('run.model.body')}</span>
                   </div>
                 </li>
                 <li>
                   <Icon name="pen" />
                   <div>
-                    Auth<span>Clerk keys and an explicit author allowlist</span>
+                    {t('run.auth.title')}
+                    <span>{t('run.auth.body')}</span>
                   </div>
                 </li>
               </ul>
             </div>
           </div>
           <p className="home-body home-body--quiet">
-            Before transcribing, restrict model routing to providers that do not
-            train on your data. Setup and environment variables are in the{' '}
-            <ExternalLink href={`${REPO}/blob/main/README.md`}>
-              README
-            </ExternalLink>
-            .
+            {t.rich('run.note', {
+              readme: (chunks) => (
+                <ExternalLink href={`${REPO}/blob/main/README.md`}>
+                  {chunks}
+                </ExternalLink>
+              ),
+            })}
           </p>
           <div className="home-personal-note surface">
             <p>
-              There is no sign up here. <em>This one is mine.</em> The code is
-              free to clone.
+              {t.rich('run.personal', { em })}
             </p>
             <ExternalLink href={REPO} className="pill pill--solid">
-              Get the code
+              {t('run.cta')}
               <Icon name="external" />
             </ExternalLink>
           </div>
@@ -292,15 +282,15 @@ npm run dev`}</code>
         <a
           href="#top"
           className="wordmark wordmark--mark"
-          aria-label="from anna, back to top"
+          aria-label={t('foot.top')}
         >
           <BrandMark size={40} />
         </a>
-        <p className="meta">written by hand, read on a screen</p>
-        <nav className="island" aria-label="Footer">
-          <SegmentTrack label="Project links">
-            <ExternalLink href={REPO}>Source</ExternalLink>
-            <ExternalLink href={PACKAGE}>Package</ExternalLink>
+        <p className="meta">{t('foot.line')}</p>
+        <nav className="island" aria-label={t('foot.nav')}>
+          <SegmentTrack label={t('foot.links')}>
+            <ExternalLink href={REPO}>{t('foot.source')}</ExternalLink>
+            <ExternalLink href={PACKAGE}>{t('foot.package')}</ExternalLink>
             <ExternalLink href={`${REPO}/blob/main/LICENSE`}>MIT</ExternalLink>
             <ExternalLink href="https://annamaria.app">annamaria.app</ExternalLink>
           </SegmentTrack>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 
 import { Icon } from '@/components/ui/icon'
@@ -42,6 +43,7 @@ export function Reactions({
   readOnly,
   enhanced,
 }: Props) {
+  const t = useTranslations('letter.reactions')
   const [counts, setCounts] = useState(initial)
   const [mine, setMine] = useState(initialMine)
   const [open, setOpen] = useState(false)
@@ -102,7 +104,7 @@ export function Reactions({
     setFailed(false)
 
     const on = !picks.current.has(reaction)
-    const label = REACTIONS.find((item) => item.id === reaction)?.label
+    const label = t(`names.${reaction}`)
     const before = counts[reaction]
 
     const next = new Set(picks.current)
@@ -114,7 +116,9 @@ export function Reactions({
       [reaction]: Math.max(0, now[reaction] + (on ? 1 : -1)),
     }))
     if (on) setFlights((now) => ({ ...now, [reaction]: (now[reaction] ?? 0) + 1 }))
-    setAnnouncement(on ? `Reacted: ${label}` : `Removed: ${label}`)
+    setAnnouncement(
+      on ? t('reacted', { reaction: label }) : t('removed', { reaction: label }),
+    )
 
     void (async () => {
       try {
@@ -138,7 +142,7 @@ export function Reactions({
         choose(undone)
         setCounts((now) => ({ ...now, [reaction]: before }))
         setFailed(true)
-        setAnnouncement('That reaction could not be saved. Try again.')
+        setAnnouncement(t('failed'))
       } finally {
         pending.current.delete(reaction)
       }
@@ -146,11 +150,12 @@ export function Reactions({
   }
 
   return (
-    <section className="reactions" aria-label="Reactions to this letter">
+    <section className="reactions" aria-label={t('label')}>
       <div className="reactions-inner" ref={wrapRef}>
         {shown.length > 0 && (
           <ul className="reactions-list">
-            {shown.map(({ id, emoji, label }) => {
+            {shown.map(({ id, emoji }) => {
+              const label = t(`names.${id}`)
               const active = mine.includes(id)
               return (
                 <li key={id}>
@@ -163,7 +168,7 @@ export function Reactions({
                         {counts[id]}
                       </span>
                       <span className="sr-only">
-                        {label}: {counts[id]}
+                        {t('count', { label, count: counts[id] })}
                       </span>
                     </span>
                   ) : (
@@ -171,7 +176,7 @@ export function Reactions({
                       type="button"
                       className="reaction"
                       aria-pressed={active}
-                      aria-label={`${label}: ${counts[id]}`}
+                      aria-label={t('count', { label, count: counts[id] })}
                       onClick={() => toggle(id)}
                     >
                       <span className="reaction-emoji" aria-hidden="true">
@@ -202,7 +207,7 @@ export function Reactions({
           // a reader will is still shown, so the page is the one a reader gets.
           <span className="reaction reaction--add" data-static="true">
             <Icon name="react" />
-            <span>Readers react here</span>
+            <span>{t('hint')}</span>
           </span>
         )}
 
@@ -212,13 +217,13 @@ export function Reactions({
             type="button"
             className="reaction reaction--add"
             data-bare={shown.length > 0 || undefined}
-            aria-label="Add a reaction"
+            aria-label={t('add')}
             aria-expanded={open}
             aria-controls="reaction-picker"
             onClick={() => setOpen((now) => !now)}
           >
             <Icon name="react" />
-            {shown.length === 0 && <span>React</span>}
+            {shown.length === 0 && <span>{t('react')}</span>}
           </button>
         )}
 
@@ -228,16 +233,16 @@ export function Reactions({
             ref={pickerRef}
             className="reaction-picker"
             role="group"
-            aria-label="Choose a reaction"
+            aria-label={t('choose')}
           >
-            {REACTIONS.map(({ id, emoji, label }) => (
+            {REACTIONS.map(({ id, emoji }) => (
               <button
                 key={id}
                 type="button"
                 className="reaction-choice"
                 aria-pressed={mine.includes(id)}
-                aria-label={label}
-                title={label}
+                aria-label={t(`names.${id}`)}
+                title={t(`names.${id}`)}
                 onClick={() => {
                   toggle(id)
                   setOpen(false)

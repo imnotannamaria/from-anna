@@ -134,6 +134,11 @@
   justify-content: space-between;
   width: 100%;
 }
+.envelope-stationery-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .envelope-opener {
   display: grid;
   justify-items: center;
@@ -150,7 +155,54 @@
   cursor: pointer;
 }
 .envelope-open {
+  position: relative;
+  overflow: hidden;
   padding-inline: 22px;
+}
+/*
+  The two buttons a reader should not miss, opening the letter and seeing the
+  original, share one cue: a band of light that crosses them now and then.
+  It is a transform on a layer of their own, so it never repaints the label,
+  never touches its contrast, and stops for reduced motion.
+*/
+.envelope-open::after,
+.reader:not([data-seen-photo]) .dock-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    var(--sheen, rgb(255 255 255 / 0.42)) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: sheen 4.2s cubic-bezier(0.45, 0, 0.25, 1) 1.4s infinite;
+}
+.envelope-open[data-busy]::after {
+  animation: none;
+  transform: translateX(-120%);
+}
+.reader:not([data-seen-photo]) .dock-photo {
+  --sheen: color-mix(in srgb, var(--fg-brand) 30%, transparent);
+  overflow: hidden;
+}
+@keyframes sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  32%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .envelope-open::after,
+  .reader:not([data-seen-photo]) .dock-photo::after {
+    animation: none;
+    display: none;
+  }
 }
 .envelope-under {
   margin-top: 14px;
@@ -664,9 +716,11 @@ html:has(.reader[data-enhanced='true'][data-open='true']) {
   border-color: transparent;
 }
 .deck-position {
-  font: 10px var(--font-mono);
-  color: var(--fg-muted);
-  padding: 0 8px;
+  display: none;
+  font: 11px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+  padding: 0 6px;
 }
 /* The reply: what the letter has been answered with, and a way to add to it. */
 .reactions {
@@ -928,6 +982,22 @@ button.reaction:active {
     min-width: 40px;
     padding-inline: 10px;
   }
+  /* Three sheets of numbers and a worded photo button do not fit a phone in
+     one row. The numbers step aside for a position; the arrows stay. */
+  .reading-dock .deck-controls .segment-track {
+    display: none;
+  }
+  .reading-dock .deck-position {
+    display: inline;
+  }
+  /* Except the photograph's. As an icon alone nobody knew it was there. */
+  .reading-dock .dock-photo .dock-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
 }
 /* On a narrow phone three controls and a mark leave the name about 90px, so
    the name sat against the buttons and the line under it broke in three.
@@ -945,6 +1015,17 @@ button.reaction:active {
   .reader-address {
     order: 3;
     flex-basis: 100%;
+  }
+}
+/* The narrowest phones: the same row, a little less air around it. */
+@media (max-width: 360px) {
+  .reading-dock {
+    gap: 6px;
+    padding-inline: 10px;
+  }
+  .reading-dock .dock-photo {
+    gap: 5px;
+    padding-inline: 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
